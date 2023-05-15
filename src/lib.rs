@@ -1,5 +1,5 @@
 
-mod data;
+pub mod data;
 
 /* TODO Data: 
                 * enum

@@ -3,6 +3,7 @@
 pub enum Number {
     Float64(f64),
     Usize(usize),
+    // TODO:  Indeterminate that's just a string or something?
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -18,3 +19,15 @@ pub enum Data {
 // TODO: macro that lets you use struct dot notation to access fields from struct item
 // TODO: derives needed so that Data can be used in hash?
 // TODO: Hash case for Data?
+
+impl From<usize> for Data {
+    fn from(item : usize) -> Self {
+        Data::Number(Number::Usize(item))
+    }
+}
+
+impl From<f64> for Data {
+    fn from(item : f64) -> Self {
+        Data::Number(Number::Float64(item))
+    }
+}
