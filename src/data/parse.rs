@@ -17,6 +17,22 @@ fn parse_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     alt!(input => parse_float64)
 }
 
+fn junk<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+    pat!(any: char => char = x => x);
+    fn space<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+        parser!( input => {
+            x <= any;
+            where x.is_whitespace();
+            select ()
+        })
+    }
+
+    parser!( input => {
+        _x <= * space;
+        select ()
+    })
+}
+
 fn parse_float64<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     pat!(any: char => char = x => x);
     pat!(lower_e: char => char = 'e' => 'e');
