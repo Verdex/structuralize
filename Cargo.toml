@@ -7,3 +7,6 @@ edition = "2021"
 
 [dependencies]
 renounce = { git = "https://www.github.com/verdex/renounce", version = "0.3.0", tag = "release-0.3.0" }
+
+[dev-dependencies]
+intra = { git = "https://www.github.com/verdex/intra", version = "0.1.0", tag = "release-0.1.0" }
