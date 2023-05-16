@@ -33,6 +33,14 @@ fn junk<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
     })
 }
 
+fn parse_symbol<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
+
+    parser!(input => {
+        ! where false;
+        select Data::Symbol("blarg".to_string())
+    })
+}
+
 fn parse_float64<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     pat!(any: char => char = x => x);
     pat!(lower_e: char => char = 'e' => 'e');
@@ -72,8 +80,7 @@ mod test {
     #[test]
     fn should_parse_float64() {
         let input = "-123.456E-2";
-        let mut input = input.chars();
-        let data = parse_data(&mut input).unwrap();
+        let data = input.parse::<Data>().unwrap();
 
         let mut matched = false;
         atom!(data => [Data::Number(Number::Float64(x))] => { 
