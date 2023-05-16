@@ -31,3 +31,9 @@ impl From<f64> for Data {
         Data::Number(Number::Float64(item))
     }
 }
+
+impl<T> From<Vec<T>> for Data where Data : From<T> {
+    fn from(item : Vec<T>) -> Self {
+        Data::List(item.into_iter().map(|x| x.into()).collect::<Vec<Data>>())
+    }
+}
