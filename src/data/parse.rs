@@ -15,7 +15,7 @@ impl std::str::FromStr for Data {
 
 fn parse_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     fn options<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
-        alt!(input => parse_float64)
+        alt!(input => parse_float64; parse_list)
     }
 
     parser!(input => {
