@@ -14,7 +14,16 @@ impl std::str::FromStr for Data {
 }
 
 fn parse_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
-    alt!(input => parse_float64)
+    fn options<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
+        alt!(input => parse_float64)
+    }
+
+    parser!(input => {
+        _before_clear <= junk;
+        data <= options;
+        _after_clear <= junk;
+        select data
+    })
 }
 
 fn junk<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
