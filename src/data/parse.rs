@@ -69,6 +69,35 @@ fn parse_float64<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     })
 }
 
+fn parse_list<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
+    pat!(parse_l_square: char => () = '[' => ());
+    pat!(parse_r_square: char => () = ']' => ());
+    pat!(parse_comma: char => () = ',' => ());
+
+    fn parse_data_comma<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
+        parser!(input => {
+            data <= parse_data;
+            _comma <= parse_comma;
+            select data
+        })
+    }
+
+    parser!(input => {
+        _left_square_bracket <= parse_l_square;
+        datas <= * parse_data_comma;
+        last_data <= ? parse_data;
+        _right_square_bracket <= ! parse_r_square;
+        select {
+            let mut datas = datas;
+            match last_data {
+                Some(data) => { datas.push(data); },
+                None => (),
+            }
+            Data::List(datas)
+        }
+    })
+}
+
 #[cfg(test)]
 mod test {
     use intra::*;
