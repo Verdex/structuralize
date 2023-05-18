@@ -74,9 +74,16 @@ fn parse_float64<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
         alt!(input => number; dot; minus; plus; lower_e; upper_e)
     }
 
+    fn parse_init_num_char<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+        alt!(input => number; minus)
+    }
+
+    fn combine(c : char, mut v : Vec<char>) -> Vec<char> { v.insert(0, c); v }
+
     parser!(input => {
+        initial <= parse_init_num_char;
         num_chars <= * parse_num_char;
-        let result = num_chars.into_iter().collect::<String>().parse::<f64>();
+        let result = combine(initial, num_chars).into_iter().collect::<String>().parse::<f64>();
         ! where result.is_ok();
         select Data::Number(Number::Float64(result.unwrap()))
     })
@@ -121,7 +128,7 @@ mod test {
 
     #[test]
     fn should_parse_list() {
-        //let input = " [ [], [1, 2], [1 , 2, 3]] ";
+        let input = " [ [], [1, 2], [1 , 2, 3]] ";
         let input = "[]";
         let data = input.parse::<Data>().unwrap();
 
