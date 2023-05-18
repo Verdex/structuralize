@@ -9,6 +9,10 @@ impl std::str::FromStr for Data {
     type Err = Box<dyn std::error::Error>;  
 
     fn from_str(s : &str) -> Result<Self, Self::Err> {
+        // TODO:  the Chars struct will be returned at the point of failure
+        // in the event of a Fatal result.  Might be a good idea to somehow
+        // reflect that in a different concrete Error so that it can be shown
+        // to a consumer.
         Ok(parse_data(&mut s.chars())?)
     }
 }
@@ -43,7 +47,7 @@ fn junk<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
 }
 
 fn parse_symbol<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
-
+    todo!();
     parser!(input => {
         ! where false;
         select Data::Symbol("blarg".to_string())
@@ -114,6 +118,21 @@ mod test {
 
     fn slice<'a, T>(input : &'a Vec<T>) -> &'a [T] { &input[..] }
     fn unbox<'a, T>(input : &'a Box<T> ) -> &'a T { &**input }
+
+    #[test]
+    fn should_parse_list() {
+        //let input = " [ [], [1, 2], [1 , 2, 3]] ";
+        let input = "[]";
+        let data = input.parse::<Data>().unwrap();
+
+        let mut matched = false;
+        atom!(data => [Data::Number(Number::Float64(x))] => { 
+            assert_eq!(x, -123.456E-2);
+            matched = true;
+        } );
+
+        assert!(matched);
+    }
 
     #[test]
     fn should_parse_float64() {
