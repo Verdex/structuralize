@@ -128,13 +128,20 @@ mod test {
 
     #[test]
     fn should_parse_list() {
-        let input = " [ [], [1, 2], [1 , 2, 3]] ";
-        let input = "[]";
+        let input = " [ [], [1, 2], [1 , 2, 3], 4] ";
         let data = input.parse::<Data>().unwrap();
 
         let mut matched = false;
-        atom!(data => [Data::Number(Number::Float64(x))] => { 
-            assert_eq!(x, -123.456E-2);
+        atom!(data => [Data::List(ref params)] params; 
+              slice $ [ [Data::List(first), Data::List(second), Data::List(third), Data::Number(Number::Float64(4f64))] ] => { 
+            assert_eq!(first.len(), 0);
+            assert_eq!(second.len(), 2);
+            assert_eq!(second[0], Data::Number(Number::Float64(1f64)));
+            assert_eq!(second[1], Data::Number(Number::Float64(2f64)));
+            assert_eq!(third.len(), 3);
+            assert_eq!(third[0], Data::Number(Number::Float64(1f64)));
+            assert_eq!(third[1], Data::Number(Number::Float64(2f64)));
+            assert_eq!(third[2], Data::Number(Number::Float64(3f64)));
             matched = true;
         } );
 
