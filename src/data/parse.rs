@@ -56,7 +56,7 @@ fn junk<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
     })
 }
 
-fn parse_symbol<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
+fn parse_word<'a>(input : &mut Chars<'a>) -> Result<String, ParseError> {
     pat!(underscore: char => char = '_' => '_');
 
     fn parse_alpha<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
@@ -81,8 +81,21 @@ fn parse_symbol<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
         select {
             let mut rest = rest;
             rest.insert(0, init);
-            Data::Symbol(rest.into_iter().collect::<String>())
+            rest.into_iter().collect::<String>()
         } 
+    })
+}
+
+/*fn parse_cons<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
+    pat!(parse_comma: char => () = ',' => ());
+    pat!(parse_l_paren: char => () = '(' => ());
+    pat!(parse_r_paren: char => () => ')' => ());
+}*/
+
+fn parse_symbol<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
+    parser!(input => {
+        word <= parse_word;
+        select Data::Symbol(word)
     })
 }
 
