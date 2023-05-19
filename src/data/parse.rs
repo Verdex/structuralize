@@ -150,6 +150,19 @@ mod test {
     fn unbox<'a, T>(input : &'a Box<T> ) -> &'a T { &**input }
 
     #[test]
+    fn should_parse_symbol() {
+        let input = " symbol_123 ";
+        let data = input.parse::<Data>().unwrap();
+
+        let mut matched = false;
+        atom!(data => [Data::Symbol(sym)] => { 
+            assert_eq!(sym, "symbol_123");
+            matched = true;
+        } );
+        assert!(matched);
+    }
+
+    #[test]
     fn should_parse_list() {
         let input = " [ [], [1, 2], [1 , 2, 3], 4] ";
         let data = input.parse::<Data>().unwrap();
