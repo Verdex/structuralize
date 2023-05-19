@@ -19,7 +19,7 @@ impl std::str::FromStr for Data {
 
 fn parse_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     fn options<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
-        alt!(input => parse_float64; parse_list)
+        alt!(input => parse_float64; parse_list; parse_symbol)
     }
 
     parser!(input => {
@@ -27,6 +27,16 @@ fn parse_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
         data <= options;
         _after_clear <= junk;
         select data
+    })
+}
+
+pat!(any<'a>: char => char = x => x);
+
+fn number<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+    parser!(input => {
+        num <= any;
+        where num.is_digit(10);
+        select num
     })
 }
 
@@ -47,28 +57,41 @@ fn junk<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
 }
 
 fn parse_symbol<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
-    todo!();
+    pat!(underscore: char => char = '_' => '_');
+
+    fn parse_alpha<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+        parser!(input => {
+            init_symbol <= any;
+            where init_symbol.is_alphabetic();
+            select init_symbol
+        })
+    }
+
+    fn parse_init<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+        alt!(input => parse_alpha; underscore)
+    }
+
+    fn parse_symbol_char<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+        alt!(input => parse_alpha; number; underscore)
+    }
+
     parser!(input => {
-        ! where false;
-        select Data::Symbol("blarg".to_string())
+        init <= parse_init;
+        rest <= * parse_symbol_char;
+        select {
+            let mut rest = rest;
+            rest.insert(0, init);
+            Data::Symbol(rest.into_iter().collect::<String>())
+        } 
     })
 }
 
 fn parse_float64<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
-    pat!(any: char => char = x => x);
     pat!(lower_e: char => char = 'e' => 'e');
     pat!(upper_e: char => char = 'E' => 'E');
     pat!(minus: char => char = '-' => '-');
     pat!(plus: char => char = '+' => '+');
     pat!(dot: char => char = '.' => '.');
-
-    fn number<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
-        parser!(input => {
-            num <= any;
-            where num.is_digit(10);
-            select num
-        })
-    }
 
     fn parse_num_char<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
         alt!(input => number; dot; minus; plus; lower_e; upper_e)
