@@ -79,21 +79,6 @@ fn number<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
     })
 }
 
-fn parse_whitespace<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
-    fn space<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
-        parser!( input => {
-            x <= parse_any;
-            where x.is_whitespace();
-            select ()
-        })
-    }
-
-    parser!( input => {
-        _x <= * space;
-        select ()
-    })
-}
-
 fn parse_word<'a>(input : &mut Chars<'a>) -> Result<String, ParseError> {
     pat!(underscore: char => char = '_' => '_');
 
