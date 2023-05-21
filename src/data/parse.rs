@@ -34,7 +34,7 @@ fn parse_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     })
 }
 
-fn number<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+fn parse_number<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
     parser!(input => {
         num <= parse_any;
         where num.is_digit(10);
@@ -58,7 +58,7 @@ fn parse_word<'a>(input : &mut Chars<'a>) -> Result<String, ParseError> {
     }
 
     fn parse_symbol_char<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
-        alt!(input => parse_alpha; number; underscore)
+        alt!(input => parse_alpha; parse_number; underscore)
     }
 
     parser!(input => {
@@ -131,11 +131,11 @@ fn parse_float64<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     pat!(dot: char => char = '.' => '.');
 
     fn parse_num_char<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
-        alt!(input => number; dot; minus; plus; lower_e; upper_e)
+        alt!(input => parse_number; dot; minus; plus; lower_e; upper_e)
     }
 
     fn parse_init_num_char<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
-        alt!(input => number; minus)
+        alt!(input => parse_number; minus)
     }
 
     fn combine(c : char, mut v : Vec<char>) -> Vec<char> { v.insert(0, c); v }
