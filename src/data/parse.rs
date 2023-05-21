@@ -34,44 +34,6 @@ fn parse_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     })
 }
 
-fn parse_number<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
-    parser!(input => {
-        num <= parse_any;
-        where num.is_digit(10);
-        select num
-    })
-}
-
-fn parse_word<'a>(input : &mut Chars<'a>) -> Result<String, ParseError> {
-    pat!(underscore: char => char = '_' => '_');
-
-    fn parse_alpha<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
-        parser!(input => {
-            init_symbol <= parse_any;
-            where init_symbol.is_alphabetic();
-            select init_symbol
-        })
-    }
-
-    fn parse_init<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
-        alt!(input => parse_alpha; underscore)
-    }
-
-    fn parse_symbol_char<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
-        alt!(input => parse_alpha; parse_number; underscore)
-    }
-
-    parser!(input => {
-        init <= parse_init;
-        rest <= * parse_symbol_char;
-        select {
-            let mut rest = rest;
-            rest.insert(0, init);
-            rest.into_iter().collect::<String>()
-        } 
-    })
-}
-
 fn parse_struct<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     pat!(parse_l_paren: char => () = '{' => ());
     pat!(parse_r_paren: char => () = '}' => ());
