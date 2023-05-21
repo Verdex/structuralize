@@ -22,10 +22,11 @@ macro_rules! parse_list {
                 _clear_0 <= parse_whitespace;
                 _left_bracket <= $l_bracket;
                 targets <= * parse_target_comma;
-                last_target <= ? $target;
                 _clear_1 <= parse_whitespace;
-                _right_bracket <= ! $r_bracket;
+                last_target <= ? $target;
                 _clear_2 <= parse_whitespace;
+                _right_bracket <= ! $r_bracket;
+                _clear_3 <= parse_whitespace;
                 select {
                     let mut targets = targets;
                     match last_target {

@@ -13,7 +13,11 @@ impl std::str::FromStr for Data {
         // in the event of a Fatal result.  Might be a good idea to somehow
         // reflect that in a different concrete Error so that it can be shown
         // to a consumer.
-        Ok(parse_data(&mut s.chars())?)
+        let mut x = s.chars();
+        let y = parse_data(&mut x);
+        println!("{}", x.collect::<String>());
+        Ok(y?)
+        //Ok(parse_data(&mut s.chars())?)
     }
 }
 
@@ -126,6 +130,14 @@ mod test {
 
     fn slice<'a, T>(input : &'a Vec<T>) -> &'a [T] { &input[..] }
     fn unbox<'a, T>(input : &'a Box<T> ) -> &'a T { &**input }
+
+    #[test]
+    fn should_parse_complex_data() {
+        let input = " name  { first : other { first : one( 1, 2, num([3, 2, 3, [blarg]]) ) } , second: inner ,  }";
+        let data = input.parse::<Data>().unwrap();
+        println!("{:?}", data);
+        // TODO
+    }
 
     #[test]
     fn should_parse_struct() {
