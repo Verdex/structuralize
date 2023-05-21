@@ -6,23 +6,29 @@ use renounce::*;
 use super::data::*;
 
 macro_rules! parse_list {
-    ($input:ident => $l_bracket:ident, $target:ident, $r_bracket:ident) => {
+    ($input:ident => $l_bracket:ident, $target:ident : $target_type:ty, $r_bracket:ident) => {
         {
             pat!(parse_comma: char => () = ',' => ());
 
-            fn parse_target_comma<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
+            fn parse_target_comma<'a>(input : &mut Chars<'a>) -> Result<$target_type, ParseError> {
                 parser!(input => {
                     target <= $target;
+                    _clear <= junk;
                     _comma <= parse_comma;
                     select target 
                 })
             }
 
             parser!($input => {
+                _clear_0 <= junk;
                 _left_bracket <= $l_bracket;
+                _clear_1 <= junk;
                 targets <= * parse_target_comma;
+                _clear_2 <= junk;
                 last_target <= ? $target;
+                _clear_3 <= junk;
                 _right_bracket <= ! $r_bracket;
+                _clear_4 <= junk;
                 select {
                     let mut targets = targets;
                     match last_target {
@@ -33,7 +39,11 @@ macro_rules! parse_list {
                 }
             })
         }
-    }
+    };
+
+    ($input:ident => $l_bracket:ident, $target:ident, $r_bracket:ident) => {
+        parse_list!($input => $l_bracket, $target : Data, $r_bracket)
+    };
 }
 
 impl std::str::FromStr for Data {
@@ -117,6 +127,34 @@ fn parse_word<'a>(input : &mut Chars<'a>) -> Result<String, ParseError> {
             rest.insert(0, init);
             rest.into_iter().collect::<String>()
         } 
+    })
+}
+
+fn parse_struct<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
+    pat!(parse_l_paren: char => () = '{' => ());
+    pat!(parse_r_paren: char => () = '}' => ());
+    pat!(parse_colon: char => () = ':' => ());
+
+    fn parse_field<'a>(input : &mut Chars<'a>) -> Result<(String, Data), ParseError> {
+        parser!(input => {
+            field_name <= parse_word;
+            _clear_1 <= junk;
+            _colon <= ! parse_colon;
+            // Note: parse_data clears before and after itself
+            data <= parse_data; 
+            select (field_name, data)
+        })
+    }
+
+    fn parse_fields<'a>(input : &mut Chars<'a>) -> Result<Vec<(String, Data)>, ParseError> {
+        parse_list!(input => parse_l_paren, parse_field : (String, Data), parse_r_paren)
+    }
+
+    parser!(input => {
+        struct_name <= parse_word;
+        _clear <= junk;
+        fields <= parse_fields;
+        select Data::Struct { name: struct_name, fields }
     })
 }
 
