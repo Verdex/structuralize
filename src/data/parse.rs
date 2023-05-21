@@ -12,9 +12,11 @@ macro_rules! parse_list {
 
             fn parse_target_comma<'a>(input : &mut Chars<'a>) -> Result<$target_type, ParseError> {
                 parser!(input => {
+                    _clear_0 <= junk;
                     target <= $target;
-                    _clear <= junk;
+                    _clear_1 <= junk;
                     _comma <= parse_comma;
+                    _clear_2 <= junk;
                     select target 
                 })
             }
@@ -22,13 +24,11 @@ macro_rules! parse_list {
             parser!($input => {
                 _clear_0 <= junk;
                 _left_bracket <= $l_bracket;
-                _clear_1 <= junk;
                 targets <= * parse_target_comma;
-                _clear_2 <= junk;
                 last_target <= ? $target;
-                _clear_3 <= junk;
+                _clear_1 <= junk;
                 _right_bracket <= ! $r_bracket;
-                _clear_4 <= junk;
+                _clear_2 <= junk;
                 select {
                     let mut targets = targets;
                     match last_target {
@@ -226,7 +226,7 @@ mod test {
 
     #[test]
     fn should_parse_struct() {
-        let input = " name  { first : 1.0 , second: inner  }";
+        let input = " name  { first : 1.0 , second: inner ,  }";
         let data = input.parse::<Data>().unwrap();
 
         let mut matched = false;
