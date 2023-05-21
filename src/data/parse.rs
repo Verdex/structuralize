@@ -247,6 +247,7 @@ mod test {
         let mut matched = false;
         atom!(data => [Data::Cons { name, params: ref params }] params; 
                        slice $ [ [Data::Number(Number::Float64(a)), Data::Symbol(_), Data::Number(Number::Float64(b))] ] => { 
+            assert_eq!(name, "name");
             assert_eq!(*a, 1f64);
             assert_eq!(*b, 5.5f64);
             matched = true;
