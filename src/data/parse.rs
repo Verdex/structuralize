@@ -5,6 +5,37 @@ use renounce::*;
 
 use super::data::*;
 
+macro_rules! parse_list {
+    ($input:ident => $l_bracket:ident, $target:ident, $r_bracket:ident) => {
+        {
+            pat!(parse_comma: char => () = ',' => ());
+
+            fn parse_target_comma<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
+                parser!(input => {
+                    target <= $target;
+                    _comma <= parse_comma;
+                    select target 
+                })
+            }
+
+            parser!($input => {
+                _left_bracket <= $l_bracket;
+                targets <= * parse_target_comma;
+                last_target <= ? $target;
+                _right_bracket <= ! $r_bracket;
+                select {
+                    let mut targets = targets;
+                    match last_target {
+                        Some(target) => { targets.push(target); },
+                        None => (),
+                    }
+                    targets
+                }
+            })
+        }
+    }
+}
+
 impl std::str::FromStr for Data {
     type Err = Box<dyn std::error::Error>;  
 
@@ -90,6 +121,8 @@ fn parse_word<'a>(input : &mut Chars<'a>) -> Result<String, ParseError> {
     pat!(parse_comma: char => () = ',' => ());
     pat!(parse_l_paren: char => () = '(' => ());
     pat!(parse_r_paren: char => () => ')' => ());
+
+
 }*/
 
 fn parse_symbol<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
@@ -128,31 +161,10 @@ fn parse_float64<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
 fn parse_list<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     pat!(parse_l_square: char => () = '[' => ());
     pat!(parse_r_square: char => () = ']' => ());
-    pat!(parse_comma: char => () = ',' => ());
 
-    fn parse_data_comma<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
-        parser!(input => {
-            data <= parse_data;
-            _comma <= parse_comma;
-            select data
-        })
-    }
-
-    parser!(input => {
-        _left_square_bracket <= parse_l_square;
-        datas <= * parse_data_comma;
-        last_data <= ? parse_data;
-        _right_square_bracket <= ! parse_r_square;
-        select {
-            let mut datas = datas;
-            match last_data {
-                Some(data) => { datas.push(data); },
-                None => (),
-            }
-            Data::List(datas)
-        }
-    })
+    Ok(Data::List(parse_list!(input => parse_l_square, parse_data, parse_r_square)?))
 }
+
 
 #[cfg(test)]
 mod test {
