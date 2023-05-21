@@ -50,7 +50,10 @@ impl std::str::FromStr for Data {
 
 fn parse_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     fn options<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
-        alt!(input => parse_float64; parse_list; parse_symbol)
+        alt!(input => parse_float64; 
+                      parse_cons; 
+                      parse_list; 
+                      parse_symbol)
     }
 
     parser!(input => {
@@ -117,13 +120,21 @@ fn parse_word<'a>(input : &mut Chars<'a>) -> Result<String, ParseError> {
     })
 }
 
-/*fn parse_cons<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
-    pat!(parse_comma: char => () = ',' => ());
+fn parse_cons<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     pat!(parse_l_paren: char => () = '(' => ());
-    pat!(parse_r_paren: char => () => ')' => ());
+    pat!(parse_r_paren: char => () = ')' => ());
 
+    fn param_list<'a>(input : &mut Chars<'a>) -> Result<Vec<Data>, ParseError> {
+        parse_list!(input => parse_l_paren, parse_data, parse_r_paren)
+    }
 
-}*/
+    parser!(input => {
+        cons_name <= parse_word;
+        _clear <= junk;
+        params <= param_list;
+        select Data::Cons { name: cons_name, params }
+    })
+}
 
 fn parse_symbol<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     parser!(input => {
@@ -173,6 +184,19 @@ mod test {
 
     fn slice<'a, T>(input : &'a Vec<T>) -> &'a [T] { &input[..] }
     fn unbox<'a, T>(input : &'a Box<T> ) -> &'a T { &**input }
+
+    #[test]
+    fn should_parse_cons() {
+        let input = " name  ( 1.0, inner, 5.5 )";
+        let data = input.parse::<Data>().unwrap();
+
+        let mut matched = false;
+        atom!(data => [Data::Cons { name, params: ref params }] params; 
+                       slice $ [ [Data::Number(Number::Float64(1.0)), Data::Symbol(_), Data::Number(Number::Float64(5.5))] ] => { 
+            matched = true;
+        } );
+        assert!(matched);
+    }
 
     #[test]
     fn should_parse_symbol() {
