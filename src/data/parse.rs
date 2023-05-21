@@ -232,6 +232,7 @@ mod test {
         let mut matched = false;
         atom!(data => [Data::Struct { name, fields: ref fields}] fields; 
                        slice $ [ [(first, Data::Number(Number::Float64(f))), (second, Data::Symbol(sym))] ] => { 
+            assert_eq!(name, "name");
             assert_eq!(*f, 1f64);
             assert_eq!(sym, "inner");
             matched = true;
