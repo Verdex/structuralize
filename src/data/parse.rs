@@ -62,6 +62,7 @@ fn parse_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     fn options<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
         alt!(input => parse_float64; 
                       parse_cons; 
+                      parse_struct;
                       parse_list; 
                       parse_symbol)
     }
