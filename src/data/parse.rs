@@ -225,6 +225,21 @@ mod test {
     fn unbox<'a, T>(input : &'a Box<T> ) -> &'a T { &**input }
 
     #[test]
+    fn should_parse_struct() {
+        let input = " name  { first : 1.0 , second: inner  }";
+        let data = input.parse::<Data>().unwrap();
+
+        let mut matched = false;
+        atom!(data => [Data::Struct { name, fields: ref fields}] fields; 
+                       slice $ [ [(first, Data::Number(Number::Float64(f))), (second, Data::Symbol(sym))] ] => { 
+            assert_eq!(*f, 1f64);
+            assert_eq!(sym, "inner");
+            matched = true;
+        } );
+        assert!(matched);
+    }
+
+    #[test]
     fn should_parse_cons() {
         let input = " name  ( 1.0, inner, 5.5 )";
         let data = input.parse::<Data>().unwrap();
