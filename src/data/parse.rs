@@ -1,8 +1,8 @@
 
 use std::str::Chars;
-
 use renounce::*;
 
+use crate::parsing::*;
 use super::data::*;
 
 macro_rules! parse_list {
@@ -71,21 +71,18 @@ fn parse_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     })
 }
 
-pat!(any<'a>: char => char = x => x);
-
 fn number<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
     parser!(input => {
-        num <= any;
+        num <= parse_any;
         where num.is_digit(10);
         select num
     })
 }
 
 fn junk<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
-    pat!(any: char => char = x => x);
     fn space<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
         parser!( input => {
-            x <= any;
+            x <= parse_any;
             where x.is_whitespace();
             select ()
         })
@@ -102,7 +99,7 @@ fn parse_word<'a>(input : &mut Chars<'a>) -> Result<String, ParseError> {
 
     fn parse_alpha<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
         parser!(input => {
-            init_symbol <= any;
+            init_symbol <= parse_any;
             where init_symbol.is_alphabetic();
             select init_symbol
         })
