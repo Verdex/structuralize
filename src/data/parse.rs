@@ -12,23 +12,23 @@ macro_rules! parse_list {
 
             fn parse_target_comma<'a>(input : &mut Chars<'a>) -> Result<$target_type, ParseError> {
                 parser!(input => {
-                    _clear_0 <= junk;
+                    _clear_0 <= parse_whitespace;
                     target <= $target;
-                    _clear_1 <= junk;
+                    _clear_1 <= parse_whitespace;
                     _comma <= parse_comma;
-                    _clear_2 <= junk;
+                    _clear_2 <= parse_whitespace;
                     select target 
                 })
             }
 
             parser!($input => {
-                _clear_0 <= junk;
+                _clear_0 <= parse_whitespace;
                 _left_bracket <= $l_bracket;
                 targets <= * parse_target_comma;
                 last_target <= ? $target;
-                _clear_1 <= junk;
+                _clear_1 <= parse_whitespace;
                 _right_bracket <= ! $r_bracket;
-                _clear_2 <= junk;
+                _clear_2 <= parse_whitespace;
                 select {
                     let mut targets = targets;
                     match last_target {
@@ -64,9 +64,9 @@ fn parse_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     }
 
     parser!(input => {
-        _before_clear <= junk;
+        _before_clear <= parse_whitespace;
         data <= options;
-        _after_clear <= junk;
+        _after_clear <= parse_whitespace;
         select data
     })
 }
@@ -79,7 +79,7 @@ fn number<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
     })
 }
 
-fn junk<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+fn parse_whitespace<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
     fn space<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
         parser!( input => {
             x <= parse_any;
@@ -132,7 +132,7 @@ fn parse_struct<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     fn parse_field<'a>(input : &mut Chars<'a>) -> Result<(String, Data), ParseError> {
         parser!(input => {
             field_name <= parse_word;
-            _clear_1 <= junk;
+            _clear_1 <= parse_whitespace;
             _colon <= ! parse_colon;
             // Note: parse_data clears before and after itself
             data <= parse_data; 
@@ -146,7 +146,7 @@ fn parse_struct<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
 
     parser!(input => {
         struct_name <= parse_word;
-        _clear <= junk;
+        _clear <= parse_whitespace;
         fields <= parse_fields;
         select Data::Struct { name: struct_name, fields }
     })
@@ -162,7 +162,7 @@ fn parse_cons<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
 
     parser!(input => {
         cons_name <= parse_word;
-        _clear <= junk;
+        _clear <= parse_whitespace;
         params <= param_list;
         select Data::Cons { name: cons_name, params }
     })
