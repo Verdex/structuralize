@@ -40,10 +40,6 @@ macro_rules! parse_list {
             })
         }
     };
-
-    ($input:ident => $l_bracket:ident, $target:ident, $r_bracket:ident) => {
-        parse_list!($input => $l_bracket, $target : Data, $r_bracket)
-    };
 }
 
 impl std::str::FromStr for Data {
@@ -164,7 +160,7 @@ fn parse_cons<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     pat!(parse_r_paren: char => () = ')' => ());
 
     fn param_list<'a>(input : &mut Chars<'a>) -> Result<Vec<Data>, ParseError> {
-        parse_list!(input => parse_l_paren, parse_data, parse_r_paren)
+        parse_list!(input => parse_l_paren, parse_data : Data, parse_r_paren)
     }
 
     parser!(input => {
@@ -212,7 +208,7 @@ fn parse_list<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     pat!(parse_l_square: char => () = '[' => ());
     pat!(parse_r_square: char => () = ']' => ());
 
-    Ok(Data::List(parse_list!(input => parse_l_square, parse_data, parse_r_square)?))
+    Ok(Data::List(parse_list!(input => parse_l_square, parse_data : Data, parse_r_square)?))
 }
 
 
