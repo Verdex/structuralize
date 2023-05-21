@@ -231,7 +231,9 @@ mod test {
 
         let mut matched = false;
         atom!(data => [Data::Cons { name, params: ref params }] params; 
-                       slice $ [ [Data::Number(Number::Float64(1.0)), Data::Symbol(_), Data::Number(Number::Float64(5.5))] ] => { 
+                       slice $ [ [Data::Number(Number::Float64(a)), Data::Symbol(_), Data::Number(Number::Float64(b))] ] => { 
+            assert_eq!(*a, 1f64);
+            assert_eq!(*b, 5.5f64);
             matched = true;
         } );
         assert!(matched);
@@ -257,7 +259,8 @@ mod test {
 
         let mut matched = false;
         atom!(data => [Data::List(ref params)] params; 
-              slice $ [ [Data::List(first), Data::List(second), Data::List(third), Data::Number(Number::Float64(4f64))] ] => { 
+              slice $ [ [Data::List(first), Data::List(second), Data::List(third), Data::Number(Number::Float64(f))] ] => { 
+            assert_eq!(*f, 4f64);
             assert_eq!(first.len(), 0);
             assert_eq!(second.len(), 2);
             assert_eq!(second[0], Data::Number(Number::Float64(1f64)));
