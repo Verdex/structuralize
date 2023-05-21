@@ -20,6 +20,12 @@ pub enum Data {
 // TODO: derives needed so that Data can be used in hash?
 // TODO: Hash case for Data?
 
+impl From<String> for Data {
+    fn from(item : String) -> Self {
+        Data::String(item)
+    }
+}
+
 impl From<usize> for Data {
     fn from(item : usize) -> Self {
         Data::Number(Number::Usize(item))
