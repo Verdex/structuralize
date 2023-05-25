@@ -23,7 +23,7 @@ impl std::str::FromStr for Data {
 
 fn parse_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     fn options<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
-        alt!(input => parse_float64; 
+        alt!(input => parse_data_float64; 
                       parse_cons; 
                       parse_struct;
                       parse_list; 
@@ -89,30 +89,8 @@ fn parse_symbol<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     })
 }
 
-fn parse_float64<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
-    pat!(lower_e: char => char = 'e' => 'e');
-    pat!(upper_e: char => char = 'E' => 'E');
-    pat!(minus: char => char = '-' => '-');
-    pat!(plus: char => char = '+' => '+');
-    pat!(dot: char => char = '.' => '.');
-
-    fn parse_num_char<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
-        alt!(input => parse_number; dot; minus; plus; lower_e; upper_e)
-    }
-
-    fn parse_init_num_char<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
-        alt!(input => parse_number; minus)
-    }
-
-    fn combine(c : char, mut v : Vec<char>) -> Vec<char> { v.insert(0, c); v }
-
-    parser!(input => {
-        initial <= parse_init_num_char;
-        num_chars <= * parse_num_char;
-        let result = combine(initial, num_chars).into_iter().collect::<String>().parse::<f64>();
-        ! where result.is_ok();
-        select Data::Number(Number::Float64(result.unwrap()))
-    })
+fn parse_data_float64<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
+    Ok(Data::Number(Number::Float64(parse_float64(input)?)))
 }
 
 fn parse_list<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
@@ -211,7 +189,7 @@ mod test {
     }
 
     #[test]
-    fn should_parse_float64() {
+    fn should_parse_data_float64() {
         let input = "-123.456E-2";
         let data = input.parse::<Data>().unwrap();
 

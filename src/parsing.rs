@@ -57,11 +57,37 @@ pub (crate) fn parse_whitespace<'a>(input : &mut Chars<'a>) -> Result<(), ParseE
     })
 }
 
-pub (crate) fn parse_number<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+pub (crate) fn parse_digit<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
     parser!(input => {
         num <= parse_any;
         where num.is_digit(10);
         select num
+    })
+}
+
+pub (crate) fn parse_float64<'a>(input : &mut Chars<'a>) -> Result<f64, ParseError> {
+    pat!(lower_e: char => char = 'e' => 'e');
+    pat!(upper_e: char => char = 'E' => 'E');
+    pat!(minus: char => char = '-' => '-');
+    pat!(plus: char => char = '+' => '+');
+    pat!(dot: char => char = '.' => '.');
+
+    fn parse_num_char<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+        alt!(input => parse_digit; dot; minus; plus; lower_e; upper_e)
+    }
+
+    fn parse_init_num_char<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+        alt!(input => parse_digit; minus)
+    }
+
+    fn combine(c : char, mut v : Vec<char>) -> Vec<char> { v.insert(0, c); v }
+
+    parser!(input => {
+        initial <= parse_init_num_char;
+        num_chars <= * parse_num_char;
+        let result = combine(initial, num_chars).into_iter().collect::<String>().parse::<f64>();
+        ! where result.is_ok();
+        select result.unwrap()
     })
 }
 
@@ -81,7 +107,7 @@ pub (crate) fn parse_word<'a>(input : &mut Chars<'a>) -> Result<String, ParseErr
     }
 
     fn parse_symbol_char<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
-        alt!(input => parse_alpha; parse_number; underscore)
+        alt!(input => parse_alpha; parse_digit; underscore)
     }
 
     parser!(input => {
