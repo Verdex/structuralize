@@ -135,8 +135,11 @@ mod test {
     fn should_parse_complex_data() {
         let input = " name  { first : other { first : one( 1, 2, num([3, 2, 3, [blarg]]) ) } , second: inner ,  }";
         let data = input.parse::<Data>().unwrap();
-        println!("{:?}", data);
-        // TODO
+        let mut matched = false;
+        atom!(data => [Data::Struct { .. }] => { 
+            matched = true;
+        } );
+        assert!(matched);
     }
 
     #[test]
