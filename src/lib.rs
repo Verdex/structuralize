@@ -1,12 +1,9 @@
 
-pub mod parsing;
+mod parsing;
 pub mod data;
+pub mod pattern;
 
-/* TODO Data: 
-                * enum
-                * From defs ?
-                * parser
-
+/* 
    TODO parser: 
                 * parser
                 * fn impl
