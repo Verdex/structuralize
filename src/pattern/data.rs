@@ -54,6 +54,12 @@ impl Display for Slot {
     }
 }
 
+impl From<&str> for Slot {
+    fn from(item : &str) -> Self {
+        Slot::Symbol(item.to_string())
+    }
+}
+
 impl From<&String> for Slot {
     fn from(item : &String) -> Self {
         Slot::Symbol(item.to_string())

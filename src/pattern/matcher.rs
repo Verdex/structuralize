@@ -26,8 +26,10 @@ mod test {
     #[test]
     fn should_capture_var() {
         let data = Data::Number(Number::Usize(0));
-        let results = pattern_match(&Pattern::CaptureVar("a".to_string()), &data);
+        let pattern = Pattern::CaptureVar("a".to_string());
+        let results = pattern_match(&pattern, &data);
 
         assert_eq!(results.len(), 1);
+        assert_eq!(results[0].get(&"a".into()), Some(&data));
     } 
 }
