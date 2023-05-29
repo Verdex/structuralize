@@ -20,16 +20,11 @@ pub struct MatchResult {
 
 impl MatchResult {
     fn merge(&mut self, other : MatchResult) { 
+        // TODO: Is it faster to collect both self and other?
+        // TODO:  This can fail on duplicate slots unless pattern is type checked
         for (key, value) in other.map.into_iter() {
-            if self.map.contains_key(&key) {
-                return Err(MatchError::SlotAlreadyTaken(key.to_string()));
-            }
-            else {
-                self.map.insert(key, value);
-            }
+            self.map.insert(key, value);
         }
-
-        Ok(())
     }
 }
 
