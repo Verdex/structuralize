@@ -17,9 +17,9 @@ pub struct MatchResult {
     map : HashMap<Slot, Data>
 }
 
-impl<const N : usize> From<[(&String, &Data); N]> for MatchResult {
-    fn from(item : [(&String, &Data); N]) -> Self {
-        let map = item.into_iter().map(|(k,v)| (k.into(), v.clone())).collect::<HashMap<Slot, Data>>();
+impl<const N : usize> From<[(Slot, &Data); N]> for MatchResult {
+    fn from(item : [(Slot, &Data); N]) -> Self {
+        let map = item.into_iter().map(|(k,v)| (k, v.clone())).collect::<HashMap<Slot, Data>>();
         MatchResult { map }
     }
 }

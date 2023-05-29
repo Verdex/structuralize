@@ -10,7 +10,7 @@ pub fn pattern_match(pattern : &Pattern, data : &Data) -> Result<Vec<MatchResult
     use Pattern::*;
 
     match pattern {
-        CaptureVar(sym) => Ok(vec![ [(sym, data)].into() ]),
+        CaptureVar(sym) => Ok(vec![ [(sym.into(), data)].into() ]),
         As(sym, pat) => {
             todo!()
         },
