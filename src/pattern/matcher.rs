@@ -8,13 +8,20 @@ use super::data::*;
 
 pub fn pattern_match(pattern : &Pattern, data : &Data) -> Vec<MatchResult> {
     use Pattern::*;
-    match pattern {
-        CaptureVar(s) => vec![[(s.into(), data)].into()],
-        As(s, p) => {
+    match (pattern, data) {
+        (CaptureVar(s), data) => vec![[(s.into(), data)].into()],
+        (As(s, p), data) => {
             let x = pattern_match(p, data);
             let as_result : MatchResult = [(s.into(), data)].into();
             x.into_iter().map(|mut y| { y.merge(as_result.clone()); y }).collect()
         },
+        (Cons { name, params }, Data::Cons { name: cons_name, params: cons_params }) 
+            if name == cons_name && params.len() == cons_params.len() => {
+
+            let x = params.into_iter().zip(cons_params).map(|(p, d)| pattern_match(p, d));
+            vec![]
+        },
+        (Cons { .. }, _) => vec![],
         _ => todo!(),
     }
 }

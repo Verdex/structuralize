@@ -19,6 +19,10 @@ pub struct MatchResult {
 }
 
 impl MatchResult {
+    pub fn new() -> Self {
+        MatchResult { map: HashMap::new() }
+    }
+    
     pub fn merge(&mut self, other : MatchResult) { 
         // TODO: Is it faster to collect both self and other?
         // TODO:  This can fail on duplicate slots unless pattern is type checked
