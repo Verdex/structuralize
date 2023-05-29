@@ -13,18 +13,22 @@ pub enum Pattern {
     Cons { name: String, params: Vec<Pattern> },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MatchResult {
     map : HashMap<Slot, Data>
 }
 
 impl MatchResult {
-    fn merge(&mut self, other : MatchResult) { 
+    pub fn merge(&mut self, other : MatchResult) { 
         // TODO: Is it faster to collect both self and other?
         // TODO:  This can fail on duplicate slots unless pattern is type checked
         for (key, value) in other.map.into_iter() {
             self.map.insert(key, value);
         }
+    }
+
+    pub fn get(&self, key : &Slot) -> Option<&Data> {
+        self.map.get(key)
     }
 }
 
