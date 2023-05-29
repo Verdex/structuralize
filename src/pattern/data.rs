@@ -1,4 +1,5 @@
 
+use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 use std::collections::HashMap;
 
@@ -17,6 +18,21 @@ pub struct MatchResult {
     map : HashMap<Slot, Data>
 }
 
+impl MatchResult {
+    fn merge(&mut self, other : MatchResult) { 
+        for (key, value) in other.map.into_iter() {
+            if self.map.contains_key(&key) {
+                return Err(MatchError::SlotAlreadyTaken(key.to_string()));
+            }
+            else {
+                self.map.insert(key, value);
+            }
+        }
+
+        Ok(())
+    }
+}
+
 impl<const N : usize> From<[(Slot, &Data); N]> for MatchResult {
     fn from(item : [(Slot, &Data); N]) -> Self {
         let map = item.into_iter().map(|(k,v)| (k, v.clone())).collect::<HashMap<Slot, Data>>();
@@ -30,6 +46,15 @@ pub enum Slot {
     Path(Vec<String>),
 }
 
+impl Display for Slot {
+    fn fmt(&self, f : &mut Formatter) -> std::fmt::Result {
+        match self {
+            Slot::Symbol(s) => write!(f, "{}", s),
+            Slot::Path(s) => write!(f, "{}", s.join(".")),
+        }
+    }
+}
+
 impl From<&String> for Slot {
     fn from(item : &String) -> Self {
         Slot::Symbol(item.to_string())
@@ -38,16 +63,3 @@ impl From<&String> for Slot {
 
 // TODO probably need comparison patterns in order to avoid needing expressions
     // This probably means that if-patterns aren't going to work
-
-#[derive(Debug)]
-pub enum MatchError {
-
-}
-
-impl std::fmt::Display for MatchError {
-   fn fmt(&self, f : &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "TODO")
-    }
-}
-
-impl std::error::Error for MatchError {}
