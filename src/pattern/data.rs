@@ -1,7 +1,7 @@
 
 #[derive(Debug, Clone)]
 pub enum Pattern {
-    Var(String),
+    CaptureVar(String),
     As(String, Box<Pattern>),
     Cons { name: String, params: Vec<Pattern> },
 }
