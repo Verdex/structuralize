@@ -18,13 +18,19 @@ pub fn pattern_match(pattern : &Pattern, data : &Data) -> Vec<MatchResult> {
         (Cons { name, params }, Data::Cons { name: cons_name, params: cons_params }) 
             if name == cons_name && params.len() == cons_params.len() => {
 
-            let x = params.into_iter().zip(cons_params).map(|(p, d)| pattern_match(p, d));
+            let x = params.into_iter().zip(cons_params)
+                                      .map(|(p, d)| pattern_match(p, d));
+                                      //.fold(MatchResult::new(), |a, b| a.iter().flat_map(|alet| b.iter().map(move |b)))
             vec![]
         },
         (Cons { .. }, _) => vec![],
         _ => todo!(),
     }
 }
+
+/*fn combine_results(a : Vec<MatchResult>, b : Vec<MatchResult>) -> Vec<MatchResult> {
+    a.iter().flat_map(|alet| b.iter().map(move |blet| {alet.merge(blet); alet})).map(|x| x.clone()).collect()
+}*/
 
 #[cfg(test)] 
 mod test {
