@@ -9,7 +9,6 @@ use crate::data::*;
 #[derive(Debug, Clone)]
 pub enum Pattern {
     CaptureVar(String),
-    As(String, Box<Pattern>),
     Cons { name: String, params: Vec<Pattern> },
 }
 
