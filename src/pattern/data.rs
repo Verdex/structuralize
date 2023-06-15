@@ -13,16 +13,16 @@ pub enum Pattern {
 }
 
 #[derive(Debug, Clone)]
-pub struct MatchResult {
-    map : HashMap<Slot, Data>
+pub struct MatchResult<'a> {
+    map : HashMap<Slot, &'a Data>
 }
 
-impl MatchResult {
+impl<'a> MatchResult<'a> {
     pub fn new() -> Self {
         MatchResult { map: HashMap::new() }
     }
     
-    pub fn merge(&mut self, other : MatchResult) { 
+    pub fn merge(&mut self, other : MatchResult<'a>) { 
         // TODO: Is it faster to collect both self and other?
         // TODO:  This can fail on duplicate slots unless pattern is type checked
         for (key, value) in other.map.into_iter() {
@@ -30,14 +30,25 @@ impl MatchResult {
         }
     }
 
-    pub fn get(&self, key : &Slot) -> Option<&Data> {
-        self.map.get(key)
+    pub fn get(&self, key : &Slot) -> Option<&'a Data> {
+        Some(*self.map.get(key)?)
+    }
+
+    pub fn add(&mut self, key : Slot, value : &'a Data) {
+        self.map.insert(key, value);
     }
 }
 
-impl<const N : usize> From<[(Slot, &Data); N]> for MatchResult {
-    fn from(item : [(Slot, &Data); N]) -> Self {
-        let map = item.into_iter().map(|(k,v)| (k, v.clone())).collect::<HashMap<Slot, Data>>();
+impl<'a, const N : usize> From<[(Slot, &'a Data); N]> for MatchResult<'a> {
+    fn from(item : [(Slot, &'a Data); N]) -> Self {
+        let map = item.into_iter().map(|(k,v)| (k, v)).collect::<HashMap<Slot, &'a Data>>();
+        MatchResult { map }
+    }
+}
+
+impl<'a> From<Vec<(Slot, &'a Data)>> for MatchResult<'a> {
+    fn from(item : Vec<(Slot, &'a Data)>) -> Self {
+        let map = item.into_iter().map(|(k,v)| (k, v)).collect::<HashMap<Slot, &'a Data>>();
         MatchResult { map }
     }
 }
