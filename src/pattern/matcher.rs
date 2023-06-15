@@ -11,18 +11,38 @@ pub struct MatchResults<'a, 'b> {
 }
 
 impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
-    type Item = MatchResult;
+    type Item = MatchResult<'b>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let x = self.target.pop();
-
-        match x {
-            (Pattern::CaptureVar(name), data) => {
-
-            }
+        if self.target.len() == 0 {
+            return None;
         }
 
-        None
+        let x = self.target.pop().unwrap();
+
+        let mut result : Vec<(Slot, &'b Data)> = vec![];
+        let mut q : Vec<(&'a Pattern, &'b Data)> = vec![];
+
+        q.push(x);
+
+        while q.len() > 0 {
+            let target = q.pop().unwrap();
+
+            match target {
+                (Pattern::CaptureVar(name), data) => {
+                    result.push((name.into(), data));
+                },
+                (Pattern::Cons {name: pname, params: pparam}, Data::Cons {name: dname, params: dparam}) 
+                    if pname == dname && pparam.len() == dparam.len() => {
+                    let mut z = pparam.iter().zip(dparam.iter()).collect::<Vec<_>>();
+                    q.append(&mut z)
+                },
+                _ => todo!(),
+            }
+
+        }
+
+        Some(result.into())
     }
 }
 
