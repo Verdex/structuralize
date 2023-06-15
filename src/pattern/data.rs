@@ -80,5 +80,11 @@ impl From<&String> for Slot {
     }
 }
 
+impl From<String> for Slot {
+    fn from(item : String) -> Self {
+        Slot::Symbol(item.to_string())
+    }
+}
+
 // TODO probably need comparison patterns in order to avoid needing expressions
     // This probably means that if-patterns aren't going to work
