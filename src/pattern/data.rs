@@ -56,8 +56,8 @@ impl<'a> From<Vec<(Slot, &'a Data)>> for MatchResult<'a> {
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Slot {
-    Symbol(String),
-    Path(Vec<String>),
+    Symbol(Box<str>),
+    Path(Vec<Box<str>>),
 }
 
 impl Display for Slot {
@@ -71,31 +71,31 @@ impl Display for Slot {
 
 impl From<&Box<str>> for Slot {
     fn from(item : &Box<str>) -> Self {
-        Slot::Symbol(item.to_string())
+        Slot::Symbol(item.clone())
     }
 }
 
 impl From<Box<str>> for Slot {
     fn from(item : Box<str>) -> Self {
-        Slot::Symbol(item.to_string())
+        Slot::Symbol(item)
     }
 }
 
 impl From<&str> for Slot {
     fn from(item : &str) -> Self {
-        Slot::Symbol(item.to_string())
+        Slot::Symbol(item.into())
     }
 }
 
 impl From<&String> for Slot {
     fn from(item : &String) -> Self {
-        Slot::Symbol(item.to_string())
+        Slot::Symbol(item.clone().into())
     }
 }
 
 impl From<String> for Slot {
     fn from(item : String) -> Self {
-        Slot::Symbol(item.to_string())
+        Slot::Symbol(item.into())
     }
 }
 

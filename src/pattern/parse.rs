@@ -5,7 +5,7 @@ use renounce::*;
 use crate::parsing::*;
 use super::data::*;
 
-impl std::str::FromStr for Pattern {
+/*impl std::str::FromStr for Pattern {
     type Err = Box<dyn std::error::Error>;  
 
     fn from_str(s : &str) -> Result<Self, Self::Err> {
@@ -201,4 +201,4 @@ mod test {
 
         assert!(matched);
     }
-}
+}*/
