@@ -9,8 +9,14 @@ use crate::data::*;
 #[derive(Debug, Clone)]
 pub enum Pattern {
     Number(Number),
+    String(Box<str>),
+    Symbol(Box<str>),
+    Wild,
     CaptureVar(Box<str>),
     Cons { name: Box<str>, params: Vec<Pattern> },
+    Struct { name: Box<str>, fields: Vec<(Box<str>, Pattern)> },
+    ExactList(Vec<Pattern>),
+    RestList(Vec<Pattern>, Pattern),
 }
 
 #[derive(Debug, Clone)]
