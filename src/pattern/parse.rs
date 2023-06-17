@@ -5,7 +5,7 @@ use renounce::*;
 use crate::parsing::*;
 use super::data::*;
 
-/*impl std::str::FromStr for Pattern {
+impl std::str::FromStr for Pattern {
     type Err = Box<dyn std::error::Error>;  
 
     fn from_str(s : &str) -> Result<Self, Self::Err> {
@@ -43,7 +43,7 @@ fn parse_struct<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
     pat!(parse_r_paren: char => () = '}' => ());
     pat!(parse_colon: char => () = ':' => ());
 
-    fn parse_field<'a>(input : &mut Chars<'a>) -> Result<(String, Pattern), ParseError> {
+    fn parse_field<'a>(input : &mut Chars<'a>) -> Result<(Box<str>, Pattern), ParseError> {
         parser!(input => {
             field_name <= parse_word;
             _clear_1 <= parse_whitespace;
@@ -54,8 +54,8 @@ fn parse_struct<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
         })
     }
 
-    fn parse_fields<'a>(input : &mut Chars<'a>) -> Result<Vec<(String, Pattern)>, ParseError> {
-        parse_list!(input => parse_l_paren, parse_field : (String, Pattern), parse_r_paren)
+    fn parse_fields<'a>(input : &mut Chars<'a>) -> Result<Vec<(Box<str>, Pattern)>, ParseError> {
+        parse_list!(input => parse_l_paren, parse_field : (Box<str>, Pattern), parse_r_paren)
     }
 
     parser!(input => {
@@ -201,4 +201,4 @@ mod test {
 
         assert!(matched);
     }
-}*/
+}
