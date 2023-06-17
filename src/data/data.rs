@@ -9,10 +9,10 @@ pub enum Number {
 #[derive(Debug, PartialEq, Clone)]
 pub enum Data {
     Number(Number),
-    String(String),
-    Symbol(String),
-    Cons { name: String, params: Vec<Data> },
-    Struct { name: String, fields: Vec<(String, Data)> },
+    String(Box<str>),
+    Symbol(Box<str>),
+    Cons { name: Box<str>, params: Vec<Data> },
+    Struct { name: Box<str>, fields: Vec<(Box<str>, Data)> },
     List(Vec<Data>),
 }
 
@@ -20,9 +20,21 @@ pub enum Data {
 // TODO: derives needed so that Data can be used in hash?
 // TODO: Hash case for Data?
 
+impl From<Box<str>> for Data {
+    fn from(item : Box<str>) -> Self {
+        Data::String(item.into())
+    }
+}
+
+impl From<&str> for Data {
+    fn from(item : &str) -> Self {
+        Data::String(item.into())
+    }
+}
+
 impl From<String> for Data {
     fn from(item : String) -> Self {
-        Data::String(item)
+        Data::String(item.into())
     }
 }
 

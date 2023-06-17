@@ -8,8 +8,9 @@ use crate::data::*;
 
 #[derive(Debug, Clone)]
 pub enum Pattern {
-    CaptureVar(String),
-    Cons { name: String, params: Vec<Pattern> },
+    Number(Number),
+    CaptureVar(Box<str>),
+    Cons { name: Box<str>, params: Vec<Pattern> },
 }
 
 #[derive(Debug, Clone)]
@@ -65,6 +66,18 @@ impl Display for Slot {
             Slot::Symbol(s) => write!(f, "{}", s),
             Slot::Path(s) => write!(f, "{}", s.join(".")),
         }
+    }
+}
+
+impl From<&Box<str>> for Slot {
+    fn from(item : &Box<str>) -> Self {
+        Slot::Symbol(item.to_string())
+    }
+}
+
+impl From<Box<str>> for Slot {
+    fn from(item : Box<str>) -> Self {
+        Slot::Symbol(item.to_string())
     }
 }
 

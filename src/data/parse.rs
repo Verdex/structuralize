@@ -43,7 +43,7 @@ fn parse_struct<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     pat!(parse_r_paren: char => () = '}' => ());
     pat!(parse_colon: char => () = ':' => ());
 
-    fn parse_field<'a>(input : &mut Chars<'a>) -> Result<(String, Data), ParseError> {
+    fn parse_field<'a>(input : &mut Chars<'a>) -> Result<(Box<str>, Data), ParseError> {
         parser!(input => {
             field_name <= parse_word;
             _clear_1 <= parse_whitespace;
@@ -54,8 +54,8 @@ fn parse_struct<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
         })
     }
 
-    fn parse_fields<'a>(input : &mut Chars<'a>) -> Result<Vec<(String, Data)>, ParseError> {
-        parse_list!(input => parse_l_paren, parse_field : (String, Data), parse_r_paren)
+    fn parse_fields<'a>(input : &mut Chars<'a>) -> Result<Vec<(Box<str>, Data)>, ParseError> {
+        parse_list!(input => parse_l_paren, parse_field : (Box<str>, Data), parse_r_paren)
     }
 
     parser!(input => {

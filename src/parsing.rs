@@ -91,7 +91,7 @@ pub (crate) fn parse_float64<'a>(input : &mut Chars<'a>) -> Result<f64, ParseErr
     })
 }
 
-pub (crate) fn parse_word<'a>(input : &mut Chars<'a>) -> Result<String, ParseError> {
+pub (crate) fn parse_word<'a>(input : &mut Chars<'a>) -> Result<Box<str>, ParseError> {
     pat!(underscore: char => char = '_' => '_');
 
     fn parse_alpha<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
@@ -116,7 +116,7 @@ pub (crate) fn parse_word<'a>(input : &mut Chars<'a>) -> Result<String, ParseErr
         select {
             let mut rest = rest;
             rest.insert(0, init);
-            rest.into_iter().collect::<String>()
+            rest.into_iter().collect::<String>().into()
         } 
     })
 }
