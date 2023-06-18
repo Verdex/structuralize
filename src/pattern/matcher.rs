@@ -56,7 +56,7 @@ mod test {
 
     #[test]
     fn should_match_single_var() {
-        let pattern = Pattern::CaptureVar("x".into());
+        let pattern : Pattern = "x".parse().unwrap();
         let data : Data = "cons(:a)".parse().unwrap();
 
         let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
@@ -68,12 +68,7 @@ mod test {
 
     #[test]
     fn should_match_cons_with_vars() {
-        let pattern = Pattern::Cons { name : "cons".into()
-                                    , params: vec![ Pattern::CaptureVar("x".into())
-                                                  , Pattern::CaptureVar("y".into())
-                                                  , Pattern::CaptureVar("z".into())
-                                                  ]
-                                   };
+        let pattern : Pattern = "cons( x, y, z )".parse().unwrap();
         let data : Data = "cons(:a, :b, :c)".parse().unwrap();
 
         let results = pattern_match(&pattern, &data).collect::<Vec<_>>();

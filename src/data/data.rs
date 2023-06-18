@@ -9,7 +9,7 @@ pub enum Number {
 #[derive(Debug, PartialEq, Clone)]
 pub enum Data {
     Number(Number),
-    String(Box<str>),
+    String(Box<str>), // TODO needs parser
     Symbol(Box<str>),
     Cons { name: Box<str>, params: Vec<Data> },
     Struct { name: Box<str>, fields: Vec<(Box<str>, Data)> },

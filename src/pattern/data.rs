@@ -9,14 +9,14 @@ use crate::data::*;
 #[derive(Debug, Clone)]
 pub enum Pattern {
     Number(Number),
-    String(Box<str>),
+    String(Box<str>), // TODO needs parser
     Symbol(Box<str>),
     Wild,
     CaptureVar(Box<str>),
     Cons { name: Box<str>, params: Vec<Pattern> },
     Struct { name: Box<str>, fields: Vec<(Box<str>, Pattern)> },
     ExactList(Vec<Pattern>),
-    RestList(Vec<Pattern>, Box<Pattern>),
+    RestList(Vec<Pattern>, Box<Pattern>), // TODO needs parser
 }
 
 #[derive(Debug, Clone)]
