@@ -83,7 +83,9 @@ fn parse_cons<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
 }
 
 fn parse_symbol<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
+    pat!(parse_colon: char => () = ':' => ());
     parser!(input => {
+        _colon <= parse_colon;
         word <= parse_word;
         select Data::Symbol(word)
     })
@@ -111,7 +113,7 @@ mod test {
 
     #[test]
     fn should_parse_complex_data() {
-        let input = " name  { first : other { first : one( 1, 2, num([3, 2, 3, [blarg]]) ) } , second: inner ,  }";
+        let input = " name  { first : other { first : one( 1, 2, num([3, 2, 3, [:blarg]]) ) } , second: :inner ,  }";
         let data = input.parse::<Data>().unwrap();
         let mut matched = false;
         atom!(data => [Data::Struct { .. }] => { 
@@ -122,7 +124,7 @@ mod test {
 
     #[test]
     fn should_parse_struct() {
-        let input = " name  { first : 1.0 , second: inner ,  }";
+        let input = " name  { first : 1.0 , second: :inner ,  }";
         let data = input.parse::<Data>().unwrap();
 
         let mut matched = false;
@@ -138,7 +140,7 @@ mod test {
 
     #[test]
     fn should_parse_cons() {
-        let input = " name  ( 1.0, inner, 5.5 )";
+        let input = " name  ( 1.0, :inner, 5.5 )";
         let data = input.parse::<Data>().unwrap();
 
         let mut matched = false;
@@ -154,7 +156,7 @@ mod test {
 
     #[test]
     fn should_parse_symbol() {
-        let input = " symbol_123 ";
+        let input = " :symbol_123 ";
         let data = input.parse::<Data>().unwrap();
 
         let mut matched = false;

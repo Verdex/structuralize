@@ -92,7 +92,9 @@ fn parse_wild<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
 }
 
 fn parse_symbol<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+    pat!(parse_colon: char => () = ':' => ());
     parser!(input => {
+        _colon <= parse_colon;
         word <= parse_word;
         select Pattern::Symbol(word)
     })
@@ -120,9 +122,18 @@ mod test {
     fn slice<'a, T>(input : &'a Vec<T>) -> &'a [T] { &input[..] }
     fn unbox<'a, T>(input : &'a Box<T> ) -> &'a T { &**input }
 
+    fn get_float(p : &Pattern) -> Option<f64> {
+        if let Pattern::Number(Number::Float64(x)) = p {
+            Some(*x)
+        }
+        else {
+            None
+        }
+    }
+
     #[test]
     fn should_parse_complex_data() {
-        let input = " name  { first : other { first : one( 1, 2, num([3, 2, 3, [blarg]]) ) } , second: inner ,  }";
+        let input = " name  { first : other { first : one( 1, 2, num([3, 2, 3, [:blarg]]) ) } , second: :inner ,  }";
         let data = input.parse::<Pattern>().unwrap();
         let mut matched = false;
         atom!(data => [Pattern::Struct { .. }] => { 
@@ -133,7 +144,7 @@ mod test {
 
     #[test]
     fn should_parse_struct() {
-        let input = " name  { first : 1.0 , second: inner ,  }";
+        let input = " name  { first : 1.0 , second: :inner ,  }";
         let data = input.parse::<Pattern>().unwrap();
 
         let mut matched = false;
@@ -149,7 +160,7 @@ mod test {
 
     #[test]
     fn should_parse_cons() {
-        let input = " name  ( 1.0, inner, 5.5 )";
+        let input = " name  ( 1.0, :inner, 5.5 )";
         let data = input.parse::<Pattern>().unwrap();
 
         let mut matched = false;
@@ -165,12 +176,24 @@ mod test {
 
     #[test]
     fn should_parse_symbol() {
-        let input = " symbol_123 ";
+        let input = " :symbol_123 ";
         let data = input.parse::<Pattern>().unwrap();
 
         let mut matched = false;
         atom!(data => [Pattern::Symbol(sym)] => { 
             assert_eq!(*sym, *"symbol_123");
+            matched = true;
+        } );
+        assert!(matched);
+    }
+    
+    #[test]
+    fn should_parse_wild() {
+        let input = " _ ";
+        let data = input.parse::<Pattern>().unwrap();
+
+        let mut matched = false;
+        atom!(data => [Pattern::Wild] => { 
             matched = true;
         } );
         assert!(matched);
@@ -187,12 +210,12 @@ mod test {
             assert_eq!(*f, 4f64);
             assert_eq!(first.len(), 0);
             assert_eq!(second.len(), 2);
-            assert!(matches!( second[0], Pattern::Number(Number::Float64(1f64))));
-            assert!(matches!(second[1], Pattern::Number(Number::Float64(2f64))));
+            assert_eq!(get_float(&second[0]).unwrap(), 1f64);
+            assert_eq!(get_float(&second[1]).unwrap(), 2f64);
             assert_eq!(third.len(), 3);
-            assert!(matches!(third[0], Pattern::Number(Number::Float64(1f64))));
-            assert!(matches!(third[1], Pattern::Number(Number::Float64(2f64))));
-            assert!(matches!(third[2], Pattern::Number(Number::Float64(3f64))));
+            assert_eq!(get_float(&third[0]).unwrap(), 1f64);
+            assert_eq!(get_float(&third[1]).unwrap(), 2f64);
+            assert_eq!(get_float(&third[2]).unwrap(), 3f64);
             matched = true;
         } );
 
