@@ -28,6 +28,8 @@ fn parse_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
                       parse_struct;
                       parse_list; 
                       parse_wild;
+                      // Note:  parse capture variable needs to happen after parse wild
+                      parse_capture_var;
                       parse_symbol)
     }
 
@@ -49,7 +51,7 @@ fn parse_struct<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
             field_name <= parse_word;
             _clear_1 <= parse_whitespace;
             _colon <= ! parse_colon;
-            // Note: parse_data clears before and after itself
+            // Note: parse_pattern clears before and after itself
             pattern <= parse_pattern; 
             select (field_name, pattern)
         })
@@ -80,6 +82,13 @@ fn parse_cons<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
         _clear <= parse_whitespace;
         params <= param_list;
         select Pattern::Cons { name: cons_name, params }
+    })
+}
+
+fn parse_capture_var<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+    parser!(input => {
+        word <= parse_word;
+        select Pattern::CaptureVar(word)
     })
 }
 
@@ -169,6 +178,19 @@ mod test {
             assert_eq!(*name, *"name");
             assert_eq!(*a, 1f64);
             assert_eq!(*b, 5.5f64);
+            matched = true;
+        } );
+        assert!(matched);
+    }
+
+    #[test]
+    fn should_parse_capture_var() {
+        let input = " symbol_123 ";
+        let data = input.parse::<Pattern>().unwrap();
+
+        let mut matched = false;
+        atom!(data => [Pattern::CaptureVar(sym)] => { 
+            assert_eq!(*sym, *"symbol_123");
             matched = true;
         } );
         assert!(matched);
