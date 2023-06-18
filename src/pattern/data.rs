@@ -16,7 +16,7 @@ pub enum Pattern {
     Cons { name: Box<str>, params: Vec<Pattern> },
     Struct { name: Box<str>, fields: Vec<(Box<str>, Pattern)> },
     ExactList(Vec<Pattern>),
-    RestList(Vec<Pattern>, Pattern),
+    RestList(Vec<Pattern>, Box<Pattern>),
 }
 
 #[derive(Debug, Clone)]

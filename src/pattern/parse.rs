@@ -27,14 +27,15 @@ fn parse_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
                       parse_cons; 
                       parse_struct;
                       parse_list; 
+                      parse_wild;
                       parse_symbol)
     }
 
     parser!(input => {
         _before_clear <= parse_whitespace;
-        data <= options;
+        pattern <= options;
         _after_clear <= parse_whitespace;
-        select data
+        select pattern 
     })
 }
 
@@ -49,8 +50,8 @@ fn parse_struct<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
             _clear_1 <= parse_whitespace;
             _colon <= ! parse_colon;
             // Note: parse_data clears before and after itself
-            data <= parse_data; 
-            select (field_name, data)
+            pattern <= parse_pattern; 
+            select (field_name, pattern)
         })
     }
 
@@ -71,7 +72,7 @@ fn parse_cons<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
     pat!(parse_r_paren: char => () = ')' => ());
 
     fn param_list<'a>(input : &mut Chars<'a>) -> Result<Vec<Pattern>, ParseError> {
-        parse_list!(input => parse_l_paren, parse_data : Pattern, parse_r_paren)
+        parse_list!(input => parse_l_paren, parse_pattern : Pattern, parse_r_paren)
     }
 
     parser!(input => {
@@ -79,6 +80,14 @@ fn parse_cons<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
         _clear <= parse_whitespace;
         params <= param_list;
         select Pattern::Cons { name: cons_name, params }
+    })
+}
+
+fn parse_wild<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+    parser!(input => {
+        word <= parse_word;
+        where *word == *"_";
+        select Pattern::Wild
     })
 }
 
@@ -90,6 +99,7 @@ fn parse_symbol<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
 }
 
 fn parse_data_float64<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+    use crate::data::Number;
     Ok(Pattern::Number(Number::Float64(parse_float64(input)?)))
 }
 
@@ -97,7 +107,7 @@ fn parse_list<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
     pat!(parse_l_square: char => () = '[' => ());
     pat!(parse_r_square: char => () = ']' => ());
 
-    Ok(Pattern::List(parse_list!(input => parse_l_square, parse_data : Pattern, parse_r_square)?))
+    Ok(Pattern::ExactList(parse_list!(input => parse_l_square, parse_pattern : Pattern, parse_r_square)?))
 }
 
 
@@ -105,6 +115,7 @@ fn parse_list<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
 mod test {
     use intra::*;
     use super::*;
+    use crate::data::Number;
 
     fn slice<'a, T>(input : &'a Vec<T>) -> &'a [T] { &input[..] }
     fn unbox<'a, T>(input : &'a Box<T> ) -> &'a T { &**input }
@@ -128,9 +139,9 @@ mod test {
         let mut matched = false;
         atom!(data => [Pattern::Struct { name, fields: ref fields}] fields; 
                        slice $ [ [(first, Pattern::Number(Number::Float64(f))), (second, Pattern::Symbol(sym))] ] => { 
-            assert_eq!(name, "name");
+            assert_eq!(*name, *"name");
             assert_eq!(*f, 1f64);
-            assert_eq!(sym, "inner");
+            assert_eq!(**sym, *"inner");
             matched = true;
         } );
         assert!(matched);
@@ -144,7 +155,7 @@ mod test {
         let mut matched = false;
         atom!(data => [Pattern::Cons { name, params: ref params }] params; 
                        slice $ [ [Pattern::Number(Number::Float64(a)), Pattern::Symbol(_), Pattern::Number(Number::Float64(b))] ] => { 
-            assert_eq!(name, "name");
+            assert_eq!(*name, *"name");
             assert_eq!(*a, 1f64);
             assert_eq!(*b, 5.5f64);
             matched = true;
@@ -159,29 +170,29 @@ mod test {
 
         let mut matched = false;
         atom!(data => [Pattern::Symbol(sym)] => { 
-            assert_eq!(sym, "symbol_123");
+            assert_eq!(*sym, *"symbol_123");
             matched = true;
         } );
         assert!(matched);
     }
 
     #[test]
-    fn should_parse_list() {
+    fn should_parse_exact_list() {
         let input = " [ [], [1, 2], [1 , 2, 3], 4] ";
         let data = input.parse::<Pattern>().unwrap();
 
         let mut matched = false;
-        atom!(data => [Pattern::List(ref params)] params; 
-              slice $ [ [Pattern::List(first), Pattern::List(second), Pattern::List(third), Pattern::Number(Number::Float64(f))] ] => { 
+        atom!(data => [Pattern::ExactList(ref params)] params; 
+              slice $ [ [Pattern::ExactList(first), Pattern::ExactList(second), Pattern::ExactList(third), Pattern::Number(Number::Float64(f))] ] => { 
             assert_eq!(*f, 4f64);
             assert_eq!(first.len(), 0);
             assert_eq!(second.len(), 2);
-            assert_eq!(second[0], Pattern::Number(Number::Float64(1f64)));
-            assert_eq!(second[1], Pattern::Number(Number::Float64(2f64)));
+            assert!(matches!( second[0], Pattern::Number(Number::Float64(1f64))));
+            assert!(matches!(second[1], Pattern::Number(Number::Float64(2f64))));
             assert_eq!(third.len(), 3);
-            assert_eq!(third[0], Pattern::Number(Number::Float64(1f64)));
-            assert_eq!(third[1], Pattern::Number(Number::Float64(2f64)));
-            assert_eq!(third[2], Pattern::Number(Number::Float64(3f64)));
+            assert!(matches!(third[0], Pattern::Number(Number::Float64(1f64))));
+            assert!(matches!(third[1], Pattern::Number(Number::Float64(2f64))));
+            assert!(matches!(third[2], Pattern::Number(Number::Float64(3f64))));
             matched = true;
         } );
 
