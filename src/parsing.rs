@@ -2,8 +2,6 @@
 use std::str::Chars;
 use renounce::*;
 
-// TODO: data and pattern parsers don't have a string parser yet
-
 macro_rules! parse_list {
     ($input:ident => $l_bracket:ident, $target:ident : $target_type:ty, $r_bracket:ident) => {
         {
