@@ -123,4 +123,65 @@ pub (crate) fn parse_word<'a>(input : &mut Chars<'a>) -> Result<Box<str>, ParseE
     })
 }
 
+pub (crate) fn parse_string<'a>(input : &mut Chars<'a>) -> Result<Box<str>, ParseError> {
+    pat!(parse_n: char => char = 'n' => '\n');
+    pat!(parse_r: char => char = 'r' => '\r');
+    pat!(parse_t: char => char = 't' => '\t');
+    pat!(parse_slash: char => char = '\\' => '\\');
+    pat!(parse_zero: char => char = '0' => '\0');
+    pat!(parse_quote: char => char = '"' => '"');
+
+    fn parse_code<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+        alt!(input => parse_n; parse_r; parse_t; parse_slash; parse_zero; parse_quote)
+    }
+
+    fn parse_escape<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+        parser!(input => {
+            _slash <= parse_slash;
+            code <= ! parse_code;
+            select code
+        })
+    }
+
+    fn parse_any_but_quote<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+        parser!(input => {
+            any <= parse_any;
+            where any != '"';
+            select any
+        })
+    }
+
+    fn parse_str_char<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+        alt!(input => parse_escape; parse_any_but_quote)
+    }
+
+    parser!(input => {
+        _start_quote <= parse_quote;
+        str_chars <= * parse_str_char;
+        _end_quote <= parse_quote;
+        select str_chars.into_iter().collect::<String>().into()
+    })
+}
+
 pub (crate) use parse_list;
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn should_parse_empty_string() {
+        let mut input = "\"\"".chars();
+        let output = parse_string(&mut input).unwrap();
+        assert_eq!(*output, *"");
+    }
+
+    #[test]
+    fn should_parse_string() {
+        let input = "\"blah \\t \\n \\r \\\\ \\0 \\\"  \"";
+        let mut cs = input.chars();
+        let output = parse_string(&mut cs).unwrap();
+        assert_eq!(*output, *"blah \t \n \r \\ \0 \"  ");
+    }
+}
