@@ -27,7 +27,8 @@ fn parse_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
                       parse_cons; 
                       parse_struct;
                       parse_list; 
-                      parse_symbol)
+                      parse_symbol;
+                      parse_string_data)
     }
 
     parser!(input => {
@@ -88,6 +89,13 @@ fn parse_symbol<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
         _colon <= parse_colon;
         word <= parse_word;
         select Data::Symbol(word)
+    })
+}
+
+fn parse_string_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
+    parser!(input => {
+        string <= parse_string;
+        select Data::String(string)
     })
 }
 

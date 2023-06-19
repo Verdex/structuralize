@@ -30,7 +30,8 @@ fn parse_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
                       parse_wild;
                       // Note:  parse capture variable needs to happen after parse wild
                       parse_capture_var;
-                      parse_symbol)
+                      parse_symbol;
+                      parse_string_pattern)
     }
 
     parser!(input => {
@@ -106,6 +107,13 @@ fn parse_symbol<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
         _colon <= parse_colon;
         word <= parse_word;
         select Pattern::Symbol(word)
+    })
+}
+
+fn parse_string_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+    parser!(input => {
+        string <= parse_string;
+        select Pattern::String(string)
     })
 }
 
