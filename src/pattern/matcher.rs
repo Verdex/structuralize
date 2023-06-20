@@ -14,35 +14,40 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
     type Item = MatchResult<'b>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.target.len() == 0 {
-            return None;
-        }
-
-        let x = self.target.pop().unwrap();
-
-        let mut result : Vec<(Slot, &'b Data)> = vec![];
-        let mut q : Vec<(&'a Pattern, &'b Data)> = vec![];
-
-        q.push(x);
-
-        while q.len() > 0 {
-            let target = q.pop().unwrap();
-
-            match target {
-                (Pattern::CaptureVar(name), data) => {
-                    result.push((name.into(), data));
-                },
-                (Pattern::Cons {name: pname, params: pparam}, Data::Cons {name: dname, params: dparam}) 
-                    if pname == dname && pparam.len() == dparam.len() => {
-                    let mut z = pparam.iter().zip(dparam.iter()).collect::<Vec<_>>();
-                    q.append(&mut z)
-                },
-                _ => todo!(),
+        'outer : loop {
+            if self.target.len() == 0 {
+                return None;
             }
 
-        }
+            let x = self.target.pop().unwrap();
 
-        Some(result.into())
+            let mut result : Vec<(Slot, &'b Data)> = vec![];
+            let mut q : Vec<(&'a Pattern, &'b Data)> = vec![];
+
+            q.push(x);
+
+            while q.len() > 0 {
+                let target = q.pop().unwrap();
+
+                match target {
+                    (Pattern::CaptureVar(name), data) => {
+                        result.push((name.into(), data));
+                    },
+                    (Pattern::Cons {name: pname, params: pparam}, Data::Cons {name: dname, params: dparam}) 
+                        if pname == dname && pparam.len() == dparam.len() => {
+                        let mut z = pparam.iter().zip(dparam.iter()).collect::<Vec<_>>();
+                        q.append(&mut z)
+                    },
+                    (Pattern::String(p), Data::String(d)) if p == d => { },
+                    (Pattern::String(_), Data::String(_)) => { 
+                        continue 'outer;
+                    },
+                    _ => todo!(),
+                }
+            }
+
+            return Some(result.into());
+        }
     }
 }
 
@@ -53,6 +58,27 @@ pub fn pattern_match<'a, 'b>(pattern : &'a Pattern, data : &'b Data) -> MatchRes
 #[cfg(test)] 
 mod test {
     use super::*;
+
+    #[test]
+    fn should_match_due_to_string() {
+        let pattern : Pattern = "cons(a, \"leta\")".parse().unwrap();
+        let data : Data = "cons(:a, \"leta\")".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 1);
+
+        let observed = results[0].get(&"a".into()).unwrap();
+        assert_eq!(observed, &":a".parse::<Data>().unwrap());
+    }
+
+    #[test]
+    fn should_fail_match_due_to_string() {
+        let pattern : Pattern = "cons(a, \"leta\")".parse().unwrap();
+        let data : Data = "cons(:a, \"letb\")".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 0);
+    }
 
     #[test]
     fn should_match_single_var() {
