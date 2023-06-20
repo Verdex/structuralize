@@ -17,6 +17,12 @@ pub enum Pattern {
     Struct { name: Box<str>, fields: Vec<(Box<str>, Pattern)> },
     ExactList(Vec<Pattern>),
     RestList(Vec<Pattern>, Box<Pattern>), // TODO needs parser
+    // TODO and pattern
+    // TODO or pattern
+    // TODO "array" pattern
+    // TODO object pattern
+    // TODO reference pattern
+    // TODO pattern function
 }
 
 #[derive(Debug, Clone)]
