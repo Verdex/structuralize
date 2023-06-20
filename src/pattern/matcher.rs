@@ -42,6 +42,10 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
                     (Pattern::String(_), Data::String(_)) => { 
                         continue 'outer;
                     },
+                    (Pattern::Symbol(p), Data::Symbol(d)) if p == d => { },
+                    (Pattern::Symbol(p), Data::Symbol(d)) => { 
+                        continue 'outer;
+                    },
                     _ => todo!(),
                 }
             }
@@ -58,6 +62,27 @@ pub fn pattern_match<'a, 'b>(pattern : &'a Pattern, data : &'b Data) -> MatchRes
 #[cfg(test)] 
 mod test {
     use super::*;
+
+    #[test]
+    fn should_match_due_to_symbol() {
+        let pattern : Pattern = "cons(a, :b)".parse().unwrap();
+        let data : Data = "cons(:a, :b)".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 1);
+
+        let observed = results[0].get(&"a".into()).unwrap();
+        assert_eq!(observed, &":a".parse::<Data>().unwrap());
+    }
+
+    #[test]
+    fn should_fail_match_due_to_symbol() {
+        let pattern : Pattern = "cons(a, :a)".parse().unwrap();
+        let data : Data = "cons(:a, :b)".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 0);
+    }
 
     #[test]
     fn should_match_due_to_string() {
