@@ -38,6 +38,7 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
                         let mut z = pparam.iter().zip(dparam.iter()).collect::<Vec<_>>();
                         q.append(&mut z)
                     },
+                    (Pattern::Wild, _) => { },
                     (Pattern::String(p), Data::String(d)) if p == d => { },
                     (Pattern::String(_), Data::String(_)) => { 
                         continue 'outer;
@@ -62,6 +63,15 @@ pub fn pattern_match<'a, 'b>(pattern : &'a Pattern, data : &'b Data) -> MatchRes
 #[cfg(test)] 
 mod test {
     use super::*;
+
+    #[test]
+    fn should_match_wild() {
+        let pattern : Pattern = "_".parse().unwrap();
+        let data : Data = "cons(:a, :b)".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 1);
+    }
 
     #[test]
     fn should_match_due_to_symbol() {
