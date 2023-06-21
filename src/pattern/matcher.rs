@@ -33,8 +33,14 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
                     (Pattern::CaptureVar(name), data) => {
                         result.push((name.into(), data));
                     },
+                    (Pattern::Struct { name: pname, fields: pfields }, Data::Struct { name: dname, fields: dfields } )
+                        if pname == dname && pfields.len() == dfields.len() => {
+                        
+                        todo!()
+                    },
                     (Pattern::Cons {name: pname, params: pparam}, Data::Cons {name: dname, params: dparam}) 
                         if pname == dname && pparam.len() == dparam.len() => {
+
                         let mut z = pparam.iter().zip(dparam.iter()).collect::<Vec<_>>();
                         q.append(&mut z)
                     },
@@ -51,7 +57,9 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
                     (Pattern::Symbol(_), Data::Symbol(_)) => { 
                         continue 'outer;
                     },
-                    _ => todo!(),
+                    _ => {
+                        continue 'outer;
+                    },
                 }
             }
 
