@@ -44,7 +44,7 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
                         continue 'outer;
                     },
                     (Pattern::Symbol(p), Data::Symbol(d)) if p == d => { },
-                    (Pattern::Symbol(p), Data::Symbol(d)) => { 
+                    (Pattern::Symbol(_), Data::Symbol(_)) => { 
                         continue 'outer;
                     },
                     _ => todo!(),
