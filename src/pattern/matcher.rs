@@ -38,6 +38,10 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
                         let mut z = pparam.iter().zip(dparam.iter()).collect::<Vec<_>>();
                         q.append(&mut z)
                     },
+                    (Pattern::Number(pn), Data::Number(dn)) if pn == dn => { },
+                    (Pattern::Number(_), Data::Number(_)) => { 
+                        continue 'outer;
+                    },
                     (Pattern::Wild, _) => { },
                     (Pattern::String(p), Data::String(d)) if p == d => { },
                     (Pattern::String(_), Data::String(_)) => { 
@@ -63,6 +67,27 @@ pub fn pattern_match<'a, 'b>(pattern : &'a Pattern, data : &'b Data) -> MatchRes
 #[cfg(test)] 
 mod test {
     use super::*;
+
+    #[test]
+    fn should_match_due_to_number() {
+        let pattern : Pattern = "cons(a, 1.1)".parse().unwrap();
+        let data : Data = "cons(:a, 1.1)".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 1);
+
+        let observed = results[0].get(&"a".into()).unwrap();
+        assert_eq!(observed, &":a".parse::<Data>().unwrap());
+    }
+
+    #[test]
+    fn should_fail_match_due_to_number() {
+        let pattern : Pattern = "cons(a, 1.1)".parse().unwrap();
+        let data : Data = "cons(:a, 1.2)".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 0);
+    }
 
     #[test]
     fn should_match_wild() {
