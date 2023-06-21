@@ -44,19 +44,10 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
                         let mut z = pparam.iter().zip(dparam.iter()).collect::<Vec<_>>();
                         q.append(&mut z)
                     },
-                    (Pattern::Number(pn), Data::Number(dn)) if pn == dn => { },
-                    (Pattern::Number(_), Data::Number(_)) => { 
-                        continue 'outer;
-                    },
                     (Pattern::Wild, _) => { },
+                    (Pattern::Number(pn), Data::Number(dn)) if pn == dn => { },
                     (Pattern::String(p), Data::String(d)) if p == d => { },
-                    (Pattern::String(_), Data::String(_)) => { 
-                        continue 'outer;
-                    },
                     (Pattern::Symbol(p), Data::Symbol(d)) if p == d => { },
-                    (Pattern::Symbol(_), Data::Symbol(_)) => { 
-                        continue 'outer;
-                    },
                     _ => {
                         continue 'outer;
                     },
