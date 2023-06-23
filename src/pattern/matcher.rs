@@ -211,4 +211,52 @@ mod test {
         assert_eq!(observed_y, &":b".parse::<Data>().unwrap());
         assert_eq!(observed_z, &":c".parse::<Data>().unwrap());
     }
+
+    #[test]
+    fn should_match_struct() {
+        let pattern : Pattern = "struct { a: 1, b: 2, c: 3 }".parse().unwrap();
+        let data : Data = "struct { a: 1, b: 2, c: 3 }".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 1);
+    }
+
+    #[test]
+    fn should_match_struct_with_inner_var() {
+        let pattern : Pattern = "struct { a: 1, b: 2, c: x }".parse().unwrap();
+        let data : Data = "struct { a: 1, b: 2, c: 3 }".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 1);
+
+        let observed_x = results[0].get(&"x".into()).unwrap();
+        assert_eq!(observed_x, &"3".parse::<Data>().unwrap());
+    }
+
+    #[test]
+    fn should_fail_match_struct_due_to_length() {
+        let pattern : Pattern = "struct { a: 1, b: 2 }".parse().unwrap();
+        let data : Data = "struct { a: 1, b: 2, c: 3 }".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn should_fail_match_struct_due_to_inner_name_mismatch() {
+        let pattern : Pattern = "struct { a: 1, b: 2, x: 3 }".parse().unwrap();
+        let data : Data = "struct { a: 1, b: 2, c: 3 }".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn should_fail_match_struct_due_to_nested_struct_mismatch() {
+        let pattern : Pattern = "struct { a: 1, b: 2, c: inner { x: 1 } }".parse().unwrap();
+        let data : Data = "struct { a: 1, b: 2, c: inner { d: 1} }".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 0);
+    }
 }
