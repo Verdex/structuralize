@@ -35,8 +35,17 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
                     },
                     (Pattern::Struct { name: pname, fields: pfields }, Data::Struct { name: dname, fields: dfields } )
                         if pname == dname && pfields.len() == dfields.len() => {
-                        
-                        todo!()
+
+                        for (p_field_name, d_field_name) in pfields.iter()
+                                                                   .zip(dfields.iter())
+                                                                   .map(|((p, _), (d, _))| (p, d)) {
+                            if p_field_name != d_field_name {
+                                continue 'outer;
+                            }
+                        }
+
+                        let mut z = pfields.iter().zip(dfields.iter()).map(|((_, p), (_, d))| (p, d)).collect::<Vec<_>>();
+                        q.append(&mut z);
                     },
                     (Pattern::Cons {name: pname, params: pparam}, Data::Cons {name: dname, params: dparam}) 
                         if pname == dname && pparam.len() == dparam.len() => {
