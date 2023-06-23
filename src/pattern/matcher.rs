@@ -161,6 +161,42 @@ mod test {
     }
 
     #[test]
+    fn should_fail_match_due_to_nested_cons_internal_mismatch() {
+        let pattern : Pattern = "cons( :a, :b, :c, cons(:x) )".parse().unwrap();
+        let data : Data = "cons(:a, :b, :c, cons(:a) )".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn should_fail_match_due_to_cons_internal_mismatch() {
+        let pattern : Pattern = "cons( :a, :b, :c, :x )".parse().unwrap();
+        let data : Data = "cons(:a, :b, :c, :d)".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn should_fail_match_due_to_cons_name_mismatch() {
+        let pattern : Pattern = "other( x, y, z )".parse().unwrap();
+        let data : Data = "cons(:a, :b, :c)".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn should_fail_match_due_to_cons_length_mismatch() {
+        let pattern : Pattern = "cons( x, y, z )".parse().unwrap();
+        let data : Data = "cons(:a, :b, :c, :d)".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
     fn should_match_cons_with_vars() {
         let pattern : Pattern = "cons( x, y, z )".parse().unwrap();
         let data : Data = "cons(:a, :b, :c)".parse().unwrap();
@@ -175,5 +211,4 @@ mod test {
         assert_eq!(observed_y, &":b".parse::<Data>().unwrap());
         assert_eq!(observed_z, &":c".parse::<Data>().unwrap());
     }
-
 }
