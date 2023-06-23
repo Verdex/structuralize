@@ -51,7 +51,7 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
                         if pname == dname && pparam.len() == dparam.len() => {
 
                         let mut z = pparam.iter().zip(dparam.iter()).collect::<Vec<_>>();
-                        q.append(&mut z)
+                        q.append(&mut z);
                     },
                     (Pattern::Wild, _) => { },
                     (Pattern::Number(pn), Data::Number(dn)) if pn == dn => { },
