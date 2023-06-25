@@ -33,6 +33,11 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
                     (Pattern::CaptureVar(name), data) => {
                         result.push((name.into(), data));
                     },
+                    (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
+                        
+                        let mut z = ps.iter().zip(ds.iter()).collect::<Vec<_>>();
+                        q.append(&mut z);
+                    },
                     (Pattern::Struct { name: pname, fields: pfields }, Data::Struct { name: dname, fields: dfields } )
                         if pname == dname && pfields.len() == dfields.len() => {
 
@@ -255,6 +260,53 @@ mod test {
     fn should_fail_match_struct_due_to_nested_struct_mismatch() {
         let pattern : Pattern = "struct { a: 1, b: 2, c: inner { x: 1 } }".parse().unwrap();
         let data : Data = "struct { a: 1, b: 2, c: inner { d: 1} }".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn should_match_exact_list() {
+        let pattern : Pattern = "[1, x, :a]".parse().unwrap();
+        let data : Data = "[1, 2, :a]".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 1);
+        let observed_x = results[0].get(&"x".into()).unwrap();
+        assert_eq!(observed_x, &"2".parse::<Data>().unwrap());
+    }
+
+    #[test]
+    fn should_match_empty_exact_list() {
+        let pattern : Pattern = "[]".parse().unwrap();
+        let data : Data = "[]".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 1);
+    }
+
+    #[test]
+    fn should_fail_match_exact_list_due_to_length() {
+        let pattern : Pattern = "[1, x, :a, :x]".parse().unwrap();
+        let data : Data = "[1, 2, :a]".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn should_fail_match_exact_list_due_to_value() {
+        let pattern : Pattern = "[1, x, :a, :x]".parse().unwrap();
+        let data : Data = "[1, 2, :a, :y]".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn should_fail_match_exact_list_due_to_nested_list_mismatch() {
+        let pattern : Pattern = "[1, x, :a, [:x, :x]]".parse().unwrap();
+        let data : Data = "[1, 2, :a, [:x, :y]]".parse().unwrap();
 
         let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
