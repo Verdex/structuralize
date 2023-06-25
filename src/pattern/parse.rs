@@ -30,6 +30,7 @@ fn parse_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
                       parse_wild;
                       // Note:  parse capture variable needs to happen after parse wild
                       parse_capture_var;
+                      parse_path;
                       parse_path_next;
                       parse_symbol;
                       parse_string_pattern)
@@ -40,6 +41,37 @@ fn parse_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
         pattern <= options;
         _after_clear <= parse_whitespace;
         select pattern 
+    })
+}
+
+fn parse_path<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+    pat!(parse_l_curl: char => () = '{' => ());
+    pat!(parse_r_curl: char => () = '}' => ());
+    pat!(parse_bar: char => () = '|' => ());
+
+    fn parse_l_bracket<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+        parser!(input => {
+            _curl <= parse_l_curl;
+            _bar <= parse_bar;
+            select ()
+        })
+    }
+
+    fn parse_r_bracket<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+        parser!(input => {
+            _bar <= parse_bar;
+            _curl <= parse_r_curl;
+            select ()
+        })
+    }
+
+    fn parse_points<'a>(input : &mut Chars<'a>) -> Result<Vec<Pattern>, ParseError> {
+        parse_list!(input => parse_l_bracket, parse_pattern : Pattern, parse_r_bracket)
+    }
+
+    parser!(input => {
+        points <= parse_points;
+        select Pattern::Path(points)
     })
 }
 
