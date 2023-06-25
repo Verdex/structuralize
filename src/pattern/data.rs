@@ -62,6 +62,16 @@ impl<'a> MatchResult<'a> {
     pub fn add(&mut self, key : Slot, value : &'a Data) {
         self.map.insert(key, value);
     }
+
+    pub fn extract_nexts(&mut self) -> Vec<&'a Data> {
+        let nexts = self.map.keys().filter(|k| matches!(k, Slot::Next(_))).map(|k| k.clone()).collect::<Vec<_>>();
+        let mut ret = vec![];
+        for next in nexts {
+            let data = self.map.remove(&next).unwrap();
+            ret.push(data);
+        }
+        ret
+    }
 }
 
 impl<'a, const N : usize> From<[(Slot, &'a Data); N]> for MatchResult<'a> {
@@ -80,6 +90,7 @@ impl<'a> From<Vec<(Slot, &'a Data)>> for MatchResult<'a> {
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Slot {
+    Next(usize),
     Symbol(Box<str>),
     Path(Vec<Box<str>>),
 }
@@ -87,6 +98,7 @@ pub enum Slot {
 impl Display for Slot {
     fn fmt(&self, f : &mut Formatter) -> std::fmt::Result {
         match self {
+            Slot::Next(x) => write!(f, "~Next({})~", x),
             Slot::Symbol(s) => write!(f, "{}", s),
             Slot::Path(s) => write!(f, "{}", s.join(".")),
         }
@@ -125,3 +137,31 @@ impl From<String> for Slot {
 
 // TODO probably need comparison patterns in order to avoid needing expressions
     // This probably means that if-patterns aren't going to work
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn result_should_extract_nexts() {
+        let mut result = MatchResult::new();
+
+        let a : Data = "1".parse().unwrap();
+        let b : Data = "2".parse().unwrap();
+        let c : Data = "3".parse().unwrap();
+
+        result.add(Slot::Next(1), &a);
+        result.add(Slot::Next(2), &b);
+        result.add("x".into(), &c);
+
+        let nexts = result.extract_nexts();
+
+        assert_eq!( result.map.iter().count(), 1 );
+        assert_eq!( result.get(&"x".into()).unwrap(), &"3".parse::<Data>().unwrap() );
+
+        assert_eq!( nexts.len(), 2 );
+        assert_eq!( nexts[0], &a );
+        assert_eq!( nexts[1], &b );
+    }
+}
