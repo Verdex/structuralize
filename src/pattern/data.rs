@@ -17,13 +17,25 @@ pub enum Pattern {
     Struct { name: Box<str>, fields: Vec<(Box<str>, Pattern)> },
     ExactList(Vec<Pattern>),
     RestList(Vec<Pattern>, Box<Pattern>), // TODO needs parser
+    // TODO allow parsing path next whereever, but make sure the type check
+    // prevents path next anywhere except inside of a path pattern
+    PathNext,
+    Path(Vec<Pattern>),
     // TODO and pattern
     // TODO or pattern
+    // TODO not pattern? (with brakets or just traditional prefix not?)
     // TODO "array" pattern
-    // TODO object pattern
-    // TODO reference pattern
+    // TODO reference other pattern
     // TODO pattern function
+    // TODO lessthan pattern
+    // TODO greater than pattern
+    // TODO greater than or equal pattern
+    // TODO less than or equal pattern
 }
+
+// TODO a pattern that captures something probably shouldn't be allowed to convert that data into a pattern literal
+// and then use that as a reference other pattern in a later part of the pattern
+// specifically because that could depend on the evaluation order of the pattern as a whole 
 
 #[derive(Debug, Clone)]
 pub struct MatchResult<'a> {

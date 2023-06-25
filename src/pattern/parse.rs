@@ -30,6 +30,7 @@ fn parse_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
                       parse_wild;
                       // Note:  parse capture variable needs to happen after parse wild
                       parse_capture_var;
+                      parse_path_next;
                       parse_symbol;
                       parse_string_pattern)
     }
@@ -41,6 +42,8 @@ fn parse_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
         select pattern 
     })
 }
+
+pat!(parse_path_next<'a>: char => Pattern = '^' => Pattern::PathNext);
 
 fn parse_struct<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
     pat!(parse_l_paren: char => () = '{' => ());
