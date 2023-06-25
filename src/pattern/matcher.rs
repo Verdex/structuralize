@@ -8,6 +8,7 @@ use super::data::*;
 
 pub struct MatchResults<'a, 'b> {
     target : Vec<(&'a Pattern, &'b Data)>,
+    next_id : usize,
 }
 
 impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
@@ -62,6 +63,14 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
                     (Pattern::Number(pn), Data::Number(dn)) if pn == dn => { },
                     (Pattern::String(p), Data::String(d)) if p == d => { },
                     (Pattern::Symbol(p), Data::Symbol(d)) if p == d => { },
+                    (Pattern::PathNext, data) => {
+                        result.push((Slot::Next(self.next_id), data));
+                        self.next_id += 1;
+                    },
+                    (Pattern::Path(ps), data) => {
+                        // TODO pattern match, grab first, store off rest, also store off result vector?
+                        todo!();
+                    },
                     _ => {
                         continue 'outer;
                     },
@@ -74,7 +83,7 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
 }
 
 pub fn pattern_match<'a, 'b>(pattern : &'a Pattern, data : &'b Data) -> MatchResults<'a, 'b> {
-    MatchResults { target : vec![(pattern, data)]}
+    MatchResults { target : vec![(pattern, data)], next_id: 0 }
 }
 
 #[cfg(test)] 
