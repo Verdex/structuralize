@@ -151,7 +151,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn blarg2() {
+    fn blarg2() { // TODO weird inconsistent behavior
         let pattern : Pattern = "{| cons(^, ^), [^], x |}".parse().unwrap();
         let data : Data = "cons([:a], [1.1])".parse().unwrap();
 
