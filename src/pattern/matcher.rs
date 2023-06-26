@@ -84,9 +84,11 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
 
                         let mut other = data; // TODO not other
 
-                        for p in ps {
+                        let mut pi = 0;
+
+                        while pi < ps.len() {
                             
-                            let mut blarg = pattern_match(p, other).collect::<Vec<_>>(); // is collect right here?
+                            let mut blarg = pattern_match(&ps[pi], other).collect::<Vec<_>>(); // is collect right here?
 
                             if blarg.len() == 0 {
                                 // nothing matches
@@ -113,7 +115,7 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
                                     // if there are nexts but no more ps, then this should be some sort 
                                     // of typecheck error
                                     for next in nexts {
-                                        let mut env = Env::new(&ps[1], next);
+                                        let mut env = Env::new(&ps[pi + 1], next); // TODO 
                                         env.result = result.clone();
                                         env.q = q.clone();
                                         self.target.push(env);
@@ -125,6 +127,8 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
                                 // if the first pattern is a path pattern that ends up with multiple matches
                                 panic!("!");
                             }
+
+                            pi += 1;
                         }
                     },
                     _ => {
@@ -145,6 +149,33 @@ pub fn pattern_match<'a, 'b>(pattern : &'a Pattern, data : &'b Data) -> MatchRes
 #[cfg(test)] 
 mod test {
     use super::*;
+
+    #[test]
+    fn blarg2() {
+        let pattern : Pattern = "{| cons(^, ^), [^], x |}".parse().unwrap();
+        let data : Data = "cons([:a], [1.1])".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 2);
+
+        let observed = results[0].get(&"x".into()).unwrap();
+        assert_eq!(observed, &":a".parse::<Data>().unwrap());
+
+        let observed = results[1].get(&"x".into()).unwrap();
+        assert_eq!(observed, &"1.1".parse::<Data>().unwrap());
+    }
+
+    #[test]
+    fn blarg() {
+        let pattern : Pattern = "{| cons(^, _), [^], x |}".parse().unwrap();
+        let data : Data = "cons([:a], 1.1)".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 1);
+
+        let observed = results[0].get(&"x".into()).unwrap();
+        assert_eq!(observed, &":a".parse::<Data>().unwrap());
+    }
 
     #[test]
     fn should_match_due_to_number() {
