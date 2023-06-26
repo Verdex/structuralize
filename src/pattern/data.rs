@@ -63,6 +63,10 @@ impl<'a> MatchResult<'a> {
         self.map.insert(key, value);
     }
 
+    pub fn extract(self) -> Vec<(Slot, &'a Data)> {
+        self.map.into_iter().collect()
+    }
+
     pub fn extract_nexts(&mut self) -> Vec<&'a Data> {
         let nexts = self.map.keys().filter(|k| matches!(k, Slot::Next(_))).map(|k| k.clone()).collect::<Vec<_>>();
         let mut ret = vec![];

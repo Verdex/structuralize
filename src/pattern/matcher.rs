@@ -6,8 +6,21 @@ use super::data::*;
 
 // TODO:  phantom type type checked patterns
 
+struct Env<'a, 'b> {
+    pattern : &'a Pattern,
+    data : &'b Data,
+    result : Vec<(Slot, &'b Data)>,
+    q : Vec<(&'a Pattern, &'b Data)>,
+}
+
+impl<'a, 'b> Env<'a, 'b> {
+    pub fn new(pattern: &'a Pattern, data: &'b Data) -> Env<'a, 'b> {
+        Env { pattern, data, result : vec![], q : vec![] }
+    }
+}
+
 pub struct MatchResults<'a, 'b> {
-    target : Vec<(&'a Pattern, &'b Data)>,
+    target : Vec<Env<'a, 'b>>,
     next_id : usize,
 }
 
@@ -22,10 +35,10 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
 
             let x = self.target.pop().unwrap();
 
-            let mut result : Vec<(Slot, &'b Data)> = vec![];
-            let mut q : Vec<(&'a Pattern, &'b Data)> = vec![];
+            let mut result : Vec<(Slot, &'b Data)> = x.result;
+            let mut q : Vec<(&'a Pattern, &'b Data)> = x.q;
 
-            q.push(x);
+            q.push((x.pattern, x.data));
 
             while q.len() > 0 {
                 let target = q.pop().unwrap();
@@ -68,8 +81,51 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
                         self.next_id += 1;
                     },
                     (Pattern::Path(ps), data) => {
-                        // TODO pattern match, grab first, store off rest, also store off result vector?
-                        todo!();
+
+                        let mut other = data; // TODO not other
+
+                        for p in ps {
+                            
+                            let mut blarg = pattern_match(p, other).collect::<Vec<_>>(); // is collect right here?
+
+                            if blarg.len() == 0 {
+                                // nothing matches
+                                continue 'outer;
+                            }
+                            else if blarg.len() == 1 {
+                                let blarg0 = &mut blarg[0];
+
+                                let mut nexts = blarg0.extract_nexts();
+
+
+                                let mut zzz = blarg0.clone().extract(); // TODO not so much with clone
+                                result.append(&mut zzz);
+
+                                // TODO make sure that the type checker makes sure that each path pattern
+                                // has at least one next except the last one which should have none
+
+                                if nexts.len() == 0 {
+                                    // okay if there are no more items in ps left to process
+                                    // otherwise the match fails
+                                }
+                                else {
+                                    let first_next = nexts.remove(0);
+                                    // if there are nexts but no more ps, then this should be some sort 
+                                    // of typecheck error
+                                    for next in nexts {
+                                        let mut env = Env::new(&ps[1], next);
+                                        env.result = result.clone();
+                                        env.q = q.clone();
+                                        self.target.push(env);
+                                    }
+                                    other = first_next;
+                                }
+                            }
+                            else {
+                                // if the first pattern is a path pattern that ends up with multiple matches
+                                panic!("!");
+                            }
+                        }
                     },
                     _ => {
                         continue 'outer;
@@ -83,7 +139,7 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
 }
 
 pub fn pattern_match<'a, 'b>(pattern : &'a Pattern, data : &'b Data) -> MatchResults<'a, 'b> {
-    MatchResults { target : vec![(pattern, data)], next_id: 0 }
+    MatchResults { target : vec![Env::new(pattern, data)], next_id: 0 }
 }
 
 #[cfg(test)] 
