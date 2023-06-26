@@ -147,6 +147,15 @@ impl From<String> for Slot {
 mod test {
     use super::*;
 
+    fn get_float(d : &Data) -> f64 {
+        if let Data::Number(Number::Float64(f)) = d {
+            *f
+        }
+        else {
+            panic!("get_float::not a number");
+        }
+    }
+
     #[test]
     fn result_should_extract_nexts() {
         let mut result = MatchResult::new();
@@ -159,7 +168,9 @@ mod test {
         result.add(Slot::Next(2), &b);
         result.add("x".into(), &c);
 
-        let nexts = result.extract_nexts();
+        let mut nexts = result.extract_nexts();
+
+        nexts.sort_by(|a, b| get_float(a).partial_cmp(&get_float(b)).unwrap() );
 
         assert_eq!( result.map.iter().count(), 1 );
         assert_eq!( result.get(&"x".into()).unwrap(), &"3".parse::<Data>().unwrap() );
