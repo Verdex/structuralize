@@ -156,15 +156,6 @@ impl From<String> for Slot {
 mod test {
     use super::*;
 
-    fn get_float(d : &Data) -> f64 {
-        if let Data::Number(Number::Float64(f)) = d {
-            *f
-        }
-        else {
-            panic!("get_float::not a number");
-        }
-    }
-
     #[test]
     fn result_should_extract_nexts() {
         let mut result = MatchResult::new();

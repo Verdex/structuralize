@@ -99,8 +99,13 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
 
                                 let mut nexts = blarg0.extract_nexts();
 
+                                println!("nexts {:?}", nexts);
+
 
                                 let mut zzz = blarg0.clone().extract(); // TODO not so much with clone
+
+                                println!("not nexts {:?}", zzz);
+
                                 result.append(&mut zzz);
 
                                 // TODO make sure that the type checker makes sure that each path pattern
@@ -115,10 +120,11 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
                                     // if there are nexts but no more ps, then this should be some sort 
                                     // of typecheck error
                                     for next in nexts {
-                                        let mut env = Env::new(&ps[pi + 1], next); // TODO 
+                                        /*let jabber = ps[pi + 1 ..].iter().map(|x| x.clone()).collect::<Vec<_>>();
+                                        let mut env = Env::new(&Pattern::Path(jabber), next); // TODO 
                                         env.result = result.clone();
                                         env.q = q.clone();
-                                        self.target.push(env);
+                                        self.target.push(env);*/
                                     }
                                     other = first_next;
                                 }
@@ -150,17 +156,24 @@ pub fn pattern_match<'a, 'b>(pattern : &'a Pattern, data : &'b Data) -> MatchRes
 mod test {
     use super::*;
 
+    // TODO can we cow the output of this?
+    // TODO we need this anyway for the hopefully upcoming type check
+    fn p(input : &'static str) -> Pattern {
+        input.parse().unwrap()
+    }
+
     #[test]
-    fn blarg2() { // TODO weird inconsistent behavior
-        let pattern : Pattern = "{| cons(^, ^), [^], x |}".parse().unwrap();
+    fn blarg2() { 
+        let pattern = p("{| cons(^, ^), [^], x |}");
         let data : Data = "cons([:a], [1.1])".parse().unwrap();
 
         let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 2);
 
         let observed = results[0].get(&"x".into()).unwrap();
-        assert_eq!(observed, &":a".parse::<Data>().unwrap());
+        assert_eq!(observed, &"1.1".parse::<Data>().unwrap());
 
+        println!("{:?}", results[1]);
         let observed = results[1].get(&"x".into()).unwrap();
         assert_eq!(observed, &"1.1".parse::<Data>().unwrap());
     }
