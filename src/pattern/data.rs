@@ -68,13 +68,22 @@ impl<'a> MatchResult<'a> {
     }
 
     pub fn extract_nexts(&mut self) -> Vec<&'a Data> {
+        fn proj<'a>(x : &'a Slot) -> &'a usize {
+            if let Slot::Next(u) = x {
+                u
+            }
+            else {
+                panic!("extract_nexts::proj not a Slot::Next");
+            }
+        }
         let nexts = self.map.keys().filter(|k| matches!(k, Slot::Next(_))).map(|k| k.clone()).collect::<Vec<_>>();
         let mut ret = vec![];
         for next in nexts {
             let data = self.map.remove(&next).unwrap();
-            ret.push(data);
+            ret.push((next, data));
         }
-        ret
+        ret.sort_by(|(a, _), (b, _)| proj(a).cmp(proj(b)));
+        ret.into_iter().map(|(_, x)| x).collect()
     }
 }
 
@@ -169,8 +178,6 @@ mod test {
         result.add("x".into(), &c);
 
         let mut nexts = result.extract_nexts();
-
-        nexts.sort_by(|a, b| get_float(a).partial_cmp(&get_float(b)).unwrap() );
 
         assert_eq!( result.map.iter().count(), 1 );
         assert_eq!( result.get(&"x".into()).unwrap(), &"3".parse::<Data>().unwrap() );
