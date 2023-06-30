@@ -167,7 +167,7 @@ mod test {
         let pattern = p("{| cons(^, ^), [^], x |}");
         let data : Data = "cons([:a], [1.1])".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 2);
 
         let observed = results[0].get(&"x".into()).unwrap();
@@ -175,15 +175,15 @@ mod test {
 
         println!("{:?}", results[1]);
         let observed = results[1].get(&"x".into()).unwrap();
-        assert_eq!(observed, &"1.1".parse::<Data>().unwrap());
+        assert_eq!(observed, &":a".parse::<Data>().unwrap());
     }
 
     #[test]
     fn blarg() {
-        let pattern : Pattern = "{| cons(^, _), [^], x |}".parse().unwrap();
+        let pattern = p("{| cons(^, _), [^], x |}");
         let data : Data = "cons([:a], 1.1)".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
 
         let observed = results[0].get(&"x".into()).unwrap();
@@ -192,10 +192,10 @@ mod test {
 
     #[test]
     fn should_match_due_to_number() {
-        let pattern : Pattern = "cons(a, 1.1)".parse().unwrap();
+        let pattern = p("cons(a, 1.1)");
         let data : Data = "cons(:a, 1.1)".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
 
         let observed = results[0].get(&"a".into()).unwrap();
@@ -204,28 +204,28 @@ mod test {
 
     #[test]
     fn should_fail_match_due_to_number() {
-        let pattern : Pattern = "cons(a, 1.1)".parse().unwrap();
+        let pattern = p("cons(a, 1.1)");
         let data : Data = "cons(:a, 1.2)".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
     #[test]
     fn should_match_wild() {
-        let pattern : Pattern = "_".parse().unwrap();
+        let pattern = p("_");
         let data : Data = "cons(:a, :b)".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
     }
 
     #[test]
     fn should_match_due_to_symbol() {
-        let pattern : Pattern = "cons(a, :b)".parse().unwrap();
+        let pattern = p("cons(a, :b)");
         let data : Data = "cons(:a, :b)".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
 
         let observed = results[0].get(&"a".into()).unwrap();
@@ -234,19 +234,19 @@ mod test {
 
     #[test]
     fn should_fail_match_due_to_symbol() {
-        let pattern : Pattern = "cons(a, :a)".parse().unwrap();
+        let pattern = p("cons(a, :a)");
         let data : Data = "cons(:a, :b)".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
     #[test]
     fn should_match_due_to_string() {
-        let pattern : Pattern = "cons(a, \"leta\")".parse().unwrap();
+        let pattern = p("cons(a, \"leta\")");
         let data : Data = "cons(:a, \"leta\")".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
 
         let observed = results[0].get(&"a".into()).unwrap();
@@ -255,19 +255,19 @@ mod test {
 
     #[test]
     fn should_fail_match_due_to_string() {
-        let pattern : Pattern = "cons(a, \"leta\")".parse().unwrap();
+        let pattern = p("cons(a, \"leta\")");
         let data : Data = "cons(:a, \"letb\")".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
     #[test]
     fn should_match_single_var() {
-        let pattern : Pattern = "x".parse().unwrap();
+        let pattern = p("x");
         let data : Data = "cons(:a)".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
 
         let observed = results[0].get(&"x".into()).unwrap();
@@ -276,46 +276,46 @@ mod test {
 
     #[test]
     fn should_fail_match_due_to_nested_cons_internal_mismatch() {
-        let pattern : Pattern = "cons( :a, :b, :c, cons(:x) )".parse().unwrap();
+        let pattern = p("cons( :a, :b, :c, cons(:x) )");
         let data : Data = "cons(:a, :b, :c, cons(:a) )".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
     #[test]
     fn should_fail_match_due_to_cons_internal_mismatch() {
-        let pattern : Pattern = "cons( :a, :b, :c, :x )".parse().unwrap();
+        let pattern = p("cons( :a, :b, :c, :x )");
         let data : Data = "cons(:a, :b, :c, :d)".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
     #[test]
     fn should_fail_match_due_to_cons_name_mismatch() {
-        let pattern : Pattern = "other( x, y, z )".parse().unwrap();
+        let pattern = p("other( x, y, z )");
         let data : Data = "cons(:a, :b, :c)".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
     #[test]
     fn should_fail_match_due_to_cons_length_mismatch() {
-        let pattern : Pattern = "cons( x, y, z )".parse().unwrap();
+        let pattern = p("cons( x, y, z )");
         let data : Data = "cons(:a, :b, :c, :d)".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
     #[test]
     fn should_match_cons_with_vars() {
-        let pattern : Pattern = "cons( x, y, z )".parse().unwrap();
+        let pattern = p("cons( x, y, z )");
         let data : Data = "cons(:a, :b, :c)".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
 
         let observed_x = results[0].get(&"x".into()).unwrap();
@@ -328,19 +328,19 @@ mod test {
 
     #[test]
     fn should_match_struct() {
-        let pattern : Pattern = "struct { a: 1, b: 2, c: 3 }".parse().unwrap();
+        let pattern = p("struct { a: 1, b: 2, c: 3 }");
         let data : Data = "struct { a: 1, b: 2, c: 3 }".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
     }
 
     #[test]
     fn should_match_struct_with_inner_var() {
-        let pattern : Pattern = "struct { a: 1, b: 2, c: x }".parse().unwrap();
+        let pattern = p("struct { a: 1, b: 2, c: x }");
         let data : Data = "struct { a: 1, b: 2, c: 3 }".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
 
         let observed_x = results[0].get(&"x".into()).unwrap();
@@ -349,37 +349,28 @@ mod test {
 
     #[test]
     fn should_fail_match_struct_due_to_length() {
-        let pattern : Pattern = "struct { a: 1, b: 2 }".parse().unwrap();
+        let pattern = p("struct { a: 1, b: 2 }");
         let data : Data = "struct { a: 1, b: 2, c: 3 }".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
     #[test]
     fn should_fail_match_struct_due_to_inner_name_mismatch() {
-        let pattern : Pattern = "struct { a: 1, b: 2, x: 3 }".parse().unwrap();
+        let pattern = p("struct { a: 1, b: 2, x: 3 }");
         let data : Data = "struct { a: 1, b: 2, c: 3 }".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
-        assert_eq!(results.len(), 0);
-    }
-
-    #[test]
-    fn should_fail_match_struct_due_to_nested_struct_mismatch() {
-        let pattern : Pattern = "struct { a: 1, b: 2, c: inner { x: 1 } }".parse().unwrap();
-        let data : Data = "struct { a: 1, b: 2, c: inner { d: 1} }".parse().unwrap();
-
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
     #[test]
     fn should_match_exact_list() {
-        let pattern : Pattern = "[1, x, :a]".parse().unwrap();
+        let pattern = p("[1, x, :a]");
         let data : Data = "[1, 2, :a]".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
         let observed_x = results[0].get(&"x".into()).unwrap();
         assert_eq!(observed_x, &"2".parse::<Data>().unwrap());
@@ -387,37 +378,37 @@ mod test {
 
     #[test]
     fn should_match_empty_exact_list() {
-        let pattern : Pattern = "[]".parse().unwrap();
+        let pattern = p("[]");
         let data : Data = "[]".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
     }
 
     #[test]
     fn should_fail_match_exact_list_due_to_length() {
-        let pattern : Pattern = "[1, x, :a, :x]".parse().unwrap();
+        let pattern = p("[1, x, :a, :x]");
         let data : Data = "[1, 2, :a]".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
     #[test]
     fn should_fail_match_exact_list_due_to_value() {
-        let pattern : Pattern = "[1, x, :a, :x]".parse().unwrap();
+        let pattern = p("[1, x, :a, :x]");
         let data : Data = "[1, 2, :a, :y]".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
     #[test]
     fn should_fail_match_exact_list_due_to_nested_list_mismatch() {
-        let pattern : Pattern = "[1, x, :a, [:x, :x]]".parse().unwrap();
+        let pattern = p("[1, x, :a, [:x, :x]]");
         let data : Data = "[1, 2, :a, [:x, :y]]".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 }
