@@ -162,12 +162,54 @@ mod test {
         input.parse().unwrap()
     }
 
-    // TODO : path pattern where we've got already captured variables before it
-    // TODO : path pattern where we're going to have captured variables after it
+    // TODO : path pattern where we've already captured varaibles from a path pattern before it 
     // TODO : path pattern that has path patterns inside of it (needs more impl before this will work)
+    // TODO : path pattern where multiple steps have multiple possible patterns
 
     #[test]
-    fn blarg2() { 
+    fn should_match_path_and_capture_after() {
+        let pattern = p("cons( {| cons(^, ^), [^], x |}, outer )");
+        let data : Data = "cons( cons([:a], [1.1]), :outer )".parse().unwrap();
+
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 2);
+
+        let observed_x = results[0].get(&"x".into()).unwrap();
+        assert_eq!(observed_x, &"1.1".parse::<Data>().unwrap());
+
+        let observed_outer = results[0].get(&"outer".into()).unwrap();
+        assert_eq!(observed_outer, &":outer".parse::<Data>().unwrap());
+
+        let observed_x = results[1].get(&"x".into()).unwrap();
+        assert_eq!(observed_x, &":a".parse::<Data>().unwrap());
+
+        let observed_outer = results[1].get(&"outer".into()).unwrap();
+        assert_eq!(observed_outer, &":outer".parse::<Data>().unwrap());
+    }
+
+    #[test]
+    fn should_match_path_and_capture_before() {
+        let pattern = p("cons( outer, {| cons(^, ^), [^], x |} )");
+        let data : Data = "cons( :outer, cons([:a], [1.1]) )".parse().unwrap();
+
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 2);
+
+        let observed_x = results[0].get(&"x".into()).unwrap();
+        assert_eq!(observed_x, &"1.1".parse::<Data>().unwrap());
+
+        let observed_outer = results[0].get(&"outer".into()).unwrap();
+        assert_eq!(observed_outer, &":outer".parse::<Data>().unwrap());
+
+        let observed_x = results[1].get(&"x".into()).unwrap();
+        assert_eq!(observed_x, &":a".parse::<Data>().unwrap());
+
+        let observed_outer = results[1].get(&"outer".into()).unwrap();
+        assert_eq!(observed_outer, &":outer".parse::<Data>().unwrap());
+    }
+
+    #[test]
+    fn should_match_multiple_paths_with_cons_and_list() { 
         let pattern = p("{| cons(^, ^), [^], x |}");
         let data : Data = "cons([:a], [1.1])".parse().unwrap();
 
@@ -177,13 +219,12 @@ mod test {
         let observed = results[0].get(&"x".into()).unwrap();
         assert_eq!(observed, &"1.1".parse::<Data>().unwrap());
 
-        println!("{:?}", results[1]);
         let observed = results[1].get(&"x".into()).unwrap();
         assert_eq!(observed, &":a".parse::<Data>().unwrap());
     }
 
     #[test]
-    fn blarg() {
+    fn should_match_path_with_cons_and_list() {
         let pattern = p("{| cons(^, _), [^], x |}");
         let data : Data = "cons([:a], 1.1)".parse().unwrap();
 
