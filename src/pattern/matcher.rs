@@ -6,26 +6,26 @@ use super::data::*;
 
 // TODO:  phantom type type checked patterns
 
-struct Env<'a, 'b> {
-    pattern : &'a Pattern,
-    data : &'b Data,
-    result : Vec<(Slot, &'b Data)>,
-    q : Vec<(&'a Pattern, &'b Data)>,
+struct Env<'a> {
+    pattern : Pattern,
+    data : &'a Data,
+    result : Vec<(Slot, &'a Data)>,
+    q : Vec<(Pattern, &'a Data)>,
 }
 
-impl<'a, 'b> Env<'a, 'b> {
-    pub fn new(pattern: &'a Pattern, data: &'b Data) -> Env<'a, 'b> {
+impl<'a> Env<'a> {
+    pub fn new(pattern: Pattern, data: &'a Data) -> Env<'a> {
         Env { pattern, data, result : vec![], q : vec![] }
     }
 }
 
-pub struct MatchResults<'a, 'b> {
-    target : Vec<Env<'a, 'b>>,
+pub struct MatchResults<'a> {
+    target : Vec<Env<'a>>,
     next_id : usize,
 }
 
-impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
-    type Item = MatchResult<'b>;
+impl<'a> Iterator for MatchResults<'a> {
+    type Item = MatchResult<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         'outer : loop {
@@ -35,8 +35,8 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
 
             let x = self.target.pop().unwrap();
 
-            let mut result : Vec<(Slot, &'b Data)> = x.result;
-            let mut q : Vec<(&'a Pattern, &'b Data)> = x.q;
+            let mut result : Vec<(Slot, &'a Data)> = x.result;
+            let mut q : Vec<(Pattern, &'a Data)> = x.q;
 
             q.push((x.pattern, x.data));
 
@@ -49,11 +49,11 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
                     },
                     (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
                         
-                        let mut z = ps.iter().zip(ds.iter()).collect::<Vec<_>>();
+                        let mut z = ps.into_iter().zip(ds.iter()).collect::<Vec<_>>();
                         q.append(&mut z);
                     },
                     (Pattern::Struct { name: pname, fields: pfields }, Data::Struct { name: dname, fields: dfields } )
-                        if pname == dname && pfields.len() == dfields.len() => {
+                        if pname == *dname && pfields.len() == dfields.len() => {
 
                         for (p_field_name, d_field_name) in pfields.iter()
                                                                    .zip(dfields.iter())
@@ -63,19 +63,19 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
                             }
                         }
 
-                        let mut z = pfields.iter().zip(dfields.iter()).map(|((_, p), (_, d))| (p, d)).collect::<Vec<_>>();
+                        let mut z = pfields.into_iter().zip(dfields.iter()).map(|((_, p), (_, d))| (p, d)).collect::<Vec<_>>();
                         q.append(&mut z);
                     },
                     (Pattern::Cons {name: pname, params: pparam}, Data::Cons {name: dname, params: dparam}) 
-                        if pname == dname && pparam.len() == dparam.len() => {
+                        if pname == *dname && pparam.len() == dparam.len() => {
 
-                        let mut z = pparam.iter().zip(dparam.iter()).collect::<Vec<_>>();
+                        let mut z = pparam.into_iter().zip(dparam.iter()).collect::<Vec<_>>();
                         q.append(&mut z);
                     },
                     (Pattern::Wild, _) => { },
-                    (Pattern::Number(pn), Data::Number(dn)) if pn == dn => { },
-                    (Pattern::String(p), Data::String(d)) if p == d => { },
-                    (Pattern::Symbol(p), Data::Symbol(d)) if p == d => { },
+                    (Pattern::Number(pn), Data::Number(dn)) if pn == *dn => { },
+                    (Pattern::String(p), Data::String(d)) if p == *d => { },
+                    (Pattern::Symbol(p), Data::Symbol(d)) if p == *d => { },
                     (Pattern::PathNext, data) => {
                         result.push((Slot::Next(self.next_id), data));
                         self.next_id += 1;
@@ -88,7 +88,7 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
 
                         while pi < ps.len() {
                             
-                            let mut blarg = pattern_match(&ps[pi], other).collect::<Vec<_>>(); // is collect right here?
+                            let mut blarg = pattern_match(ps[pi].clone(), other).collect::<Vec<_>>(); // is collect right here?
 
                             if blarg.len() == 0 {
                                 // nothing matches
@@ -120,11 +120,11 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
                                     // if there are nexts but no more ps, then this should be some sort 
                                     // of typecheck error
                                     for next in nexts {
-                                        /*let jabber = ps[pi + 1 ..].iter().map(|x| x.clone()).collect::<Vec<_>>();
-                                        let mut env = Env::new(&Pattern::Path(jabber), next); // TODO 
+                                        let jabber = ps[pi + 1 ..].iter().map(|x| x.clone()).collect::<Vec<_>>();
+                                        let mut env = Env::new(Pattern::Path(jabber), next); // TODO 
                                         env.result = result.clone();
                                         env.q = q.clone();
-                                        self.target.push(env);*/
+                                        self.target.push(env);
                                     }
                                     other = first_next;
                                 }
@@ -148,7 +148,7 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
     }
 }
 
-pub fn pattern_match<'a, 'b>(pattern : &'a Pattern, data : &'b Data) -> MatchResults<'a, 'b> {
+pub fn pattern_match<'a>(pattern : Pattern, data : &'a Data) -> MatchResults<'a> {
     MatchResults { target : vec![Env::new(pattern, data)], next_id: 0 }
 }
 
