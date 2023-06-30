@@ -81,6 +81,7 @@ impl<'a> Iterator for MatchResults<'a> {
                         self.next_id += 1;
                     },
                     (Pattern::Path(ps), data) => {
+                        // TODO clean up this clause
 
                         let mut other = data; // TODO not other
 
@@ -156,11 +157,14 @@ pub fn pattern_match<'a>(pattern : Pattern, data : &'a Data) -> MatchResults<'a>
 mod test {
     use super::*;
 
-    // TODO can we cow the output of this?
     // TODO we need this anyway for the hopefully upcoming type check
     fn p(input : &'static str) -> Pattern {
         input.parse().unwrap()
     }
+
+    // TODO : path pattern where we've got already captured variables before it
+    // TODO : path pattern where we're going to have captured variables after it
+    // TODO : path pattern that has path patterns inside of it (needs more impl before this will work)
 
     #[test]
     fn blarg2() { 
