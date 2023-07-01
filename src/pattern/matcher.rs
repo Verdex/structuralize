@@ -100,12 +100,7 @@ impl<'a> Iterator for MatchResults<'a> {
 
                                 let mut nexts = blarg0.extract_nexts();
 
-                                println!("nexts {:?}", nexts);
-
-
                                 let mut zzz = blarg0.clone().extract(); // TODO not so much with clone
-
-                                println!("not nexts {:?}", zzz);
 
                                 result.append(&mut zzz);
 
