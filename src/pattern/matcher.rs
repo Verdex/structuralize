@@ -162,9 +162,42 @@ mod test {
         input.parse().unwrap()
     }
 
-    // TODO : path pattern where we've already captured varaibles from a path pattern before it 
+    // TODO : empty path pattern is basically the same as _
     // TODO : path pattern that has path patterns inside of it (needs more impl before this will work)
     // TODO : path pattern where multiple steps have multiple possible patterns
+
+    #[test]
+    fn should_match_path_and_path() {
+        let pattern = p("cons( {| cons(^, ^), [^], x |}, {| cons(^, ^), [^], y |} )");
+        let data : Data = "cons( cons([:a], [1.1]), cons([:b], [2.2]) )".parse().unwrap();
+
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 4);
+
+        let observed_x = results[0].get(&"x".into()).unwrap();
+        assert_eq!(observed_x, &"1.1".parse::<Data>().unwrap());
+
+        let observed_y= results[0].get(&"y".into()).unwrap();
+        assert_eq!(observed_y, &"2.2".parse::<Data>().unwrap());
+
+        let observed_x = results[1].get(&"x".into()).unwrap();
+        assert_eq!(observed_x, &":a".parse::<Data>().unwrap());
+
+        let observed_y= results[1].get(&"y".into()).unwrap();
+        assert_eq!(observed_y, &"2.2".parse::<Data>().unwrap());
+
+        let observed_x = results[2].get(&"x".into()).unwrap();
+        assert_eq!(observed_x, &"1.1".parse::<Data>().unwrap());
+
+        let observed_y= results[2].get(&"y".into()).unwrap();
+        assert_eq!(observed_y, &":b".parse::<Data>().unwrap());
+
+        let observed_x = results[3].get(&"x".into()).unwrap();
+        assert_eq!(observed_x, &":a".parse::<Data>().unwrap());
+
+        let observed_y= results[3].get(&"y".into()).unwrap();
+        assert_eq!(observed_y, &":b".parse::<Data>().unwrap());
+    }
 
     #[test]
     fn should_match_path_and_capture_after() {
