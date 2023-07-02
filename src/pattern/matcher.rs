@@ -160,6 +160,27 @@ mod test {
     // TODO : path pattern that has path patterns inside of it (needs more impl before this will work)
 
     #[test]
+    fn should_match_only_valid_paths() {
+        let pattern = p("{| cons(^, ^), [^], x |}");
+        let data : Data = "cons([:a], :b)".parse().unwrap();
+
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 1);
+
+        let observed = results[0].get(&"x".into()).unwrap();
+        assert_eq!(observed, &":a".parse::<Data>().unwrap());
+    }
+
+    #[test]
+    fn should_not_match_path() {
+        let pattern = p("{| cons(:whatever) |}");
+        let data : Data = ":whatever".parse().unwrap();
+
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
     fn should_match_empty_path() {
         let pattern = p("{| |}");
         let data : Data = ":whatever".parse().unwrap();
