@@ -157,9 +157,16 @@ mod test {
         input.parse().unwrap()
     }
 
-    // TODO : empty path pattern is basically the same as _
     // TODO : path pattern that has path patterns inside of it (needs more impl before this will work)
-    // TODO : path pattern where multiple steps have multiple possible patterns
+
+    #[test]
+    fn should_match_empty_path() {
+        let pattern = p("{| |}");
+        let data : Data = ":whatever".parse().unwrap();
+
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 1);
+    }
 
     #[test]
     fn should_match_multi_step_multi_next_path() {
