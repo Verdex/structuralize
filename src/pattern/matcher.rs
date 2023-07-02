@@ -80,16 +80,14 @@ impl<'a> Iterator for MatchResults<'a> {
                         captures.push((Slot::Next(self.next_id), data));
                         self.next_id += 1;
                     },
-                    (Pattern::Path(ps), data) => {
+                    (Pattern::Path(ps), mut data) => {
                         // TODO clean up this clause
-
-                        let mut other = data; // TODO not other
 
                         let mut pi = 0;
 
                         while pi < ps.len() {
                             
-                            let mut blarg = pattern_match(ps[pi].clone(), other).collect::<Vec<_>>(); // is collect right here?
+                            let mut blarg = pattern_match(ps[pi].clone(), data).collect::<Vec<_>>(); // is collect right here?
 
                             if blarg.len() == 0 {
                                 // nothing matches
@@ -122,7 +120,7 @@ impl<'a> Iterator for MatchResults<'a> {
                                         env.match_queue = match_queue.clone();
                                         self.match_states.push(env);
                                     }
-                                    other = first_next;
+                                    data = first_next;
                                 }
                             }
                             else {
