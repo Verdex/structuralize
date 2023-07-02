@@ -162,6 +162,27 @@ mod test {
     // TODO : path pattern where multiple steps have multiple possible patterns
 
     #[test]
+    fn should_match_multi_step_multi_next_path() {
+        let pattern = p("{| cons(^, ^), [^, ^], x |}");
+        let data : Data = "cons( [:a, :b], [:c, :d] )".parse().unwrap();
+
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 4);
+
+        let observed = results[0].get(&"x".into()).unwrap();
+        assert_eq!(observed, &":d".parse::<Data>().unwrap());
+
+        let observed = results[1].get(&"x".into()).unwrap();
+        assert_eq!(observed, &":c".parse::<Data>().unwrap());
+
+        let observed = results[2].get(&"x".into()).unwrap();
+        assert_eq!(observed, &":b".parse::<Data>().unwrap());
+
+        let observed = results[3].get(&"x".into()).unwrap();
+        assert_eq!(observed, &":a".parse::<Data>().unwrap());
+    }
+
+    #[test]
     fn should_match_path_and_path() {
         let pattern = p("cons( {| cons(^, ^), [^], x |}, {| cons(^, ^), [^], y |} )");
         let data : Data = "cons( cons([:a], [1.1]), cons([:b], [2.2]) )".parse().unwrap();
