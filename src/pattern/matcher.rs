@@ -10,12 +10,12 @@ struct State<'a> {
     pattern : Pattern,
     data : &'a Data,
     captures : Vec<(Slot, &'a Data)>,
-    q : Vec<(Pattern, &'a Data)>,
+    match_queue : Vec<(Pattern, &'a Data)>,
 }
 
 impl<'a> State<'a> {
     pub fn new(pattern: Pattern, data: &'a Data) -> State<'a> {
-        State { pattern, data, captures : vec![], q : vec![] }
+        State { pattern, data, captures : vec![], match_queue : vec![] }
     }
 }
 
@@ -36,12 +36,12 @@ impl<'a> Iterator for MatchResults<'a> {
             let x = self.target.pop().unwrap();
 
             let mut captures : Vec<(Slot, &'a Data)> = x.captures;
-            let mut q : Vec<(Pattern, &'a Data)> = x.q;
+            let mut match_queue : Vec<(Pattern, &'a Data)> = x.match_queue;
 
-            q.push((x.pattern, x.data));
+            match_queue.push((x.pattern, x.data));
 
-            while q.len() > 0 {
-                let target = q.pop().unwrap();
+            while match_queue.len() > 0 {
+                let target = match_queue.pop().unwrap();
 
                 match target {
                     (Pattern::CaptureVar(name), data) => {
@@ -50,7 +50,7 @@ impl<'a> Iterator for MatchResults<'a> {
                     (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
                         
                         let mut z = ps.into_iter().zip(ds.iter()).collect::<Vec<_>>();
-                        q.append(&mut z);
+                        match_queue.append(&mut z);
                     },
                     (Pattern::Struct { name: pname, fields: pfields }, Data::Struct { name: dname, fields: dfields } )
                         if pname == *dname && pfields.len() == dfields.len() => {
@@ -64,13 +64,13 @@ impl<'a> Iterator for MatchResults<'a> {
                         }
 
                         let mut z = pfields.into_iter().zip(dfields.iter()).map(|((_, p), (_, d))| (p, d)).collect::<Vec<_>>();
-                        q.append(&mut z);
+                        match_queue.append(&mut z);
                     },
                     (Pattern::Cons {name: pname, params: pparam}, Data::Cons {name: dname, params: dparam}) 
                         if pname == *dname && pparam.len() == dparam.len() => {
 
                         let mut z = pparam.into_iter().zip(dparam.iter()).collect::<Vec<_>>();
-                        q.append(&mut z);
+                        match_queue.append(&mut z);
                     },
                     (Pattern::Wild, _) => { },
                     (Pattern::Number(pn), Data::Number(dn)) if pn == *dn => { },
@@ -119,7 +119,7 @@ impl<'a> Iterator for MatchResults<'a> {
                                         let jabber = ps[pi + 1 ..].iter().map(|x| x.clone()).collect::<Vec<_>>();
                                         let mut env = State::new(Pattern::Path(jabber), next); // TODO 
                                         env.captures = captures.clone();
-                                        env.q = q.clone();
+                                        env.match_queue = match_queue.clone();
                                         self.target.push(env);
                                     }
                                     other = first_next;
