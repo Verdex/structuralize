@@ -49,8 +49,8 @@ impl<'a> Iterator for MatchResults<'a> {
                     },
                     (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
                         
-                        let mut z = ps.into_iter().zip(ds.iter()).collect::<Vec<_>>();
-                        match_queue.append(&mut z);
+                        let mut to_match = ps.into_iter().zip(ds.iter()).collect::<Vec<_>>();
+                        match_queue.append(&mut to_match);
                     },
                     (Pattern::Struct { name: pname, fields: pfields }, Data::Struct { name: dname, fields: dfields } )
                         if pname == *dname && pfields.len() == dfields.len() => {
@@ -63,14 +63,14 @@ impl<'a> Iterator for MatchResults<'a> {
                             }
                         }
 
-                        let mut z = pfields.into_iter().zip(dfields.iter()).map(|((_, p), (_, d))| (p, d)).collect::<Vec<_>>();
-                        match_queue.append(&mut z);
+                        let mut to_match = pfields.into_iter().zip(dfields.iter()).map(|((_, p), (_, d))| (p, d)).collect::<Vec<_>>();
+                        match_queue.append(&mut to_match);
                     },
                     (Pattern::Cons {name: pname, params: pparam}, Data::Cons {name: dname, params: dparam}) 
                         if pname == *dname && pparam.len() == dparam.len() => {
 
-                        let mut z = pparam.into_iter().zip(dparam.iter()).collect::<Vec<_>>();
-                        match_queue.append(&mut z);
+                        let mut to_match = pparam.into_iter().zip(dparam.iter()).collect::<Vec<_>>();
+                        match_queue.append(&mut to_match);
                     },
                     (Pattern::Wild, _) => { },
                     (Pattern::Number(pn), Data::Number(dn)) if pn == *dn => { },
