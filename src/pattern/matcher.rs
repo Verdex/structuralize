@@ -9,13 +9,13 @@ use super::data::*;
 struct Env<'a> {
     pattern : Pattern,
     data : &'a Data,
-    result : Vec<(Slot, &'a Data)>,
+    captures : Vec<(Slot, &'a Data)>,
     q : Vec<(Pattern, &'a Data)>,
 }
 
 impl<'a> Env<'a> {
     pub fn new(pattern: Pattern, data: &'a Data) -> Env<'a> {
-        Env { pattern, data, result : vec![], q : vec![] }
+        Env { pattern, data, captures : vec![], q : vec![] }
     }
 }
 
@@ -35,7 +35,7 @@ impl<'a> Iterator for MatchResults<'a> {
 
             let x = self.target.pop().unwrap();
 
-            let mut result : Vec<(Slot, &'a Data)> = x.result;
+            let mut result : Vec<(Slot, &'a Data)> = x.captures;
             let mut q : Vec<(Pattern, &'a Data)> = x.q;
 
             q.push((x.pattern, x.data));
@@ -118,7 +118,7 @@ impl<'a> Iterator for MatchResults<'a> {
                                     for next in nexts {
                                         let jabber = ps[pi + 1 ..].iter().map(|x| x.clone()).collect::<Vec<_>>();
                                         let mut env = Env::new(Pattern::Path(jabber), next); // TODO 
-                                        env.result = result.clone();
+                                        env.captures = result.clone();
                                         env.q = q.clone();
                                         self.target.push(env);
                                     }
