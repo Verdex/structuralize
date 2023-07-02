@@ -41,9 +41,9 @@ impl<'a> Iterator for MatchResults<'a> {
             match_queue.push((current_state.pattern, current_state.data));
 
             while match_queue.len() > 0 {
-                let target = match_queue.pop().unwrap();
+                let current_match = match_queue.pop().unwrap();
 
-                match target {
+                match current_match {
                     (Pattern::CaptureVar(name), data) => {
                         captures.push((name.into(), data));
                     },
