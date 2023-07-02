@@ -35,7 +35,7 @@ impl<'a> Iterator for MatchResults<'a> {
 
             let x = self.target.pop().unwrap();
 
-            let mut result : Vec<(Slot, &'a Data)> = x.captures;
+            let mut captures : Vec<(Slot, &'a Data)> = x.captures;
             let mut q : Vec<(Pattern, &'a Data)> = x.q;
 
             q.push((x.pattern, x.data));
@@ -45,7 +45,7 @@ impl<'a> Iterator for MatchResults<'a> {
 
                 match target {
                     (Pattern::CaptureVar(name), data) => {
-                        result.push((name.into(), data));
+                        captures.push((name.into(), data));
                     },
                     (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
                         
@@ -77,7 +77,7 @@ impl<'a> Iterator for MatchResults<'a> {
                     (Pattern::String(p), Data::String(d)) if p == *d => { },
                     (Pattern::Symbol(p), Data::Symbol(d)) if p == *d => { },
                     (Pattern::PathNext, data) => {
-                        result.push((Slot::Next(self.next_id), data));
+                        captures.push((Slot::Next(self.next_id), data));
                         self.next_id += 1;
                     },
                     (Pattern::Path(ps), data) => {
@@ -102,7 +102,7 @@ impl<'a> Iterator for MatchResults<'a> {
 
                                 let mut zzz = blarg0.clone().extract(); // TODO not so much with clone
 
-                                result.append(&mut zzz);
+                                captures.append(&mut zzz);
 
                                 // TODO make sure that the type checker makes sure that each path pattern
                                 // has at least one next except the last one which should have none
@@ -118,7 +118,7 @@ impl<'a> Iterator for MatchResults<'a> {
                                     for next in nexts {
                                         let jabber = ps[pi + 1 ..].iter().map(|x| x.clone()).collect::<Vec<_>>();
                                         let mut env = State::new(Pattern::Path(jabber), next); // TODO 
-                                        env.captures = result.clone();
+                                        env.captures = captures.clone();
                                         env.q = q.clone();
                                         self.target.push(env);
                                     }
@@ -139,7 +139,7 @@ impl<'a> Iterator for MatchResults<'a> {
                 }
             }
 
-            return Some(result.into());
+            return Some(captures.into());
         }
     }
 }
