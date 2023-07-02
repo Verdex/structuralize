@@ -66,10 +66,10 @@ impl<'a> Iterator for MatchResults<'a> {
                         let mut to_match = pfields.into_iter().zip(dfields.iter()).map(|((_, p), (_, d))| (p, d)).collect::<Vec<_>>();
                         match_queue.append(&mut to_match);
                     },
-                    (Pattern::Cons {name: pname, params: pparam}, Data::Cons {name: dname, params: dparam}) 
-                        if pname == *dname && pparam.len() == dparam.len() => {
+                    (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
+                        if pname == *dname && pparams.len() == dparams.len() => {
 
-                        let mut to_match = pparam.into_iter().zip(dparam.iter()).collect::<Vec<_>>();
+                        let mut to_match = pparams.into_iter().zip(dparams.iter()).collect::<Vec<_>>();
                         match_queue.append(&mut to_match);
                     },
                     (Pattern::Wild, _) => { },
