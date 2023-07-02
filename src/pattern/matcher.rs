@@ -20,7 +20,7 @@ impl<'a> State<'a> {
 }
 
 pub struct MatchResults<'a> {
-    target : Vec<State<'a>>,
+    match_states : Vec<State<'a>>,
     next_id : usize,
 }
 
@@ -29,11 +29,11 @@ impl<'a> Iterator for MatchResults<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         'outer : loop {
-            if self.target.len() == 0 {
+            if self.match_states.len() == 0 {
                 return None;
             }
 
-            let x = self.target.pop().unwrap();
+            let x = self.match_states.pop().unwrap();
 
             let mut captures : Vec<(Slot, &'a Data)> = x.captures;
             let mut match_queue : Vec<(Pattern, &'a Data)> = x.match_queue;
@@ -120,7 +120,7 @@ impl<'a> Iterator for MatchResults<'a> {
                                         let mut env = State::new(Pattern::Path(jabber), next); // TODO 
                                         env.captures = captures.clone();
                                         env.match_queue = match_queue.clone();
-                                        self.target.push(env);
+                                        self.match_states.push(env);
                                     }
                                     other = first_next;
                                 }
@@ -145,7 +145,7 @@ impl<'a> Iterator for MatchResults<'a> {
 }
 
 pub fn pattern_match<'a>(pattern : Pattern, data : &'a Data) -> MatchResults<'a> {
-    MatchResults { target : vec![State::new(pattern, data)], next_id: 0 }
+    MatchResults { match_states : vec![State::new(pattern, data)], next_id: 0 }
 }
 
 #[cfg(test)] 
