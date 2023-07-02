@@ -33,12 +33,12 @@ impl<'a> Iterator for MatchResults<'a> {
                 return None;
             }
 
-            let x = self.match_states.pop().unwrap();
+            let current_state = self.match_states.pop().unwrap();
 
-            let mut captures : Vec<(Slot, &'a Data)> = x.captures;
-            let mut match_queue : Vec<(Pattern, &'a Data)> = x.match_queue;
+            let mut captures : Vec<(Slot, &'a Data)> = current_state.captures;
+            let mut match_queue : Vec<(Pattern, &'a Data)> = current_state.match_queue;
 
-            match_queue.push((x.pattern, x.data));
+            match_queue.push((current_state.pattern, current_state.data));
 
             while match_queue.len() > 0 {
                 let target = match_queue.pop().unwrap();
