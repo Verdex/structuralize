@@ -6,21 +6,21 @@ use super::data::*;
 
 // TODO:  phantom type type checked patterns
 
-struct Env<'a> {
+struct State<'a> {
     pattern : Pattern,
     data : &'a Data,
     captures : Vec<(Slot, &'a Data)>,
     q : Vec<(Pattern, &'a Data)>,
 }
 
-impl<'a> Env<'a> {
-    pub fn new(pattern: Pattern, data: &'a Data) -> Env<'a> {
-        Env { pattern, data, captures : vec![], q : vec![] }
+impl<'a> State<'a> {
+    pub fn new(pattern: Pattern, data: &'a Data) -> State<'a> {
+        State { pattern, data, captures : vec![], q : vec![] }
     }
 }
 
 pub struct MatchResults<'a> {
-    target : Vec<Env<'a>>,
+    target : Vec<State<'a>>,
     next_id : usize,
 }
 
@@ -117,7 +117,7 @@ impl<'a> Iterator for MatchResults<'a> {
                                     // of typecheck error
                                     for next in nexts {
                                         let jabber = ps[pi + 1 ..].iter().map(|x| x.clone()).collect::<Vec<_>>();
-                                        let mut env = Env::new(Pattern::Path(jabber), next); // TODO 
+                                        let mut env = State::new(Pattern::Path(jabber), next); // TODO 
                                         env.captures = result.clone();
                                         env.q = q.clone();
                                         self.target.push(env);
@@ -145,7 +145,7 @@ impl<'a> Iterator for MatchResults<'a> {
 }
 
 pub fn pattern_match<'a>(pattern : Pattern, data : &'a Data) -> MatchResults<'a> {
-    MatchResults { target : vec![Env::new(pattern, data)], next_id: 0 }
+    MatchResults { target : vec![State::new(pattern, data)], next_id: 0 }
 }
 
 #[cfg(test)] 
