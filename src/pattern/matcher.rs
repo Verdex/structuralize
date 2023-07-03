@@ -87,20 +87,20 @@ impl<'a> Iterator for MatchResults<'a> {
 
                         while pi < ps.len() {
                             
-                            let mut blarg = pattern_match(ps[pi].clone(), data).collect::<Vec<_>>(); // is collect right here?
+                            let mut internal_match_results = pattern_match(ps[pi].clone(), data).collect::<Vec<_>>(); // is collect right here?
 
-                            if blarg.len() == 0 {
+                            if internal_match_results.len() == 0 {
                                 // nothing matches
                                 continue 'outer;
                             }
-                            else if blarg.len() == 1 {
-                                let blarg0 = &mut blarg[0];
+                            else if internal_match_results.len() == 1 {
+                                let mut result = internal_match_results.pop().unwrap();
 
-                                let mut nexts = blarg0.extract_nexts();
+                                let mut nexts = result.extract_nexts();
 
-                                let mut zzz = blarg0.clone().extract(); // TODO not so much with clone
+                                let mut internal_captures = result.clone().extract(); // TODO not so much with clone
 
-                                captures.append(&mut zzz);
+                                captures.append(&mut internal_captures);
 
                                 // TODO make sure that the type checker makes sure that each path pattern
                                 // has at least one next except the last one which should have none
