@@ -115,10 +115,10 @@ impl<'a> Iterator for MatchResults<'a> {
                                     // of typecheck error
                                     for next in nexts {
                                         let jabber = ps[pi + 1 ..].iter().map(|x| x.clone()).collect::<Vec<_>>();
-                                        let mut env = State::new(Pattern::Path(jabber), next); // TODO 
-                                        env.captures = captures.clone();
-                                        env.match_queue = match_queue.clone();
-                                        self.match_states.push(env);
+                                        let mut state = State::new(Pattern::Path(jabber), next); // TODO 
+                                        state.captures = captures.clone();
+                                        state.match_queue = match_queue.clone();
+                                        self.match_states.push(state);
                                     }
                                     data = first_next;
                                 }
