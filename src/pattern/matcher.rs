@@ -92,8 +92,14 @@ impl<'a> Iterator for MatchResults<'a> {
                     (Pattern::PathNext, data) => {
                         captures.push((Slot::Next(self.next_id), data));
                         self.next_id += 1;
+                        // TODO once you have a next you need to communicate that to the next match result 
+                        // (which has to be a non-conrete ToMatch)
+                        // ALSO you need to clear out the other nexts (which is potentially nebulous) and store them off
+                        // in the match states
                     },
                     (Pattern::Path(ps), mut data) => {
+                        // TODO something like reverse ps and append to match queue
+
                         // TODO clean up this clause
 
                         let mut pi = 0;
@@ -169,6 +175,8 @@ mod test {
     }
 
     // TODO : path pattern that has path patterns inside of it (needs more impl before this will work)
+
+    // TODO : {| cons(cons(^, ^), ^), [^], x |}
 
     #[test]
     fn should_match_only_valid_paths() {
