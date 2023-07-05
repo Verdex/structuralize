@@ -176,7 +176,23 @@ mod test {
 
     // TODO : path pattern that has path patterns inside of it (needs more impl before this will work)
 
-    // TODO : {| cons(cons(^, ^), ^), [^], x |}
+    #[test]
+    fn should_match_nested_nexts_in_path() {
+        let pattern = p("{| cons(cons(^, ^), ^), [^], x |}");
+        let data : Data = "cons(cons([:a], [:b]), [:c])".parse().unwrap();
+
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 3);
+
+        let observed = results[0].get(&"x".into()).unwrap();
+        assert_eq!(observed, &":c".parse::<Data>().unwrap());
+
+        let observed = results[1].get(&"x".into()).unwrap();
+        assert_eq!(observed, &":a".parse::<Data>().unwrap());
+
+        let observed = results[2].get(&"x".into()).unwrap();
+        assert_eq!(observed, &":b".parse::<Data>().unwrap());
+    }
 
     #[test]
     fn should_match_only_valid_paths() {
