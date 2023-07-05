@@ -6,11 +6,22 @@ use super::data::*;
 
 // TODO:  phantom type type checked patterns
 
+#[derive(Clone)]
+enum ToMatch<'a> {
+    Concrete { pattern : Pattern, data : &'a Data}
+}
+
+impl<'a> From<(Pattern, &'a Data)> for ToMatch<'a> {
+    fn from(item : (Pattern, &'a Data)) -> Self {
+        ToMatch::Concrete { pattern: item.0, data: item.1 }
+    }
+}
+
 struct State<'a> {
     pattern : Pattern,
     data : &'a Data,
     captures : Vec<(Slot, &'a Data)>,
-    match_queue : Vec<(Pattern, &'a Data)>,
+    match_queue : Vec<ToMatch<'a>>,
 }
 
 impl<'a> State<'a> {
@@ -36,12 +47,14 @@ impl<'a> Iterator for MatchResults<'a> {
             let current_state = self.match_states.pop().unwrap();
 
             let mut captures : Vec<(Slot, &'a Data)> = current_state.captures;
-            let mut match_queue : Vec<(Pattern, &'a Data)> = current_state.match_queue;
+            let mut match_queue : Vec<ToMatch<'a>> = current_state.match_queue;
 
-            match_queue.push((current_state.pattern, current_state.data));
+            match_queue.push((current_state.pattern, current_state.data).into());
 
             while match_queue.len() > 0 {
-                let current_match = match_queue.pop().unwrap();
+                let current_match = match match_queue.pop().unwrap() {
+                    ToMatch::Concrete { pattern, data } => (pattern, data),
+                };
 
                 match current_match {
                     (Pattern::CaptureVar(name), data) => {
@@ -49,7 +62,7 @@ impl<'a> Iterator for MatchResults<'a> {
                     },
                     (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
                         
-                        let mut to_match = ps.into_iter().zip(ds.iter()).collect::<Vec<_>>();
+                        let mut to_match = ps.into_iter().zip(ds.iter()).map(|x| x.into()).collect::<Vec<_>>();
                         match_queue.append(&mut to_match);
                     },
                     (Pattern::Struct { name: pname, fields: pfields }, Data::Struct { name: dname, fields: dfields } )
@@ -63,13 +76,13 @@ impl<'a> Iterator for MatchResults<'a> {
                             }
                         }
 
-                        let mut to_match = pfields.into_iter().zip(dfields.iter()).map(|((_, p), (_, d))| (p, d)).collect::<Vec<_>>();
+                        let mut to_match = pfields.into_iter().zip(dfields.iter()).map(|((_, p), (_, d))| (p, d).into()).collect::<Vec<_>>();
                         match_queue.append(&mut to_match);
                     },
                     (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
                         if pname == *dname && pparams.len() == dparams.len() => {
 
-                        let mut to_match = pparams.into_iter().zip(dparams.iter()).collect::<Vec<_>>();
+                        let mut to_match = pparams.into_iter().zip(dparams.iter()).map(|x| x.into()).collect::<Vec<_>>();
                         match_queue.append(&mut to_match);
                     },
                     (Pattern::Wild, _) => { },
