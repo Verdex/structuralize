@@ -336,6 +336,21 @@ mod test {
     }
 
     #[test]
+    fn should_match_path_with_capture() {
+        let pattern = p("{| cons(^, a), [^], x |}");
+        let data : Data = "cons([:a], 1.1)".parse().unwrap();
+
+        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        assert_eq!(results.len(), 1);
+
+        let observed = results[0].get(&"a".into()).unwrap();
+        assert_eq!(observed, &"1.1".parse::<Data>().unwrap());
+
+        let observed = results[0].get(&"x".into()).unwrap();
+        assert_eq!(observed, &":a".parse::<Data>().unwrap());
+    }
+    
+    #[test]
     fn should_match_path_with_cons_and_list() {
         let pattern = p("{| cons(^, _), [^], x |}");
         let data : Data = "cons([:a], 1.1)".parse().unwrap();
