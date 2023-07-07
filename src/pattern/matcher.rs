@@ -52,8 +52,6 @@ impl<'a> Iterator for MatchResults<'a> {
                     Some(ToMatch::Concrete { pattern, data }) => (pattern, data),
                 };
                 
-                println!("{:?}\n\n", match_queue);
-
                 match current_match {
                     (Pattern::CaptureVar(name), data) => {
                         captures.push((name.into(), data));
