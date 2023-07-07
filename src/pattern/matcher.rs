@@ -6,7 +6,7 @@ use super::data::*;
 
 // TODO:  phantom type type checked patterns
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 enum ToMatch<'a> {
     Concrete { pattern : Pattern, data : &'a Data },
     NextSkipPoint,
@@ -51,6 +51,8 @@ impl<'a> Iterator for MatchResults<'a> {
                     Some(ToMatch::FromPreviousNext { pattern, data: Some(data) }) => (pattern, data),
                     Some(ToMatch::Concrete { pattern, data }) => (pattern, data),
                 };
+                
+                println!("{:?}\n\n", match_queue);
 
                 match current_match {
                     (Pattern::CaptureVar(name), data) => {
@@ -86,16 +88,20 @@ impl<'a> Iterator for MatchResults<'a> {
                     (Pattern::String(p), Data::String(d)) if p == *d => { },
                     (Pattern::Symbol(p), Data::Symbol(d)) if p == *d => { },
                     (Pattern::PathNext, data) => {
-                        captures.push((Slot::Next(self.next_id), data));
-                        self.next_id += 1;
+                        /*captures.push((Slot::Next(self.next_id), data));
+                        self.next_id += 1;*/
 
                         // TODO once you have a next you need to communicate that to the next match result 
                         // (which has to be a non-conrete ToMatch)
                         // ALSO you need to clear out the other nexts (which is potentially nebulous) and store them off
                         // in the match states
 
-                        /*let cap = captures.clone();
-                        let mut mq = match_queue.clone();
+                        // TODO this is going to be a problem because eventually you get to the last PathNext and 
+                        // then there's no point to have another match state
+                        let cap = captures.clone();
+                        let mq = match_queue.clone();
+
+                        self.match_states.push(State { match_queue: mq, captures: cap });
 
                         loop { 
                             match match_queue.pop() {
@@ -105,35 +111,29 @@ impl<'a> Iterator for MatchResults<'a> {
                             }
                         }
 
-                        let z = match_queue.len() - 1; // TODO
-                        match &mut match_queue[z] {
-                            ToMatch::FromPreviousNext { data: ref mut d, .. } => {
-                                *d = Some(data); // TODO ?
-                            },
-                            _ => unreachable!(),
+                        for item in match_queue.iter_mut().rev() {
+                            match item {
+                                ToMatch::FromPreviousNext { data: ref mut d, .. } => {
+                                    *d = Some(data); // TODO ?
+                                    break;
+                                },
+                                _ => { },
+                            }
                         }
 
-
-
-                        let (new_p, new_d) = match mq.pop() {
-                            // TODO impossible? None => { break 'current_match_loop; },
-                            // TODO impossible? Some(ToMatch::NextSkipPoint) => { continue 'current_match_loop; },
-                            Some(ToMatch::FromPreviousNext { pattern: _, data: None }) => { unreachable!(); },
-                            Some(ToMatch::FromPreviousNext { pattern, data: Some(data) }) => (pattern, data),
-                            Some(ToMatch::Concrete { pattern, data }) => (pattern, data),
-                            _ => unreachable!(),
-                        };
-                        
-                        let mut state = State::new(new_p, new_d);
-                        state.captures = cap;
-                        state.match_queue = mq;
-                        self.match_states.push(state);*/
+                            /*let z = match_queue.len() - 1; // TODO
+                            match &mut match_queue[z] {
+                                ToMatch::FromPreviousNext { data: ref mut d, .. } => {
+                                    *d = Some(data); // TODO ?
+                                },
+                                _ => unreachable!(),
+                            }*/
                     },
                     (Pattern::Path(ps), data) if ps.len() == 0 => { },
-                    (Pattern::Path(ps), mut data) => {
+                    (Pattern::Path(ps), data) => {
                         // TODO something like reverse ps and append to match queue
 
-                        /*let mut x = ps.into_iter()
+                        let mut x = ps.into_iter()
                                   .rev()
                                   .flat_map(|pattern| [ToMatch::FromPreviousNext {pattern, data: None}, ToMatch::NextSkipPoint])
                                   .collect::<Vec<_>>();
@@ -148,11 +148,11 @@ impl<'a> Iterator for MatchResults<'a> {
                             _ => unreachable!(),
                         }
 
-                        match_queue.append(&mut x);*/
+                        match_queue.append(&mut x);
 
                         // TODO clean up this clause
 
-                        let mut pi = 0;
+                        /*let mut pi = 0;
 
                         while pi < ps.len() {
                             
@@ -200,6 +200,7 @@ impl<'a> Iterator for MatchResults<'a> {
 
                             pi += 1;
                         }
+                        */
                     },
                     _ => {
                         continue 'outer;
