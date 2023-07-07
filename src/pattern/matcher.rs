@@ -20,8 +20,6 @@ impl<'a> From<(Pattern, &'a Data)> for ToMatch<'a> {
 }
 
 struct State<'a> {
-    //pattern : Pattern,
-    //data : &'a Data,
     captures : Vec<(Slot, &'a Data)>,
     match_queue : Vec<ToMatch<'a>>,
 }
@@ -44,9 +42,6 @@ impl<'a> Iterator for MatchResults<'a> {
 
             let mut captures : Vec<(Slot, &'a Data)> = current_state.captures;
             let mut match_queue : Vec<ToMatch<'a>> = current_state.match_queue;
-
-            // TODO we can skip this if we put these two things at the next of the queue
-            //match_queue.push((current_state.pattern, current_state.data).into());
 
             'current_match_loop : loop {
                 let current_match = match match_queue.pop() {
@@ -189,13 +184,10 @@ impl<'a> Iterator for MatchResults<'a> {
                                     // of typecheck error
                                     for next in nexts {
                                         let jabber = ps[pi + 1 ..].iter().map(|x| x.clone()).collect::<Vec<_>>();
-                                        //let mut state = State::new(Pattern::Path(jabber), next); // TODO 
 
                                         let mut mq = match_queue.clone();
                                         mq.push(ToMatch::Concrete { pattern: Pattern::Path(jabber), data: next });
 
-                                        //state.captures = captures.clone();
-                                        //state.match_queue = match_queue.clone();
                                         self.match_states.push(State { captures: captures.clone(), match_queue: mq });
                                     }
                                     data = first_next;
@@ -221,7 +213,6 @@ impl<'a> Iterator for MatchResults<'a> {
 }
 
 pub fn pattern_match<'a>(pattern : Pattern, data : &'a Data) -> MatchResults<'a> {
-    //MatchResults { match_states : vec![State::new(pattern, data)], next_id: 0 }
     MatchResults { match_states : vec![State { match_queue: vec![ToMatch::Concrete { pattern, data }], captures: vec![] }]
                  , next_id: 0 
                  }
