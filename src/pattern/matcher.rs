@@ -20,16 +20,10 @@ impl<'a> From<(Pattern, &'a Data)> for ToMatch<'a> {
 }
 
 struct State<'a> {
-    pattern : Pattern,
-    data : &'a Data,
+    //pattern : Pattern,
+    //data : &'a Data,
     captures : Vec<(Slot, &'a Data)>,
     match_queue : Vec<ToMatch<'a>>,
-}
-
-impl<'a> State<'a> {
-    pub fn new(pattern: Pattern, data: &'a Data) -> State<'a> {
-        State { pattern, data, captures : vec![], match_queue : vec![] }
-    }
 }
 
 pub struct MatchResults<'a> {
@@ -52,7 +46,7 @@ impl<'a> Iterator for MatchResults<'a> {
             let mut match_queue : Vec<ToMatch<'a>> = current_state.match_queue;
 
             // TODO we can skip this if we put these two things at the next of the queue
-            match_queue.push((current_state.pattern, current_state.data).into());
+            //match_queue.push((current_state.pattern, current_state.data).into());
 
             'current_match_loop : loop {
                 let current_match = match match_queue.pop() {
@@ -97,15 +91,15 @@ impl<'a> Iterator for MatchResults<'a> {
                     (Pattern::String(p), Data::String(d)) if p == *d => { },
                     (Pattern::Symbol(p), Data::Symbol(d)) if p == *d => { },
                     (Pattern::PathNext, data) => {
-                        /*captures.push((Slot::Next(self.next_id), data));
-                        self.next_id += 1;*/
+                        captures.push((Slot::Next(self.next_id), data));
+                        self.next_id += 1;
 
                         // TODO once you have a next you need to communicate that to the next match result 
                         // (which has to be a non-conrete ToMatch)
                         // ALSO you need to clear out the other nexts (which is potentially nebulous) and store them off
                         // in the match states
 
-                        let cap = captures.clone();
+                        /*let cap = captures.clone();
                         let mut mq = match_queue.clone();
 
                         loop { 
@@ -138,13 +132,13 @@ impl<'a> Iterator for MatchResults<'a> {
                         let mut state = State::new(new_p, new_d);
                         state.captures = cap;
                         state.match_queue = mq;
-                        self.match_states.push(state);
+                        self.match_states.push(state);*/
                     },
                     (Pattern::Path(ps), data) if ps.len() == 0 => { },
-                    (Pattern::Path(ps), data) => {
+                    (Pattern::Path(ps), mut data) => {
                         // TODO something like reverse ps and append to match queue
 
-                        let mut x = ps.into_iter()
+                        /*let mut x = ps.into_iter()
                                   .rev()
                                   .flat_map(|pattern| [ToMatch::FromPreviousNext {pattern, data: None}, ToMatch::NextSkipPoint])
                                   .collect::<Vec<_>>();
@@ -159,9 +153,8 @@ impl<'a> Iterator for MatchResults<'a> {
                             _ => unreachable!(),
                         }
 
-                        match_queue.append(&mut x);
+                        match_queue.append(&mut x);*/
 
-                        /*
                         // TODO clean up this clause
 
                         let mut pi = 0;
@@ -196,10 +189,14 @@ impl<'a> Iterator for MatchResults<'a> {
                                     // of typecheck error
                                     for next in nexts {
                                         let jabber = ps[pi + 1 ..].iter().map(|x| x.clone()).collect::<Vec<_>>();
-                                        let mut state = State::new(Pattern::Path(jabber), next); // TODO 
-                                        state.captures = captures.clone();
-                                        state.match_queue = match_queue.clone();
-                                        self.match_states.push(state);
+                                        //let mut state = State::new(Pattern::Path(jabber), next); // TODO 
+
+                                        let mut mq = match_queue.clone();
+                                        mq.push(ToMatch::Concrete { pattern: Pattern::Path(jabber), data: next });
+
+                                        //state.captures = captures.clone();
+                                        //state.match_queue = match_queue.clone();
+                                        self.match_states.push(State { captures: captures.clone(), match_queue: mq });
                                     }
                                     data = first_next;
                                 }
@@ -211,7 +208,6 @@ impl<'a> Iterator for MatchResults<'a> {
 
                             pi += 1;
                         }
-                        */
                     },
                     _ => {
                         continue 'outer;
@@ -225,7 +221,10 @@ impl<'a> Iterator for MatchResults<'a> {
 }
 
 pub fn pattern_match<'a>(pattern : Pattern, data : &'a Data) -> MatchResults<'a> {
-    MatchResults { match_states : vec![State::new(pattern, data)], next_id: 0 }
+    //MatchResults { match_states : vec![State::new(pattern, data)], next_id: 0 }
+    MatchResults { match_states : vec![State { match_queue: vec![ToMatch::Concrete { pattern, data }], captures: vec![] }]
+                 , next_id: 0 
+                 }
 }
 
 #[cfg(test)] 
