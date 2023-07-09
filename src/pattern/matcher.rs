@@ -5,6 +5,7 @@ use crate::data::*;
 use super::data::*;
 
 // TODO:  phantom type type checked patterns
+// * in a path each step needs at least one next except for the last one which cannot have any nexts
 
 #[derive(Debug, Clone)]
 enum ToMatch<'a> {
