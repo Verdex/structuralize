@@ -82,29 +82,6 @@ impl<'a> MatchResult<'a> {
     pub fn add(&mut self, key : Slot, value : &'a Data) {
         self.map.insert(key, value);
     }
-
-    pub fn extract(self) -> Vec<(Slot, &'a Data)> {
-        self.map.into_iter().collect()
-    }
-
-    pub fn extract_nexts(&mut self) -> Vec<&'a Data> {
-        fn proj<'a>(x : &'a Slot) -> &'a usize {
-            if let Slot::Next(u) = x {
-                u
-            }
-            else {
-                panic!("extract_nexts::proj not a Slot::Next");
-            }
-        }
-        let nexts = self.map.keys().filter(|k| matches!(k, Slot::Next(_))).map(|k| k.clone()).collect::<Vec<_>>();
-        let mut ret = vec![];
-        for next in nexts {
-            let data = self.map.remove(&next).unwrap();
-            ret.push((next, data));
-        }
-        ret.sort_by(|(a, _), (b, _)| proj(a).cmp(proj(b)));
-        ret.into_iter().map(|(_, x)| x).collect()
-    }
 }
 
 impl<'a, const N : usize> From<[(Slot, &'a Data); N]> for MatchResult<'a> {
@@ -123,7 +100,6 @@ impl<'a> From<Vec<(Slot, &'a Data)>> for MatchResult<'a> {
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Slot {
-    Next(usize),
     Symbol(Box<str>),
     Path(Vec<Box<str>>),
 }
@@ -131,7 +107,6 @@ pub enum Slot {
 impl Display for Slot {
     fn fmt(&self, f : &mut Formatter) -> std::fmt::Result {
         match self {
-            Slot::Next(x) => write!(f, "~Next({})~", x),
             Slot::Symbol(s) => write!(f, "{}", s),
             Slot::Path(s) => write!(f, "{}", s.join(".")),
         }
