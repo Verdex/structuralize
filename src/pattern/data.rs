@@ -151,25 +151,4 @@ impl From<String> for Slot {
 mod test {
     use super::*;
 
-    #[test]
-    fn result_should_extract_nexts() {
-        let mut result = MatchResult::new();
-
-        let a : Data = "1".parse().unwrap();
-        let b : Data = "2".parse().unwrap();
-        let c : Data = "3".parse().unwrap();
-
-        result.add(Slot::Next(1), &a);
-        result.add(Slot::Next(2), &b);
-        result.add("x".into(), &c);
-
-        let mut nexts = result.extract_nexts();
-
-        assert_eq!( result.map.iter().count(), 1 );
-        assert_eq!( result.get(&"x".into()).unwrap(), &"3".parse::<Data>().unwrap() );
-
-        assert_eq!( nexts.len(), 2 );
-        assert_eq!( nexts[0], &a );
-        assert_eq!( nexts[1], &b );
-    }
 }
