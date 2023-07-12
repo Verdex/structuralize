@@ -12,16 +12,24 @@ pub struct MatchResults<'a, 'b> {
     data : &'b Data,
 }
 
-#[derive(Debug, Clone)]
-pub enum DataPattern {
-    CaptureVar(Box<str>),
-    Cons { name: Box<str>, params: Vec<Pattern> },
+#[derive(Debug)]
+pub enum DataPattern<'a> {
+    CaptureVar(Box<str>, &'a Data),
+    Cons { name: Box<str>, params: Vec<DataPattern<'a>> },
 }
+
+fn blarg<'a>(pattern : &Pattern, data : &'a Data) -> Option<DataPattern<'a>> {
+    match (pattern, data) { 
+    }
+}
+
 
 impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
     type Item = MatchResult<'b>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        let pattern = self.pattern;
+        let data = self.data;
         None
     }
 }
