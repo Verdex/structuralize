@@ -16,7 +16,7 @@ pub struct MatchResults<'a, 'b> {
 #[derive(Debug)]
 enum DataPattern<'a> {
     CaptureVar(Box<str>, &'a Data),
-    Cons { name: Box<str>, params: Vec<DataPattern<'a>> },
+    Blarg( Vec<DataPattern<'a>> ),
 }
 
 enum JoinResult<'a> {
@@ -51,15 +51,18 @@ fn join<'a>(pattern : &Pattern, data : &'a Data) -> JoinResult<'a> {
             match_queue.append(&mut to_match);
         },*/
         (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
-            if pname == dname && pparams.len() == dparams.len() => JoinResult::Fail, // TODO
-            
-            /*{
+            if pname == dname && pparams.len() == dparams.len() => {
 
-            pparams.iter().zip(dparams.iter()).map(|x|)
-
-            let mut to_match = pparams.into_iter().zip(dparams.iter()).map(|x| x.into()).collect::<Vec<_>>();
-            match_queue.append(&mut to_match);
-        },*/
+            let mut ret = vec![];
+            for (p, d) in pparams.iter().zip(dparams.iter()) {
+                match join(p, d) {
+                    JoinResult::Pass => { },
+                    JoinResult::Fail => { return JoinResult::Fail; },
+                    JoinResult::Join(dp) => { ret.push(dp); },
+                }
+            }
+            JoinResult::Join(DataPattern::Blarg(ret))
+        },
         (Pattern::Wild, _) => JoinResult::Pass,
         (Pattern::Number(p), Data::Number(d)) if p == d => JoinResult::Pass,
         (Pattern::String(p), Data::String(d)) if p == d => JoinResult::Pass,
