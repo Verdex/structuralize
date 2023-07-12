@@ -10,16 +10,69 @@ use super::data::*;
 pub struct MatchResults<'a, 'b> {
     pattern : &'a Pattern,
     data : &'b Data,
+    stop : bool // TODO
 }
 
 #[derive(Debug)]
-pub enum DataPattern<'a> {
+enum DataPattern<'a> {
     CaptureVar(Box<str>, &'a Data),
     Cons { name: Box<str>, params: Vec<DataPattern<'a>> },
 }
 
-fn blarg<'a>(pattern : &Pattern, data : &'a Data) -> Option<DataPattern<'a>> {
+enum JoinResult<'a> {
+    Pass,
+    Fail,
+    Join(DataPattern<'a>)
+}
+
+fn join<'a>(pattern : &Pattern, data : &'a Data) -> JoinResult<'a> {
     match (pattern, data) { 
+        (Pattern::CaptureVar(name), data) => JoinResult::Join(DataPattern::CaptureVar(name.clone(), data)),
+        (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => JoinResult::Fail, // TODO
+        /*{
+            
+            let mut to_match = ps.into_iter().zip(ds.iter()).map(|x| x.into()).collect::<Vec<_>>();
+            match_queue.append(&mut to_match);
+        },*/
+        (Pattern::Struct { name: pname, fields: pfields }, Data::Struct { name: dname, fields: dfields } )
+            if pname == dname && pfields.len() == dfields.len() => JoinResult::Fail, // TODO
+            
+            /*{
+
+            for (p_field_name, d_field_name) in pfields.iter()
+                                                        .zip(dfields.iter())
+                                                        .map(|((p, _), (d, _))| (p, d)) {
+                if p_field_name != d_field_name {
+                    continue 'outer;
+                }
+            }
+
+            let mut to_match = pfields.into_iter().zip(dfields.iter()).map(|((_, p), (_, d))| (p, d).into()).collect::<Vec<_>>();
+            match_queue.append(&mut to_match);
+        },*/
+        (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
+            if pname == dname && pparams.len() == dparams.len() => JoinResult::Fail, // TODO
+            
+            /*{
+
+            pparams.iter().zip(dparams.iter()).map(|x|)
+
+            let mut to_match = pparams.into_iter().zip(dparams.iter()).map(|x| x.into()).collect::<Vec<_>>();
+            match_queue.append(&mut to_match);
+        },*/
+        (Pattern::Wild, _) => JoinResult::Pass,
+        (Pattern::Number(p), Data::Number(d)) if p == d => JoinResult::Pass,
+        (Pattern::String(p), Data::String(d)) if p == d => JoinResult::Pass,
+        (Pattern::Symbol(p), Data::Symbol(d)) if p == d => JoinResult::Pass, 
+        /*(Pattern::PathNext, data) => {
+            captures.push((Slot::Next(self.next_id), data));
+            self.next_id += 1;
+        },*/
+        (Pattern::Path(ps), data) if ps.len() == 0 => JoinResult::Pass,
+        /*(Pattern::Path(ps), data) => {
+    
+        },*/
+        _ => JoinResult::Fail,
     }
 }
 
@@ -28,14 +81,19 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
     type Item = MatchResult<'b>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        if self.stop { return None; }
         let pattern = self.pattern;
         let data = self.data;
-        None
+        match join(&pattern, &data) {
+            JoinResult::Fail => None,
+            JoinResult::Pass => { self.stop = true; Some(MatchResult::new()) }, // TODO 
+            JoinResult::Join(data_pattern) => { self.stop = true; Some(MatchResult::new()) }, // TODO 
+        }
     }
 }
 
 pub fn pattern_match<'a, 'b>(pattern : &'a Pattern, data : &'b Data) -> MatchResults<'a, 'b> {
-    MatchResults { pattern, data }
+    MatchResults { pattern, data, stop : false }
 }
 
 #[cfg(test)] 
@@ -48,7 +106,6 @@ mod test {
     }
 
     // TODO : path pattern that has path patterns inside of it (needs more impl before this will work)
-
     #[test]
     fn should_match_nested_nexts_in_path() {
         let pattern = p("{| cons(cons(^, ^), ^), [^], x |}");
