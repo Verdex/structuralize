@@ -33,26 +33,6 @@ pub enum Pattern {
     // TODO less than or equal pattern
 }
 
-impl Pattern {
-    pub fn contains_relevant_path_next(&self) -> bool {
-        use Pattern::*;
-        match self {
-            PathNext => true,
-            RestList(ps, p) => p.contains_relevant_path_next() || ps.iter().any(|x| x.contains_relevant_path_next()),
-            ExactList(ps) => ps.iter().any(|x| x.contains_relevant_path_next()),
-            Struct { fields, .. } => fields.iter().any(|(_,x)| x.contains_relevant_path_next()),
-            Cons { params, .. } => params.iter().any(|p| p.contains_relevant_path_next()),
-            CaptureVar(_) => false,
-            Wild => false,
-            Symbol(_) => false,
-            String(_) => false,
-            String(_) => false,
-            Number(_) => false,
-            Path(_) => false, // any nexts here will be used for that path
-        }
-    }
-}
-
 // TODO a pattern that captures something probably shouldn't be allowed to convert that data into a pattern literal
 // and then use that as a reference other pattern in a later part of the pattern
 // specifically because that could depend on the evaluation order of the pattern as a whole 
