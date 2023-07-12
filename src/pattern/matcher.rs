@@ -8,6 +8,8 @@ use super::data::*;
 // * in a path each step needs at least one next except for the last one which cannot have any nexts
 
 pub struct MatchResults<'a, 'b> {
+    pattern : &'a Pattern,
+    data : &'b Data,
 }
 
 #[derive(Debug, Clone)]
@@ -17,14 +19,15 @@ pub enum DataPattern {
 }
 
 impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
-    type Item = MatchResult<'a>;
+    type Item = MatchResult<'b>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        None
     }
 }
 
 pub fn pattern_match<'a, 'b>(pattern : &'a Pattern, data : &'b Data) -> MatchResults<'a, 'b> {
-
+    MatchResults { pattern, data }
 }
 
 #[cfg(test)] 
