@@ -7,158 +7,24 @@ use super::data::*;
 // TODO:  phantom type type checked patterns
 // * in a path each step needs at least one next except for the last one which cannot have any nexts
 
+pub struct MatchResults<'a, 'b> {
+}
+
 #[derive(Debug, Clone)]
-enum ToMatch<'a> {
-    Concrete { pattern : Pattern, data : &'a Data },
-    NextSkipPoint,
-    FromPreviousNext { pattern : Pattern, data : Option<&'a Data> },
+pub enum DataPattern {
+    CaptureVar(Box<str>),
+    Cons { name: Box<str>, params: Vec<Pattern> },
 }
 
-impl<'a> From<(Pattern, &'a Data)> for ToMatch<'a> {
-    fn from(item : (Pattern, &'a Data)) -> Self {
-        ToMatch::Concrete { pattern: item.0, data: item.1 }
-    }
-}
-
-struct State<'a> {
-    captures : Vec<(Slot, &'a Data)>,
-    match_queue : Vec<ToMatch<'a>>,
-}
-
-pub struct MatchResults<'a> {
-    match_states : Vec<State<'a>>,
-    next_id : usize,
-}
-
-impl<'a> Iterator for MatchResults<'a> {
+impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
     type Item = MatchResult<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        'outer : loop {
-            if self.match_states.len() == 0 {
-                return None;
-            }
-
-            let current_state = self.match_states.pop().unwrap();
-
-            let mut captures : Vec<(Slot, &'a Data)> = current_state.captures;
-            let mut match_queue : Vec<ToMatch<'a>> = current_state.match_queue;
-
-            'current_match_loop : loop {
-                let current_match = match match_queue.pop() {
-                    None => { break 'current_match_loop; },
-                    Some(ToMatch::NextSkipPoint) => { continue 'current_match_loop; },
-                    Some(ToMatch::FromPreviousNext { pattern: _, data: None }) => { unreachable!(); },
-                    Some(ToMatch::FromPreviousNext { pattern, data: Some(data) }) => (pattern, data),
-                    Some(ToMatch::Concrete { pattern, data }) => (pattern, data),
-                };
-                
-                match current_match {
-                    (Pattern::CaptureVar(name), data) => {
-                        captures.push((name.into(), data));
-                    },
-                    (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
-                        
-                        let mut to_match = ps.into_iter().zip(ds.iter()).map(|x| x.into()).collect::<Vec<_>>();
-                        match_queue.append(&mut to_match);
-                    },
-                    (Pattern::Struct { name: pname, fields: pfields }, Data::Struct { name: dname, fields: dfields } )
-                        if pname == *dname && pfields.len() == dfields.len() => {
-
-                        for (p_field_name, d_field_name) in pfields.iter()
-                                                                   .zip(dfields.iter())
-                                                                   .map(|((p, _), (d, _))| (p, d)) {
-                            if p_field_name != d_field_name {
-                                continue 'outer;
-                            }
-                        }
-
-                        let mut to_match = pfields.into_iter().zip(dfields.iter()).map(|((_, p), (_, d))| (p, d).into()).collect::<Vec<_>>();
-                        match_queue.append(&mut to_match);
-                    },
-                    (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
-                        if pname == *dname && pparams.len() == dparams.len() => {
-
-                        let mut to_match = pparams.into_iter().zip(dparams.iter()).map(|x| x.into()).collect::<Vec<_>>();
-                        match_queue.append(&mut to_match);
-                    },
-                    (Pattern::Wild, _) => { },
-                    (Pattern::Number(pn), Data::Number(dn)) if pn == *dn => { },
-                    (Pattern::String(p), Data::String(d)) if p == *d => { },
-                    (Pattern::Symbol(p), Data::Symbol(d)) if p == *d => { },
-                    (Pattern::PathNext, data) => {
-                        captures.push((Slot::Next(self.next_id), data));
-                        self.next_id += 1;
-                    },
-                    (Pattern::Path(ps), data) if ps.len() == 0 => { },
-                    (Pattern::Path(ps), mut data) => {
-
-                        // TODO clean up this clause
-
-                        let mut pi = 0;
-
-                        while pi < ps.len() {
-                            
-                            let mut internal_match_results = pattern_match(ps[pi].clone(), data).collect::<Vec<_>>(); // is collect right here?
-
-                            if internal_match_results.len() == 0 {
-                                // nothing matches
-                                continue 'outer;
-                            }
-                            else if internal_match_results.len() == 1 {
-                                let mut result = internal_match_results.pop().unwrap();
-
-                                let mut nexts = result.extract_nexts();
-
-                                let mut internal_captures = result.clone().extract(); // TODO not so much with clone
-
-                                captures.append(&mut internal_captures);
-
-                                // TODO make sure that the type checker makes sure that each path pattern
-                                // has at least one next except the last one which should have none
-
-                                if nexts.len() == 0 {
-                                    // okay if there are no more items in ps left to process
-                                    // otherwise the match fails
-                                }
-                                else {
-                                    let first_next = nexts.remove(0);
-                                    // if there are nexts but no more ps, then this should be some sort 
-                                    // of typecheck error
-                                    for next in nexts {
-                                        let jabber = ps[pi + 1 ..].iter().map(|x| x.clone()).collect::<Vec<_>>();
-
-                                        let mut mq = match_queue.clone();
-                                        mq.push(ToMatch::Concrete { pattern: Pattern::Path(jabber), data: next });
-
-                                        self.match_states.push(State { captures: captures.clone(), match_queue: mq });
-                                    }
-                                    data = first_next;
-                                }
-                            }
-                            else {
-                                // if the first pattern is a path pattern that ends up with multiple matches
-                                panic!("!");
-                            }
-
-                            pi += 1;
-                        }
-                    },
-                    _ => {
-                        continue 'outer;
-                    },
-                }
-            }
-
-            return Some(captures.into());
-        }
     }
 }
 
-pub fn pattern_match<'a>(pattern : Pattern, data : &'a Data) -> MatchResults<'a> {
-    MatchResults { match_states : vec![State { match_queue: vec![ToMatch::Concrete { pattern, data }], captures: vec![] }]
-                 , next_id: 0 
-                 }
+pub fn pattern_match<'a, 'b>(pattern : &'a Pattern, data : &'b Data) -> MatchResults<'a, 'b> {
+
 }
 
 #[cfg(test)] 
@@ -177,7 +43,7 @@ mod test {
         let pattern = p("{| cons(cons(^, ^), ^), [^], x |}");
         let data : Data = "cons(cons([:a], [:b]), [:c])".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 3);
 
         let observed = results[0].get(&"x".into()).unwrap();
@@ -195,7 +61,7 @@ mod test {
         let pattern = p("{| cons(^, ^), [^], x |}");
         let data : Data = "cons([:a], :b)".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
 
         let observed = results[0].get(&"x".into()).unwrap();
@@ -207,7 +73,7 @@ mod test {
         let pattern = p("{| cons(:whatever) |}");
         let data : Data = ":whatever".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
@@ -216,7 +82,7 @@ mod test {
         let pattern = p("{| |}");
         let data : Data = ":whatever".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
     }
 
@@ -225,7 +91,7 @@ mod test {
         let pattern = p("{| cons(^, ^), [^, ^], x |}");
         let data : Data = "cons( [:a, :b], [:c, :d] )".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 4);
 
         let observed = results[0].get(&"x".into()).unwrap();
@@ -246,7 +112,7 @@ mod test {
         let pattern = p("cons( {| cons(^, ^), [^], x |}, {| cons(^, ^), [^], y |} )");
         let data : Data = "cons( cons([:a], [1.1]), cons([:b], [2.2]) )".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 4);
 
         let observed_x = results[0].get(&"x".into()).unwrap();
@@ -279,7 +145,7 @@ mod test {
         let pattern = p("cons( {| cons(^, ^), [^], x |}, outer )");
         let data : Data = "cons( cons([:a], [1.1]), :outer )".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 2);
 
         let observed_x = results[0].get(&"x".into()).unwrap();
@@ -300,7 +166,7 @@ mod test {
         let pattern = p("cons( outer, {| cons(^, ^), [^], x |} )");
         let data : Data = "cons( :outer, cons([:a], [1.1]) )".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 2);
 
         let observed_x = results[0].get(&"x".into()).unwrap();
@@ -321,7 +187,7 @@ mod test {
         let pattern = p("{| cons(^, ^), [^], x |}");
         let data : Data = "cons([:a], [1.1])".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 2);
 
         let observed = results[0].get(&"x".into()).unwrap();
@@ -336,7 +202,7 @@ mod test {
         let pattern = p("{| cons(a, ^), [^], x |}");
         let data : Data = "cons(1.1, [:a])".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
 
         let observed = results[0].get(&"a".into()).unwrap();
@@ -351,7 +217,7 @@ mod test {
         let pattern = p("{| cons(^, a), [^], x |}");
         let data : Data = "cons([:a], 1.1)".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
 
         let observed = results[0].get(&"a".into()).unwrap();
@@ -366,7 +232,7 @@ mod test {
         let pattern = p("{| cons(^, _), [^], x |}");
         let data : Data = "cons([:a], 1.1)".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
 
         let observed = results[0].get(&"x".into()).unwrap();
@@ -378,7 +244,7 @@ mod test {
         let pattern = p("cons(a, 1.1)");
         let data : Data = "cons(:a, 1.1)".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
 
         let observed = results[0].get(&"a".into()).unwrap();
@@ -390,7 +256,7 @@ mod test {
         let pattern = p("cons(a, 1.1)");
         let data : Data = "cons(:a, 1.2)".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
@@ -399,7 +265,7 @@ mod test {
         let pattern = p("_");
         let data : Data = "cons(:a, :b)".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
     }
 
@@ -408,7 +274,7 @@ mod test {
         let pattern = p("cons(a, :b)");
         let data : Data = "cons(:a, :b)".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
 
         let observed = results[0].get(&"a".into()).unwrap();
@@ -420,7 +286,7 @@ mod test {
         let pattern = p("cons(a, :a)");
         let data : Data = "cons(:a, :b)".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
@@ -429,7 +295,7 @@ mod test {
         let pattern = p("cons(a, \"leta\")");
         let data : Data = "cons(:a, \"leta\")".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
 
         let observed = results[0].get(&"a".into()).unwrap();
@@ -441,7 +307,7 @@ mod test {
         let pattern = p("cons(a, \"leta\")");
         let data : Data = "cons(:a, \"letb\")".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
@@ -450,7 +316,7 @@ mod test {
         let pattern = p("x");
         let data : Data = "cons(:a)".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
 
         let observed = results[0].get(&"x".into()).unwrap();
@@ -462,7 +328,7 @@ mod test {
         let pattern = p("cons( :a, :b, :c, cons(:x) )");
         let data : Data = "cons(:a, :b, :c, cons(:a) )".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
@@ -471,7 +337,7 @@ mod test {
         let pattern = p("cons( :a, :b, :c, :x )");
         let data : Data = "cons(:a, :b, :c, :d)".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
@@ -480,7 +346,7 @@ mod test {
         let pattern = p("other( x, y, z )");
         let data : Data = "cons(:a, :b, :c)".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
@@ -489,7 +355,7 @@ mod test {
         let pattern = p("cons( x, y, z )");
         let data : Data = "cons(:a, :b, :c, :d)".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
@@ -498,7 +364,7 @@ mod test {
         let pattern = p("cons( x, y, z )");
         let data : Data = "cons(:a, :b, :c)".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
 
         let observed_x = results[0].get(&"x".into()).unwrap();
@@ -514,7 +380,7 @@ mod test {
         let pattern = p("struct { a: 1, b: 2, c: 3 }");
         let data : Data = "struct { a: 1, b: 2, c: 3 }".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
     }
 
@@ -523,7 +389,7 @@ mod test {
         let pattern = p("struct { a: 1, b: 2, c: x }");
         let data : Data = "struct { a: 1, b: 2, c: 3 }".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
 
         let observed_x = results[0].get(&"x".into()).unwrap();
@@ -535,7 +401,7 @@ mod test {
         let pattern = p("struct { a: 1, b: 2 }");
         let data : Data = "struct { a: 1, b: 2, c: 3 }".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
@@ -544,7 +410,7 @@ mod test {
         let pattern = p("struct { a: 1, b: 2, x: 3 }");
         let data : Data = "struct { a: 1, b: 2, c: 3 }".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
@@ -553,7 +419,7 @@ mod test {
         let pattern = p("[1, x, :a]");
         let data : Data = "[1, 2, :a]".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
         let observed_x = results[0].get(&"x".into()).unwrap();
         assert_eq!(observed_x, &"2".parse::<Data>().unwrap());
@@ -564,7 +430,7 @@ mod test {
         let pattern = p("[]");
         let data : Data = "[]".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 1);
     }
 
@@ -573,7 +439,7 @@ mod test {
         let pattern = p("[1, x, :a, :x]");
         let data : Data = "[1, 2, :a]".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
@@ -582,7 +448,7 @@ mod test {
         let pattern = p("[1, x, :a, :x]");
         let data : Data = "[1, 2, :a, :y]".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 
@@ -591,7 +457,7 @@ mod test {
         let pattern = p("[1, x, :a, [:x, :x]]");
         let data : Data = "[1, 2, :a, [:x, :y]]".parse().unwrap();
 
-        let results = pattern_match(pattern, &data).collect::<Vec<_>>();
+        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
 }
