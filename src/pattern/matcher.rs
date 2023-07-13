@@ -26,6 +26,19 @@ enum JoinResult<'a> {
 }
 
 fn join<'a>(pattern : &Pattern, data : &'a Data) -> JoinResult<'a> {
+
+    fn join_star<'a>(ps : &[Pattern], ds : &'a [Data]) -> JoinResult<'a> {
+        let mut ret = vec![];
+        for (p, d) in ps.iter().zip(ds.iter()) {
+            match join(p, d) {
+                JoinResult::Pass => { },
+                JoinResult::Fail => { return JoinResult::Fail; },
+                JoinResult::Join(dp) => { ret.push(dp); },
+            }
+        }
+        JoinResult::Join(DataPattern::SingleGroup(ret))
+    } 
+
     match (pattern, data) { 
         (Pattern::CaptureVar(name), data) => JoinResult::Join(DataPattern::Capture(name.clone(), data)),
         (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => JoinResult::Fail, // TODO
@@ -53,15 +66,7 @@ fn join<'a>(pattern : &Pattern, data : &'a Data) -> JoinResult<'a> {
         (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
             if pname == dname && pparams.len() == dparams.len() => {
 
-            let mut ret = vec![];
-            for (p, d) in pparams.iter().zip(dparams.iter()) {
-                match join(p, d) {
-                    JoinResult::Pass => { },
-                    JoinResult::Fail => { return JoinResult::Fail; },
-                    JoinResult::Join(dp) => { ret.push(dp); },
-                }
-            }
-            JoinResult::Join(DataPattern::SingleGroup(ret))
+            join_star(&pparams[..], &dparams[..])
         },
         (Pattern::Wild, _) => JoinResult::Pass,
         (Pattern::Number(p), Data::Number(d)) if p == d => JoinResult::Pass,
