@@ -1,7 +1,7 @@
 
 
+use denest::Linearizable;
 use crate::data::*;
-
 use super::data::*;
 
 // TODO:  phantom type type checked patterns
@@ -17,6 +17,15 @@ pub struct MatchResults<'a, 'b> {
 enum DataPattern<'a> {
     Capture(Box<str>, &'a Data),
     SingleGroup(Vec<DataPattern<'a>>),
+}
+
+impl<'a, 'b> Linearizable<'a> for DataPattern<'b> {
+    fn l_next(&'a self) -> Vec<&'a Self> {
+        match self {
+            DataPattern::Capture(_, _) => vec![],
+            DataPattern::SingleGroup(dsp) => dsp.iter().collect::<Vec<_>>(),
+        }
+    }
 }
 
 enum JoinResult<'a> {
@@ -95,7 +104,14 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
         match join(&pattern, &data) {
             JoinResult::Fail => None,
             JoinResult::Pass => { self.stop = true; Some(MatchResult::new()) }, // TODO 
-            JoinResult::Join(data_pattern) => { self.stop = true; Some(MatchResult::new()) }, // TODO 
+            JoinResult::Join(data_pattern) => { 
+                self.stop = true; 
+                let result : Vec<(Slot, &'b Data)>
+                    = data_pattern.to_lax()
+                                  .flat_map(|dp| match dp { DataPattern::Capture(n, d) => vec![(n.into(), *d)], _ => vec![] })
+                                  .collect::<Vec<_>>();
+                Some(result.into()) 
+            }, // TODO 
         }
     }
 }
