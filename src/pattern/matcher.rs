@@ -88,7 +88,7 @@ fn join<'a>(pattern : &Pattern, data : &'a Data) -> JoinResult<'a> {
             captures.push((Slot::Next(self.next_id), data));
             self.next_id += 1;
         },*/
-        (Pattern::Path(ps), data) if ps.len() == 0 => JoinResult::Pass,
+        (Pattern::Path(ps), _) if ps.len() == 0 => JoinResult::Pass,
         /*(Pattern::Path(ps), data) => {
     
         },*/
