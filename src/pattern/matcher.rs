@@ -6,6 +6,8 @@ use super::data::*;
 
 // TODO:  phantom type type checked patterns
 // * in a path each step needs at least one next except for the last one which cannot have any nexts
+// * make sure that structs don't have duplicate field names
+// * also make sure that struct fields are sorted
 
 pub struct MatchResults<'a, 'b> {
     pattern : &'a Pattern,
@@ -36,47 +38,48 @@ enum JoinResult<'a> {
 
 fn join<'a>(pattern : &Pattern, data : &'a Data) -> JoinResult<'a> {
 
-    fn join_star<'a>(ps : &[Pattern], ds : &'a [Data]) -> JoinResult<'a> {
-        let mut ret = vec![];
-        for (p, d) in ps.iter().zip(ds.iter()) {
-            match join(p, d) {
-                JoinResult::Pass => { },
-                JoinResult::Fail => { return JoinResult::Fail; },
-                JoinResult::Join(dp) => { ret.push(dp); },
+    macro_rules! join_star {
+        ($ps:ident, $ds:ident) => {{
+            let mut ret = vec![];
+            for (p, d) in $ps.iter().zip($ds.iter()) {
+                match join(p, d) {
+                    JoinResult::Pass => { },
+                    JoinResult::Fail => { return JoinResult::Fail; },
+                    JoinResult::Join(dp) => { ret.push(dp); },
+                }
             }
-        }
-        JoinResult::Join(DataPattern::SingleGroup(ret))
-    } 
+            JoinResult::Join(DataPattern::SingleGroup(ret))
+        }}
+    }
 
     match (pattern, data) { 
         (Pattern::CaptureVar(name), data) => JoinResult::Join(DataPattern::Capture(name.clone(), data)),
-        (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => JoinResult::Fail, // TODO
-        /*{
-            
-            let mut to_match = ps.into_iter().zip(ds.iter()).map(|x| x.into()).collect::<Vec<_>>();
-            match_queue.append(&mut to_match);
-        },*/
+        (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => 
+            join_star!(ps, ds),
+
+        // TODO add a test that fields are fine even if they are sorted differently
         (Pattern::Struct { name: pname, fields: pfields }, Data::Struct { name: dname, fields: dfields } )
-            if pname == dname && pfields.len() == dfields.len() => JoinResult::Fail, // TODO
-            
-            /*{
+            if pname == dname && pfields.len() == dfields.len() => {
+
+            // Note:  'Typechecking' will process structs such that their fields are sorted
 
             for (p_field_name, d_field_name) in pfields.iter()
                                                         .zip(dfields.iter())
                                                         .map(|((p, _), (d, _))| (p, d)) {
                 if p_field_name != d_field_name {
-                    continue 'outer;
+                    return JoinResult::Fail;
                 }
             }
 
-            let mut to_match = pfields.into_iter().zip(dfields.iter()).map(|((_, p), (_, d))| (p, d).into()).collect::<Vec<_>>();
-            match_queue.append(&mut to_match);
-        },*/
-        (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
-            if pname == dname && pparams.len() == dparams.len() => {
-
-            join_star(&pparams[..], &dparams[..])
+            let ps = pfields.iter().map(|(_, p)| p).collect::<Vec<_>>();
+            let ds = dfields.iter().map(|(_, d)| d).collect::<Vec<_>>();
+            join_star!(ps, ds)
         },
+        (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
+            if pname == dname && pparams.len() == dparams.len() => 
+
+            join_star!(pparams, dparams),
+
         (Pattern::Wild, _) => JoinResult::Pass,
         (Pattern::Number(p), Data::Number(d)) if p == d => JoinResult::Pass,
         (Pattern::String(p), Data::String(d)) if p == d => JoinResult::Pass,
