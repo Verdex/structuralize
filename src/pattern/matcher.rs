@@ -9,34 +9,36 @@ use super::data::*;
 // * make sure that structs don't have duplicate field names
 // * also make sure that struct fields are sorted
 
-pub struct MatchResults<'a, 'b> {
-    pattern : &'a Pattern,
-    data : &'b Data,
+pub struct MatchResults<'pattern, 'data> {
+    pattern : &'pattern Pattern,
+    data : &'data Data,
     stop : bool // TODO
 }
 
 #[derive(Debug)]
-enum DataPattern<'a> {
-    Capture(Box<str>, &'a Data),
-    SingleGroup(Vec<DataPattern<'a>>),
+enum DataPattern<'pattern, 'data> {
+    Capture(Box<str>, &'data Data),
+    SingleGroup(Vec<DataPattern<'pattern, 'data>>),
+    PathGroup(Vec<&'data Data>, Vec<&'pattern Pattern>)
 }
 
-impl<'a, 'b> Linearizable<'a> for DataPattern<'b> {
+impl<'a, 'pattern, 'data> Linearizable<'a> for DataPattern<'pattern, 'data> {
     fn l_next(&'a self) -> Vec<&'a Self> {
         match self {
             DataPattern::Capture(_, _) => vec![],
             DataPattern::SingleGroup(dsp) => dsp.iter().collect::<Vec<_>>(),
+            _ => todo!(),
         }
     }
 }
 
-enum JoinResult<'a> {
+enum JoinResult<'pattern, 'data> {
     Pass,
     Fail,
-    Join(DataPattern<'a>)
+    Join(DataPattern<'pattern, 'data>)
 }
 
-fn join<'a>(pattern : &Pattern, data : &'a Data) -> JoinResult<'a> {
+fn join<'pattern, 'data>(pattern : &'pattern Pattern, data : &'data Data) -> JoinResult<'pattern, 'data> {
 
     macro_rules! join_star {
         ($ps:ident, $ds:ident) => {{
@@ -97,8 +99,8 @@ fn join<'a>(pattern : &Pattern, data : &'a Data) -> JoinResult<'a> {
 }
 
 
-impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
-    type Item = MatchResult<'b>;
+impl<'pattern, 'data> Iterator for MatchResults<'pattern, 'data> {
+    type Item = MatchResult<'data>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.stop { return None; }
@@ -109,7 +111,7 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
             JoinResult::Pass => { self.stop = true; Some(MatchResult::new()) }, // TODO 
             JoinResult::Join(data_pattern) => { 
                 self.stop = true; 
-                let result : Vec<(Slot, &'b Data)>
+                let result : Vec<(Slot, &'data Data)>
                     = data_pattern.to_lax()
                                   .flat_map(|dp| match dp { DataPattern::Capture(n, d) => vec![(n.into(), *d)], _ => vec![] })
                                   .collect::<Vec<_>>();
@@ -119,7 +121,7 @@ impl<'a, 'b> Iterator for MatchResults<'a, 'b> {
     }
 }
 
-pub fn pattern_match<'a, 'b>(pattern : &'a Pattern, data : &'b Data) -> MatchResults<'a, 'b> {
+pub fn pattern_match<'pattern, 'data>(pattern : &'pattern Pattern, data : &'data Data) -> MatchResults<'pattern, 'data> {
     MatchResults { pattern, data, stop : false }
 }
 
