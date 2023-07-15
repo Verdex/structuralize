@@ -17,7 +17,7 @@ pub struct MatchResults<'pattern, 'data> {
 
 #[derive(Debug)]
 enum DataPattern<'pattern, 'data> {
-    Capture(Box<str>, &'data Data),
+    Capture(Slot, &'data Data),
     SingleGroup(Vec<DataPattern<'pattern, 'data>>),
     PathGroup(Vec<&'data Data>, Vec<&'pattern Pattern>)
 }
@@ -55,7 +55,7 @@ fn join<'pattern, 'data>(pattern : &'pattern Pattern, data : &'data Data) -> Joi
     }
 
     match (pattern, data) { 
-        (Pattern::CaptureVar(name), data) => JoinResult::Join(DataPattern::Capture(name.clone(), data)),
+        (Pattern::CaptureVar(name), data) => JoinResult::Join(DataPattern::Capture(name.into(), data)),
         (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => 
             join_star!(ps, ds),
 
@@ -108,12 +108,13 @@ impl<'pattern, 'data> Iterator for MatchResults<'pattern, 'data> {
         let data = self.data;
         match join(&pattern, &data) {
             JoinResult::Fail => None,
-            JoinResult::Pass => { self.stop = true; Some(MatchResult::new()) }, // TODO 
+            JoinResult::Pass => { self.stop = true; Some(MatchResult::new()) },
             JoinResult::Join(data_pattern) => { 
                 self.stop = true; 
                 let result : Vec<(Slot, &'data Data)>
                     = data_pattern.to_lax()
-                                  .flat_map(|dp| match dp { DataPattern::Capture(n, d) => vec![(n.into(), *d)], _ => vec![] })
+                    // TODO see if we can get rid of the clone for slot
+                                  .flat_map(|dp| match dp { DataPattern::Capture(n, d) => vec![(n.clone(), *d)], _ => vec![] })
                                   .collect::<Vec<_>>();
                 Some(result.into()) 
             }, // TODO 
