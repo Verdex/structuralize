@@ -18,14 +18,16 @@ pub struct MatchResults<'pattern, 'data> {
 #[derive(Debug)]
 enum DataPattern<'pattern, 'data> {
     Capture(Slot, &'data Data),
+    Next(&'data Data),
     SingleGroup(Vec<DataPattern<'pattern, 'data>>),
-    PathGroup(Vec<&'data Data>, Vec<&'pattern Pattern>)
+    PathGroup(&'pattern [Pattern], &'data Data),
 }
 
 impl<'a, 'pattern, 'data> Linearizable<'a> for DataPattern<'pattern, 'data> {
     fn l_next(&'a self) -> Vec<&'a Self> {
         match self {
             DataPattern::Capture(_, _) => vec![],
+            DataPattern::Next(_) => vec![],
             DataPattern::SingleGroup(dsp) => dsp.iter().collect::<Vec<_>>(),
             _ => todo!(),
         }
@@ -78,7 +80,7 @@ fn join<'pattern, 'data>(pattern : &'pattern Pattern, data : &'data Data) -> Joi
             join_star!(ps, ds)
         },
         (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
-            if pname==  dname && pparams.len() == dparams.len() => 
+            if pname == dname && pparams.len() == dparams.len() => 
 
             join_star!(pparams, dparams),
 
@@ -86,14 +88,9 @@ fn join<'pattern, 'data>(pattern : &'pattern Pattern, data : &'data Data) -> Joi
         (Pattern::Number(p), Data::Number(d)) if p == d => JoinResult::Pass,
         (Pattern::String(p), Data::String(d)) if p == d => JoinResult::Pass,
         (Pattern::Symbol(p), Data::Symbol(d)) if p == d => JoinResult::Pass, 
-        /*(Pattern::PathNext, data) => {
-            captures.push((Slot::Next(self.next_id), data));
-            self.next_id += 1;
-        },*/
+        (Pattern::PathNext, data) => JoinResult::Join(DataPattern::Next(data)),
         (Pattern::Path(ps), _) if ps.len() == 0 => JoinResult::Pass,
-        /*(Pattern::Path(ps), data) => {
-            
-        },*/
+        (Pattern::Path(ps), data) => JoinResult::Join(DataPattern::PathGroup(&ps[..], data)),
         _ => JoinResult::Fail,
     }
 }
