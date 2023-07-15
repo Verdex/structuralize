@@ -78,7 +78,7 @@ fn join<'pattern, 'data>(pattern : &'pattern Pattern, data : &'data Data) -> Joi
             join_star!(ps, ds)
         },
         (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
-            if pname == dname && pparams.len() == dparams.len() => 
+            if pname==  dname && pparams.len() == dparams.len() => 
 
             join_star!(pparams, dparams),
 
@@ -92,7 +92,7 @@ fn join<'pattern, 'data>(pattern : &'pattern Pattern, data : &'data Data) -> Joi
         },*/
         (Pattern::Path(ps), _) if ps.len() == 0 => JoinResult::Pass,
         /*(Pattern::Path(ps), data) => {
-    
+            
         },*/
         _ => JoinResult::Fail,
     }
