@@ -16,11 +16,26 @@ pub struct MatchResults<'pattern, 'data> {
 }
 
 #[derive(Debug)]
+struct PathGroup<'pattern, 'data> {
+    pattern : &'pattern [Pattern],
+    data : &'data Data,
+}
+
+impl<'pattern, 'data> Iterator for PathGroup<'pattern, 'data> {
+    type Item = JoinResult<'pattern, 'data>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        //join(self.data)
+        None
+    }
+}
+
+#[derive(Debug)]
 enum DataPattern<'pattern, 'data> {
     Capture(Slot, &'data Data),
     Next(&'data Data),
     SingleGroup(Vec<DataPattern<'pattern, 'data>>),
-    PathGroup(&'pattern [Pattern], &'data Data),
+    PathGroup(PathGroup<'pattern, 'data>),
 }
 
 impl<'a, 'pattern, 'data> Linearizable<'a> for DataPattern<'pattern, 'data> {
@@ -90,11 +105,10 @@ fn join<'pattern, 'data>(pattern : &'pattern Pattern, data : &'data Data) -> Joi
         (Pattern::Symbol(p), Data::Symbol(d)) if p == d => JoinResult::Pass, 
         (Pattern::PathNext, data) => JoinResult::Join(DataPattern::Next(data)),
         (Pattern::Path(ps), _) if ps.len() == 0 => JoinResult::Pass,
-        (Pattern::Path(ps), data) => JoinResult::Join(DataPattern::PathGroup(&ps[..], data)),
+        (Pattern::Path(ps), data) => JoinResult::Join(DataPattern::PathGroup(PathGroup { pattern : &ps[..], data })),
         _ => JoinResult::Fail,
     }
 }
-
 
 impl<'pattern, 'data> Iterator for MatchResults<'pattern, 'data> {
     type Item = MatchResult<'data>;
