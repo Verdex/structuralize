@@ -38,12 +38,19 @@ enum DataPattern<'pattern, 'data> {
     PathGroup(PathGroup<'pattern, 'data>),
 }
 
+impl<'pattern, 'data> DataPattern<'pattern, 'data> {
+    pub fn nexts(&self) -> Vec<&'data Data> {
+        self.to_lax().filter_map(|dp| match dp { DataPattern::Next(d) => Some(*d), _ => None }).collect()
+    }
+}
+
 impl<'a, 'pattern, 'data> Linearizable<'a> for DataPattern<'pattern, 'data> {
     fn l_next(&'a self) -> Vec<&'a Self> {
         match self {
             DataPattern::Capture(_, _) => vec![],
             DataPattern::Next(_) => vec![],
             DataPattern::SingleGroup(dsp) => dsp.iter().collect::<Vec<_>>(),
+            DataPattern::PathGroup(_) => vec![], // TODO is this a good idea?
             _ => todo!(),
         }
     }
