@@ -42,6 +42,10 @@ pub struct MatchResult<'a> {
     map : HashMap<Slot, &'a Data>
 }
 
+// TODO does the final interface really need MatchResult or can it just use HashMap?
+// Also if MatchResult does end up being returned then maybe make some of these pub(crate)
+// Also also, if the final interface doesn't need match reuslt, then maybe the internal
+// one doesn't need it either
 impl<'a> MatchResult<'a> {
     pub fn new() -> Self {
         MatchResult { map: HashMap::new() }
