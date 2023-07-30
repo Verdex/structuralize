@@ -45,10 +45,22 @@ mod tests {
         };
     }
 
+    t!{ should_fail_match_due_to_cons_length_mismatch pattern_match =
+            pattern "cons( x, y, z )";
+            data "cons(:a, :b, :c, :d)";
+    }
+
+
+    t!{ should_match_struct pattern_match =
+            pattern "struct { a: 1, b: 2, c: 3 }";
+            data "struct { a: 1, b: 2, c: 3 }";
+            {  }
+    }
+
     t!{ should_match_cons_with_vars pattern_match = 
-             pattern "cons( x, y, z )";
-             data "cons(:a, :b, :c)"; 
-             { "x" => ":a"; "y" => ":b"; "z" => ":c" } 
+            pattern "cons( x, y, z )";
+            data "cons(:a, :b, :c)"; 
+            { "x" => ":a"; "y" => ":b"; "z" => ":c" } 
     }
 
 }

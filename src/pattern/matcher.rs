@@ -467,40 +467,6 @@ mod test {
     }
 
     #[test]
-    fn should_fail_match_due_to_cons_length_mismatch() {
-        let pattern = p("cons( x, y, z )");
-        let data : Data = "cons(:a, :b, :c, :d)".parse().unwrap();
-
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
-        assert_eq!(results.len(), 0);
-    }
-
-    #[test]
-    fn should_match_cons_with_vars() {
-        let pattern = p("cons( x, y, z )");
-        let data : Data = "cons(:a, :b, :c)".parse().unwrap();
-
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
-        assert_eq!(results.len(), 1);
-
-        let observed_x = results[0].get(&"x".into()).unwrap();
-        let observed_y = results[0].get(&"y".into()).unwrap();
-        let observed_z = results[0].get(&"z".into()).unwrap();
-        assert_eq!(observed_x, &":a".parse::<Data>().unwrap());
-        assert_eq!(observed_y, &":b".parse::<Data>().unwrap());
-        assert_eq!(observed_z, &":c".parse::<Data>().unwrap());
-    }
-
-    #[test]
-    fn should_match_struct() {
-        let pattern = p("struct { a: 1, b: 2, c: 3 }");
-        let data : Data = "struct { a: 1, b: 2, c: 3 }".parse().unwrap();
-
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
-        assert_eq!(results.len(), 1);
-    }
-
-    #[test]
     fn should_match_struct_with_inner_var() {
         let pattern = p("struct { a: 1, b: 2, c: x }");
         let data : Data = "struct { a: 1, b: 2, c: 3 }".parse().unwrap();
