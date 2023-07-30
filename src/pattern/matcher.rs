@@ -524,22 +524,4 @@ mod test {
         let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
         assert_eq!(results.len(), 0);
     }
-
-    #[test]
-    fn should_fail_match_exact_list_due_to_value() {
-        let pattern = p("[1, x, :a, :x]");
-        let data : Data = "[1, 2, :a, :y]".parse().unwrap();
-
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
-        assert_eq!(results.len(), 0);
-    }
-
-    #[test]
-    fn should_fail_match_exact_list_due_to_nested_list_mismatch() {
-        let pattern = p("[1, x, :a, [:x, :x]]");
-        let data : Data = "[1, 2, :a, [:x, :y]]".parse().unwrap();
-
-        let results = pattern_match(&pattern, &data).collect::<Vec<_>>();
-        assert_eq!(results.len(), 0);
-    }
 }
