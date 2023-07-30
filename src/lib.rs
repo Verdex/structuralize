@@ -23,7 +23,7 @@ mod tests {
     use crate::pattern::*;
 
     macro_rules! t {
-        ($name:ident $matcher:ident = pattern $pat:expr; data $dat:expr; $({ $($s:expr => $d:expr);+ })+ ) => {
+        ($name:ident $matcher:ident = pattern $pat:expr; data $dat:expr; $({ $($s:expr => $d:expr);* })* ) => {
             #[test]
             fn $name() {
                 let pattern : Pattern = $pat.parse().unwrap();
@@ -32,13 +32,13 @@ mod tests {
                 let mut results = $matcher(&pattern, &data).into_iter().collect::<Vec<_>>();
 
                 $(
-                    let r = results.remove(0);
+                    let _r = results.remove(0);
 
                     $(
-                        let data = r.get(&$s.into()).unwrap();
+                        let data = _r.get(&$s.into()).unwrap();
                         assert_eq!( data, &$d.parse::<Data>().unwrap());
-                    )+
-                )+
+                    )*
+                )*
 
                 assert_eq!( results.len(), 0 );
             }
