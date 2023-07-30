@@ -19,5 +19,37 @@ pub mod pattern;
 mod tests {
 
     use super::*;
+    use crate::data::*;
+    use crate::pattern::*;
+
+    macro_rules! t {
+        ($name:ident $matcher:ident = pattern $pat:expr; data $dat:expr; $({ $($s:expr => $d:expr);+ })+ ) => {
+            #[test]
+            fn $name() {
+                let pattern : Pattern = $pat.parse().unwrap();
+                let data : Data = $dat.parse().unwrap();
+
+                let mut results = $matcher(&pattern, &data).collect::<Vec<_>>();
+
+                $(
+                    let r = results.remove(0);
+
+                    $(
+                        let data = r.get(&$s.into()).unwrap();
+                        assert_eq!( data, &$d.parse::<Data>().unwrap());
+                    )+
+                )+
+
+                assert_eq!( results.len(), 0 );
+            }
+        };
+    }
+
+    t!{ should_match_cons_with_vars pattern_match = 
+             pattern "cons( x, y, z )";
+             data "cons(:a, :b, :c)"; 
+             { "x" => ":a"; "y" => ":b"; "z" => ":c" } 
+      }
+
 
 }
