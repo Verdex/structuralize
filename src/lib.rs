@@ -29,7 +29,7 @@ mod tests {
                 let pattern : Pattern = $pat.parse().unwrap();
                 let data : Data = $dat.parse().unwrap();
 
-                let mut results = $matcher(&pattern, &data).collect::<Vec<_>>();
+                let mut results = $matcher(&pattern, &data).into_iter().collect::<Vec<_>>();
 
                 $(
                     let r = results.remove(0);
@@ -49,7 +49,6 @@ mod tests {
              pattern "cons( x, y, z )";
              data "cons(:a, :b, :c)"; 
              { "x" => ":a"; "y" => ":b"; "z" => ":c" } 
-      }
-
+    }
 
 }
