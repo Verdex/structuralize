@@ -47,6 +47,124 @@ mod tests {
                 use crate::data::*;
                 use crate::pattern::*;
 
+                t! { should_match_multiple_paths_with_cons_and_list $target =
+                        pattern "{| cons(^, ^), [^], x |}";
+                        data "cons([:a], [1.1])";
+                        { "x" => "1.1" }
+                        { "x" => ":a" }
+                }
+
+                t! { should_match_path_with_capture_before $target = 
+                        pattern "{| cons(a, ^), [^], x |}";
+                        data "cons(1.1, [:a])";
+                        { "a" => "1.1"; "x" => ":a" }
+                }
+
+                t! { should_match_path_with_capture_after $target = 
+                        pattern "{| cons(^, a), [^], x |}";
+                        data "cons([:a], 1.1)";
+                        { "a" => "1.1"; "x" => ":a" }
+                }
+
+                t! { should_match_path_with_cons_and_list $target = 
+                        pattern "{| cons(^, _), [^], x |}";
+                        data "cons([:a], 1.1)";
+                        { "x" => ":a" }
+                }
+
+                t! { should_match_due_to_number $target = 
+                        pattern "cons(a, 1.1)";
+                        data "cons(:a, 1.1)";
+                        { "a" => ":a" }
+                }
+                
+                t! { should_fail_match_due_to_number $target =
+                        pattern "cons(a, 1.1)";
+                        data "cons(:a, 1.2)";
+                }
+
+                t! { should_match_wild $target =
+                        pattern "_";
+                        data "cons(:a, :b)";
+                        { }
+                }
+
+                t! { should_match_due_to_symbol $target = 
+                        pattern "cons(a, :b)";
+                        data "cons(:a, :b)";
+                        { "a" => ":a" }
+                }
+
+                t! { should_fail_match_due_to_symbol $target = 
+                        pattern "cons(a, :a)";
+                        data "cons(:a, :b)";
+                }
+
+                t! { should_match_due_to_string $target = 
+                        pattern "cons(a, \"leta\")";
+                        data "cons(:a, \"leta\")";
+                        { "a" => ":a" }
+                }
+
+                t! { should_fail_match_due_to_string $target = 
+                        pattern "cons(a, \"leta\")";
+                        data "cons(:a, \"letb\")";
+                }
+
+                t! { should_match_single_var $target =
+                        pattern "x";
+                        data "cons(:a)";
+                        { "x" => "cons(:a)"}
+                }
+
+                t! { should_fail_match_due_to_nested_cons_internal_mismatch $target =
+                        pattern "cons( :a, :b, :c, cons(:x) )";
+                        data "cons(:a, :b, :c, cons(:a) )";
+                }
+
+                t! { should_fail_match_due_to_cons_internal_mismatch $target = 
+                        pattern "cons( :a, :b, :c, :x )";
+                        data "cons(:a, :b, :c, :d)";
+                }
+
+                t! { should_fail_match_due_to_cons_name_mismatch $target =
+                        pattern "other( x, y, z )";
+                        data "cons(:a, :b, :c)";
+                }
+
+                t! { should_match_struct_with_inner_var $target = 
+                        pattern "struct { a: 1, b: 2, c: x }";
+                        data "struct { a: 1, b: 2, c: 3 }";
+                        { "x" => "3" }
+                }
+
+                t! { should_fail_match_struct_due_to_length $target = 
+                        pattern "struct { a: 1, b: 2 }";
+                        data "struct { a: 1, b: 2, c: 3 }";
+                }
+
+                t! { should_fail_match_struct_due_to_inner_name_mismatch $target = 
+                        pattern "struct { a: 1, b: 2, x: 3 }";
+                        data "struct { a: 1, b: 2, c: 3 }";
+                }
+
+                t! { should_match_exact_list $target = 
+                        pattern "[1, x, :a]";
+                        data "[1, 2, :a]";
+                        { "x" => "2" }
+                }
+
+                t! { should_match_empty_exact_list $target =
+                        pattern "[]";
+                        data "[]";
+                        { }
+                }
+
+                t! { should_fail_match_exact_list_due_to_length $target = 
+                        pattern "[1, x, :a, :x]";
+                        data "[1, 2, :a]";
+                }
+
                 t! { should_fail_match_exact_list_due_to_value $target = 
                         pattern "[1, x, :a, :x]";
                         data "[1, 2, :a, :y]";
