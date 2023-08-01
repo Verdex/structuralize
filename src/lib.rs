@@ -31,7 +31,7 @@ mod tests {
                     let _r = results.remove(0);
 
                     $(
-                        let data = _r.get(&$s.into()).unwrap();
+                        let data = *_r.get(&$s.into()).unwrap();
                         assert_eq!( data, &$d.parse::<Data>().unwrap());
                     )*
                 )*
@@ -255,6 +255,7 @@ mod tests {
         };
     }
 
-    all!(pattern_match);
+    //all!(pattern_match);
+    all!(strict_pattern_match);
 
 }
