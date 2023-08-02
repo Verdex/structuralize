@@ -4,29 +4,6 @@ use std::collections::HashMap;
 use crate::data::*;
 use super::data::*;
 
-/*fn product<'a>(mut input : Vec<Vec<u8>>) -> Vec<Vec<u8>> {
-    if input.len() == 1 {
-        return input.pop().unwrap().into_iter().map(|x| vec![x]).collect();
-    }
-
-    match input.pop() {
-        None => vec![],
-        Some(x) => {
-            let mut blarg = product(input);
-
-            let mut ret = vec![];
-            for xlet in x {
-                for b in blarg.iter_mut() {
-                    let mut z = b.clone();
-                    z.push(xlet.clone());
-                    ret.push(z);
-                }
-            }
-            ret
-        },
-    }
-}*/
-
 fn product<'a>(mut input : Vec<Vec<HashMap<Slot, &'a Data>>> ) -> Vec<Vec<HashMap<Slot, &'a Data>>> {
     if input.len() == 1 {
         return input.pop().unwrap().into_iter().map(|x| vec![x]).collect();
