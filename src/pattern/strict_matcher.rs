@@ -32,16 +32,24 @@ fn collapse<'a>(input : Vec<Vec<HashMap<Slot, &'a Data>>>) -> Vec<HashMap<Slot, 
          .collect()
 }
 
-pub fn strict_pattern_match<'pattern, 'data>(pattern : &'pattern Pattern, data : &'data Data) -> Vec<HashMap<Slot, &'data Data>> {
+pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<HashMap<Slot, &'data Data>> {
+    macro_rules! pass { 
+        () => { vec![ HashMap::new() ] };
+    } 
+    macro_rules! fail {
+        () => { vec![] };
+    }
+
     match (pattern, data) {
         (Pattern::CaptureVar(name), data) => vec![ [(name.into(), data)].into() ],
-        /*(Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => 
-
-            // product 
-            ps.iter().zip(ds.iter()).map(|(p, d)| strict_pattern_match(p, d)),
+        (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == 0 && ds.len() == 0 => pass!(),
+        (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
+            let results : Vec<Vec<HashMap<_, _>>> = ps.iter().zip(ds.iter()).map(|(p, d)| strict_pattern_match(p, d)).collect();
+            collapse(product(results))
+        },
 
         // TODO add a test that fields are fine even if they are sorted differently
-        (Pattern::Struct { name: pname, fields: pfields }, Data::Struct { name: dname, fields: dfields } )
+        /*(Pattern::Struct { name: pname, fields: pfields }, Data::Struct { name: dname, fields: dfields } )
             if pname == dname && pfields.len() == dfields.len() => {
 
             // Note:  'Typechecking' will process structs such that their fields are sorted
@@ -57,20 +65,22 @@ pub fn strict_pattern_match<'pattern, 'data>(pattern : &'pattern Pattern, data :
             let ps = pfields.iter().map(|(_, p)| p).collect::<Vec<_>>();
             let ds = dfields.iter().map(|(_, d)| d).collect::<Vec<_>>();
             join_star!(ps, ds)
-        },
+        },*/
+        // TODO do empty cons need to be prevented?
         (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
-            if pname == dname && pparams.len() == dparams.len() => 
-
-            join_star!(pparams, dparams),
-
-        (Pattern::Wild, _) => JoinResult::Pass,
-        (Pattern::Number(p), Data::Number(d)) if p == d => JoinResult::Pass,
-        (Pattern::String(p), Data::String(d)) if p == d => JoinResult::Pass,
-        (Pattern::Symbol(p), Data::Symbol(d)) if p == d => JoinResult::Pass, 
-        (Pattern::PathNext, data) => JoinResult::Join(DataPattern::Next(data)),
-        (Pattern::Path(ps), _) if ps.len() == 0 => JoinResult::Pass,
-        (Pattern::Path(ps), data) => JoinResult::Join(DataPattern::PathGroup(PathGroup { pattern : &ps[..], data })),*/
-        _ => vec![],
+            if pname == dname && pparams.len() == dparams.len() => {
+            let results : Vec<Vec<HashMap<_, _>>> = pparams.iter().zip(dparams.iter()).map(|(p, d)| strict_pattern_match(p, d)).collect();
+            collapse(product(results))
+        },
+         
+        (Pattern::Wild, _) => pass!(),
+        (Pattern::Number(p), Data::Number(d)) if p == d => pass!(),
+        (Pattern::String(p), Data::String(d)) if p == d => pass!(),
+        (Pattern::Symbol(p), Data::Symbol(d)) if p == d => pass!(), 
+        //(Pattern::PathNext, data) => JoinResult::Join(DataPattern::Next(data)),
+        //(Pattern::Path(ps), _) if ps.len() == 0 => JoinResult::Pass,
+        //(Pattern::Path(ps), data) => JoinResult::Join(DataPattern::PathGroup(PathGroup { pattern : &ps[..], data })),
+        _ => fail!(),
     }
 }
 
