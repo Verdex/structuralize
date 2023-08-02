@@ -102,10 +102,72 @@ mod test {
     use super::*;
 
     #[test]
-    fn blarg() {
-        /*let x = 
-        let o = product(x);
+    fn product_should_generate_hashmap_product() {
+        let d1 = ":a".parse::<Data>().unwrap();
+        let d2 = ":b".parse::<Data>().unwrap();
+        let input : Vec<Vec<HashMap<Slot, &Data>>> = vec![
+            vec![ [("x".into(), &d1), ("y".into(), &d1)].into(), [("x".into(), &d2), ("y".into(), &d2)].into() ],
+            vec![ [("z".into(), &d1), ("w".into(), &d1)].into(), [("z".into(), &d2), ("w".into(), &d2)].into() ]
+        ];
 
-        println!("{:?}", o);*/
+        let output = product(input);
+
+        assert_eq!( output.len(), 4 );
+        assert_eq!( output[0].len(), 2 );
+        assert_eq!( **output[0][0].get(&"x".into()).unwrap(), d1 );
+        assert_eq!( **output[0][0].get(&"y".into()).unwrap(), d1 );
+        assert_eq!( **output[0][1].get(&"z".into()).unwrap(), d1 );
+        assert_eq!( **output[0][1].get(&"w".into()).unwrap(), d1 );
+
+        assert_eq!( output[1].len(), 2 );
+        assert_eq!( **output[1][0].get(&"x".into()).unwrap(), d2 );
+        assert_eq!( **output[1][0].get(&"y".into()).unwrap(), d2 );
+        assert_eq!( **output[1][1].get(&"z".into()).unwrap(), d1 );
+        assert_eq!( **output[1][1].get(&"w".into()).unwrap(), d1 );
+
+        assert_eq!( output[2].len(), 2 );
+        assert_eq!( **output[2][0].get(&"x".into()).unwrap(), d1 );
+        assert_eq!( **output[2][0].get(&"y".into()).unwrap(), d1 );
+        assert_eq!( **output[2][1].get(&"z".into()).unwrap(), d2 );
+        assert_eq!( **output[2][1].get(&"w".into()).unwrap(), d2 );
+
+        assert_eq!( output[3].len(), 2 );
+        assert_eq!( **output[3][0].get(&"x".into()).unwrap(), d2 );
+        assert_eq!( **output[3][0].get(&"y".into()).unwrap(), d2 );
+        assert_eq!( **output[3][1].get(&"z".into()).unwrap(), d2 );
+        assert_eq!( **output[3][1].get(&"w".into()).unwrap(), d2 );
+    }
+
+    #[test]
+    fn collapse_should_combine_hashmap_product() {
+        let d1 = ":a".parse::<Data>().unwrap();
+        let d2 = ":b".parse::<Data>().unwrap();
+        let input : Vec<Vec<HashMap<Slot, &Data>>> = vec![
+            vec![ [("x".into(), &d1), ("y".into(), &d1)].into(), [("x".into(), &d2), ("y".into(), &d2)].into() ],
+            vec![ [("z".into(), &d1), ("w".into(), &d1)].into(), [("z".into(), &d2), ("w".into(), &d2)].into() ]
+        ];
+
+        let output = collapse(product(input));
+
+        assert_eq!( output.len(), 4 );
+        assert_eq!( **output[0].get(&"x".into()).unwrap(), d1 );
+        assert_eq!( **output[0].get(&"y".into()).unwrap(), d1 );
+        assert_eq!( **output[0].get(&"z".into()).unwrap(), d1 );
+        assert_eq!( **output[0].get(&"w".into()).unwrap(), d1 );
+
+        assert_eq!( **output[1].get(&"x".into()).unwrap(), d2 );
+        assert_eq!( **output[1].get(&"y".into()).unwrap(), d2 );
+        assert_eq!( **output[1].get(&"z".into()).unwrap(), d1 );
+        assert_eq!( **output[1].get(&"w".into()).unwrap(), d1 );
+
+        assert_eq!( **output[2].get(&"x".into()).unwrap(), d1 );
+        assert_eq!( **output[2].get(&"y".into()).unwrap(), d1 );
+        assert_eq!( **output[2].get(&"z".into()).unwrap(), d2 );
+        assert_eq!( **output[2].get(&"w".into()).unwrap(), d2 );
+
+        assert_eq!( **output[3].get(&"x".into()).unwrap(), d2 );
+        assert_eq!( **output[3].get(&"y".into()).unwrap(), d2 );
+        assert_eq!( **output[3].get(&"z".into()).unwrap(), d2 );
+        assert_eq!( **output[3].get(&"w".into()).unwrap(), d2 );
     }
 }
