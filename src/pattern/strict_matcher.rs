@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use crate::data::*;
 use super::data::*;
 
-fn product<'a>(mut input : Vec<Vec<u8>>) -> Vec<Vec<u8>> {
+/*fn product<'a>(mut input : Vec<Vec<u8>>) -> Vec<Vec<u8>> {
     if input.len() == 1 {
         return input.pop().unwrap().into_iter().map(|x| vec![x]).collect();
     }
@@ -23,15 +23,36 @@ fn product<'a>(mut input : Vec<Vec<u8>>) -> Vec<Vec<u8>> {
                 }
             }
             ret
-            
-            /*for xlet in x {
-                for mut b in blarg.iter_mut() {
-                    b.push(xlet);
-                }
-            }
-            blarg*/
         },
     }
+}*/
+
+fn product<'a>(mut input : Vec<Vec<HashMap<Slot, &'a Data>>> ) -> Vec<Vec<HashMap<Slot, &'a Data>>> {
+    if input.len() == 1 {
+        return input.pop().unwrap().into_iter().map(|x| vec![x]).collect();
+    }
+
+    match input.pop() {
+        None => vec![],
+        Some(results) => {
+            let mut sub_solution = product(input);
+            let mut ret = vec![];
+            for result in results {
+                for solution in sub_solution.iter_mut() {
+                    let mut s = solution.clone();
+                    s.push(result.clone());
+                    ret.push(s);
+                }
+            }
+            ret
+        },
+    }
+}
+
+fn collapse<'a>(input : Vec<Vec<HashMap<Slot, &'a Data>>>) -> Vec<HashMap<Slot, &'a Data>> {
+    input.into_iter()
+         .map(|results| results.into_iter().flat_map(|hm| hm.into_iter()).collect())
+         .collect()
 }
 
 pub fn strict_pattern_match<'pattern, 'data>(pattern : &'pattern Pattern, data : &'data Data) -> Vec<HashMap<Slot, &'data Data>> {
@@ -82,9 +103,9 @@ mod test {
 
     #[test]
     fn blarg() {
-        let x = vec![vec![1, 2, 3], vec![9, 8, 7], vec![4, 5, 6]];
+        /*let x = 
         let o = product(x);
 
-        println!("{:?}", o);
+        println!("{:?}", o);*/
     }
 }
