@@ -49,7 +49,7 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
         },
 
         // TODO add a test that fields are fine even if they are sorted differently
-        /*(Pattern::Struct { name: pname, fields: pfields }, Data::Struct { name: dname, fields: dfields } )
+        (Pattern::Struct { name: pname, fields: pfields }, Data::Struct { name: dname, fields: dfields } )
             if pname == dname && pfields.len() == dfields.len() => {
 
             // Note:  'Typechecking' will process structs such that their fields are sorted
@@ -58,14 +58,16 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
                                                         .zip(dfields.iter())
                                                         .map(|((p, _), (d, _))| (p, d)) {
                 if p_field_name != d_field_name {
-                    return JoinResult::Fail;
+                    return fail!();
                 }
             }
 
-            let ps = pfields.iter().map(|(_, p)| p).collect::<Vec<_>>();
-            let ds = dfields.iter().map(|(_, d)| d).collect::<Vec<_>>();
-            join_star!(ps, ds)
-        },*/
+            let ps = pfields.iter().map(|(_, p)| p);
+            let ds = dfields.iter().map(|(_, d)| d);
+
+            let results : Vec<Vec<HashMap<_, _>>> = ps.zip(ds).map(|(p, d)| strict_pattern_match(p, d)).collect();
+            collapse(product(results))
+        },
         // TODO do empty cons need to be prevented?
         (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
             if pname == dname && pparams.len() == dparams.len() => {
