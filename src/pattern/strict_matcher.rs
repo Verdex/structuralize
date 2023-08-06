@@ -26,10 +26,14 @@ fn product<'a>(mut input : Vec<Vec<HashMap<Slot, &'a Data>>> ) -> Vec<Vec<HashMa
     }
 }
 
-fn collapse<'a>(input : Vec<Vec<HashMap<Slot, &'a Data>>>) -> Vec<HashMap<Slot, &'a Data>> {
+fn collapse_all<'a>(input : Vec<Vec<HashMap<Slot, &'a Data>>>) -> Vec<HashMap<Slot, &'a Data>> {
     input.into_iter()
-         .map(|results| results.into_iter().flat_map(|hm| hm.into_iter()).collect())
+         .map(collapse)
          .collect()
+}
+
+fn collapse<'a>(input : Vec<HashMap<Slot, &'a Data>>) -> HashMap<Slot, &'a Data> {
+    input.into_iter().flat_map(|hm| hm.into_iter()).collect()
 }
 
 fn get_id() -> usize { // TODO:  Would like something different
@@ -53,7 +57,7 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
         (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == 0 && ds.len() == 0 => pass!(),
         (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
             let results : Vec<Vec<HashMap<_, _>>> = ps.iter().zip(ds.iter()).map(|(p, d)| strict_pattern_match(p, d)).collect();
-            collapse(product(results))
+            collapse_all(product(results))
         },
 
         // TODO add a test that fields are fine even if they are sorted differently
@@ -74,13 +78,13 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
             let ds = dfields.iter().map(|(_, d)| d);
 
             let results : Vec<Vec<HashMap<_, _>>> = ps.zip(ds).map(|(p, d)| strict_pattern_match(p, d)).collect();
-            collapse(product(results))
+            collapse_all(product(results))
         },
         // TODO do empty cons need to be prevented?
         (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
             if pname == dname && pparams.len() == dparams.len() => {
             let results : Vec<Vec<HashMap<_, _>>> = pparams.iter().zip(dparams.iter()).map(|(p, d)| strict_pattern_match(p, d)).collect();
-            collapse(product(results))
+            collapse_all(product(results))
         },
          
         (Pattern::Wild, _) => pass!(),
@@ -154,7 +158,7 @@ mod test {
     }
 
     #[test]
-    fn collapse_should_combine_hashmap_product() {
+    fn collapse_all_should_combine_hashmap_product() {
         let d1 = ":a".parse::<Data>().unwrap();
         let d2 = ":b".parse::<Data>().unwrap();
         let input : Vec<Vec<HashMap<Slot, &Data>>> = vec![
@@ -162,7 +166,7 @@ mod test {
             vec![ [("z".into(), &d1), ("w".into(), &d1)].into(), [("z".into(), &d2), ("w".into(), &d2)].into() ]
         ];
 
-        let output = collapse(product(input));
+        let output = collapse_all(product(input));
 
         assert_eq!( output.len(), 4 );
         assert_eq!( **output[0].get(&"x".into()).unwrap(), d1 );
