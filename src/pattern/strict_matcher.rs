@@ -98,17 +98,22 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
             let results = strict_pattern_match(&ps[0], data);
             for result in results {
                 let mut inner : Vec<Vec<HashMap<_, _>>> = vec![];
-                let nexts : Vec<&Data> = result.iter().filter_map(|r| match r { (Slot::Next(_), d) => Some(*d), _ => None }).collect();
-                let top = result.iter().filter_map(|r| match r { (Slot::Next(_), _) => None, (s, d) => Some((s.clone(), *d)) }).collect::<HashMap<Slot, &Data>>();
-                for next in nexts {
-                    let w = ps[1..].iter().map(|x| x.clone()).collect::<Vec<_>>();
-                    let ww = Pattern::Path(w);
-                    let q = strict_pattern_match(&ww, next);
-                    let j = collapse(vec![vec![top.clone()], q]);
-                    inner.push(j);
+                let mut nexts : Vec<(usize, &Data)> = result.iter().filter_map(|r| match r { (Slot::Next(x), d) => Some((*x, *d)), _ => None }).collect();
+                nexts.sort_by_key(|(x, _)| *x);
+                let nexts : Vec<&Data> = nexts.into_iter().map(|(_, d)| d).collect();
+
+                let top : HashMap<Slot, &Data> = result.iter().filter_map(|r| match r { (Slot::Next(_), _) => None, (s, d) => Some((s.clone(), *d)) }).collect();
+                if nexts.len() == 0 {
+                    inner.push(vec![top.clone()]);
                 }
-                let blarg : Vec<HashMap<_, _>> = inner.into_iter().flatten().collect::<Vec<_>>();
-                outer.push(blarg);
+                for next in nexts {
+                    let rest = ps[1..].iter().map(|x| x.clone()).collect::<Vec<_>>();
+                    let inner_results = strict_pattern_match(&Pattern::Path(rest), next);
+                    let inner_results_with_top : Vec<HashMap<_, _>> = inner_results.into_iter().map(|x| collapse(vec![top.clone(), x])).collect();
+                    inner.push(inner_results_with_top);
+                }
+                let flat_inner : Vec<HashMap<_, _>> = inner.into_iter().flatten().collect();
+                outer.push(flat_inner);
             }
             outer.into_iter().flatten().collect()
         },
