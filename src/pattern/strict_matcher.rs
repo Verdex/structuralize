@@ -32,6 +32,14 @@ fn collapse<'a>(input : Vec<Vec<HashMap<Slot, &'a Data>>>) -> Vec<HashMap<Slot, 
          .collect()
 }
 
+fn get_id() -> usize { // TODO:  Would like something different
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    static ID : AtomicUsize = AtomicUsize::new(0);
+    ID.fetch_add(1, Ordering::Relaxed)
+}
+
+// TODO : Vec<(Slot, Data)> might be better than HashMap                
+// Although naming it with an alias would probably be a good idea 
 pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<HashMap<Slot, &'data Data>> {
     macro_rules! pass { 
         () => { vec![ HashMap::new() ] };
@@ -79,9 +87,27 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
         (Pattern::Number(p), Data::Number(d)) if p == d => pass!(),
         (Pattern::String(p), Data::String(d)) if p == d => pass!(),
         (Pattern::Symbol(p), Data::Symbol(d)) if p == d => pass!(), 
-        //(Pattern::PathNext, data) => JoinResult::Join(DataPattern::Next(data)),
-        //(Pattern::Path(ps), _) if ps.len() == 0 => JoinResult::Pass,
-        //(Pattern::Path(ps), data) => JoinResult::Join(DataPattern::PathGroup(PathGroup { pattern : &ps[..], data })),
+        (Pattern::PathNext, data) => vec![ [(Slot::Next(get_id()), data)].into() ],
+        (Pattern::Path(ps), _) if ps.len() == 0 => pass!(),
+        (Pattern::Path(ps), data) => {
+            let mut outer : Vec<Vec<HashMap<_, _>>> = vec![];
+            let results = strict_pattern_match(&ps[0], data);
+            for result in results {
+                let mut inner : Vec<Vec<HashMap<_, _>>> = vec![];
+                let nexts : Vec<&Data> = result.iter().filter_map(|r| match r { (Slot::Next(_), d) => Some(*d), _ => None }).collect();
+                let top = result.iter().filter_map(|r| match r { (Slot::Next(_), _) => None, (s, d) => Some((s.clone(), *d)) }).collect::<HashMap<Slot, &Data>>();
+                for next in nexts {
+                    let w = ps[1..].iter().map(|x| x.clone()).collect::<Vec<_>>();
+                    let ww = Pattern::Path(w);
+                    let q = strict_pattern_match(&ww, next);
+                    let j = collapse(vec![vec![top.clone()], q]);
+                    inner.push(j);
+                }
+                let blarg : Vec<HashMap<_, _>> = inner.into_iter().flatten().collect::<Vec<_>>();
+                outer.push(blarg);
+            }
+            outer.into_iter().flatten().collect()
+        },
         _ => fail!(),
     }
 }

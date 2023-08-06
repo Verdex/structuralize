@@ -84,6 +84,7 @@ impl<'a> From<Vec<(Slot, &'a Data)>> for MatchResult<'a> {
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Slot {
+    Next(usize),
     Symbol(Box<str>),
     Path(Vec<Box<str>>),
 }
@@ -91,6 +92,7 @@ pub enum Slot {
 impl Display for Slot {
     fn fmt(&self, f : &mut Formatter) -> std::fmt::Result {
         match self {
+            Slot::Next(x) => write!(f, "Next: {}", x),
             Slot::Symbol(s) => write!(f, "{}", s),
             Slot::Path(s) => write!(f, "{}", s.join(".")),
         }
