@@ -47,14 +47,15 @@ mod tests {
                 use crate::data::*;
                 use crate::pattern::*;
 
-                // TODO : path pattern that has path patterns inside of it (needs more impl before this will work)
+                // TODO : path pattern that has path patterns inside of it 
+                // TODO : cons, structs, lists all with multiple path patterns in each element
 
                 t! { should_match_nested_nexts_in_path $target =
                         pattern "{| cons(cons(^, ^), ^), [^], x |}";
                         data "cons(cons([:a], [:b]), [:c])";
-                        { "x" => ":c" }
                         { "x" => ":a" }
                         { "x" => ":b" }
+                        { "x" => ":c" }
                 }
 
                 t! { should_match_only_valid_paths $target =
@@ -77,40 +78,40 @@ mod tests {
                 t! { should_match_multi_step_multi_next_path $target = 
                         pattern "{| cons(^, ^), [^, ^], x |}";
                         data "cons( [:a, :b], [:c, :d] )";
-                        { "x" => ":d" }
-                        { "x" => ":c" }
-                        { "x" => ":b" }
                         { "x" => ":a" }
+                        { "x" => ":b" }
+                        { "x" => ":c" }
+                        { "x" => ":d" }
                 }
 
                 t! { should_match_path_and_path $target = 
                         pattern "cons( {| cons(^, ^), [^], x |}, {| cons(^, ^), [^], y |} )";
                         data "cons( cons([:a], [1.1]), cons([:b], [2.2]) )";
-                        { "x" => "1.1"; "y" => "2.2" }
-                        { "x" => ":a"; "y" => "2.2" }
-                        { "x" => "1.1"; "y" => ":b" }
                         { "x" => ":a"; "y" => ":b" }
+                        { "x" => "1.1"; "y" => ":b" }
+                        { "x" => ":a"; "y" => "2.2" }
+                        { "x" => "1.1"; "y" => "2.2" }
                 }
 
                 t! { should_match_path_and_capture_after $target =
                         pattern "cons( {| cons(^, ^), [^], x |}, outer )";
                         data "cons( cons([:a], [1.1]), :outer )";
-                        { "x" => "1.1"; "outer" => ":outer" }
                         { "x" => ":a"; "outer" => ":outer" }
+                        { "x" => "1.1"; "outer" => ":outer" }
                 }
 
                 t! { should_match_path_and_capture_before $target =
                         pattern "cons( outer, {| cons(^, ^), [^], x |} )";
                         data "cons( :outer, cons([:a], [1.1]) )";
-                        { "x" => "1.1"; "outer" => ":outer" }
                         { "x" => ":a"; "outer" => ":outer" }
+                        { "x" => "1.1"; "outer" => ":outer" }
                 }
 
                 t! { should_match_multiple_paths_with_cons_and_list $target =
                         pattern "{| cons(^, ^), [^], x |}";
                         data "cons([:a], [1.1])";
-                        { "x" => "1.1" }
                         { "x" => ":a" }
+                        { "x" => "1.1" }
                 }
 
                 t! { should_match_path_with_capture_before $target = 
