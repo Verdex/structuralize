@@ -5,14 +5,14 @@ pub mod pattern;
 
 /* 
    TODO parser: 
-                * parser
-                * fn impl
-                * macro_rules ?
+        * parser
+        * fn impl
+        * macro_rules ?
     
    TODO pattern matching:
-                * parser
-                * fn impl
-                * macro_rules ?
+        * parser
+        * fn impl
+        * macro_rules ?
 */
 
 #[cfg(test)]
@@ -51,8 +51,47 @@ mod tests {
                 use crate::data::*;
                 use crate::pattern::*;
 
-                // TODO : path pattern that has path patterns inside of it 
-                // TODO : cons, structs, lists all with multiple path patterns in each element
+                t! { should_match_multiple_paths_in_struct $target = 
+                        pattern "struct { a: {| cons(^, ^), [a, b] |}, b: {| cons(^, ^), [c, d] |} }";
+                        data "struct { a: cons([1, 2], [3, 4]), b: cons([5, 6,], [7, 8]) }";
+                        { "a" => "1"; "b" => "2"; "c" => "5"; "d" => "6" }
+                        { "a" => "3"; "b" => "4"; "c" => "5"; "d" => "6" }
+                        { "a" => "1"; "b" => "2"; "c" => "7"; "d" => "8" }
+                        { "a" => "3"; "b" => "4"; "c" => "7"; "d" => "8" }
+                }
+
+                t! { should_match_multiple_paths_in_cons $target = 
+                        pattern "cons( {| cons(^, ^), [a, b] |}, {| cons(^, ^), [c, d] |} )";
+                        data "cons( cons([1, 2], [3, 4]), cons([5, 6,], [7, 8]) )";
+                        { "a" => "1"; "b" => "2"; "c" => "5"; "d" => "6" }
+                        { "a" => "3"; "b" => "4"; "c" => "5"; "d" => "6" }
+                        { "a" => "1"; "b" => "2"; "c" => "7"; "d" => "8" }
+                        { "a" => "3"; "b" => "4"; "c" => "7"; "d" => "8" }
+                }
+
+                t! { should_match_multiple_paths_in_list $target = 
+                        pattern "[ {| cons(^, ^), [a, b] |}, {| cons(^, ^), [c, d] |} ]";
+                        data "[ cons([1, 2], [3, 4]), cons([5, 6,], [7, 8]) ]";
+                        { "a" => "1"; "b" => "2"; "c" => "5"; "d" => "6" }
+                        { "a" => "3"; "b" => "4"; "c" => "5"; "d" => "6" }
+                        { "a" => "1"; "b" => "2"; "c" => "7"; "d" => "8" }
+                        { "a" => "3"; "b" => "4"; "c" => "7"; "d" => "8" }
+                }
+
+                t! { should_match_path_pattern_inside_of_path_pattern $target = 
+                        pattern "{| cons( {| inner(^, ^), inner(1, a, b) |} , ^, ^), outer(1, c, d) |}";
+                        data "cons( inner(inner(1, :a, :b), inner(1, :c, :d)), outer(1, :e, :f), outer(1, :g, :h) )";
+                        { "a" => ":a"; "b" => ":b"; "c" => ":e"; "d" => ":f" }
+                        { "a" => ":a"; "b" => ":b"; "c" => ":g"; "d" => ":h" }
+                        { "a" => ":c"; "b" => ":d"; "c" => ":e"; "d" => ":f" }
+                        { "a" => ":c"; "b" => ":d"; "c" => ":g"; "d" => ":h" }
+                }
+
+                t! { should_match_path_pattern_inside_of_path_pattern_and_ignore_failures $target = 
+                        pattern "{| cons( {| inner(^, ^), inner(1, a, b) |} , ^, ^), outer(1, c, d) |}";
+                        data "cons( inner(inner(2, :a, :b), inner(1, :c, :d)), outer(1, :e, :f), outer(2, :g, :h) )";
+                        { "a" => ":c"; "b" => ":d"; "c" => ":e"; "d" => ":f" }
+                }
 
                 t! { should_match_nested_nexts_in_path $target =
                         pattern "{| cons(cons(^, ^), ^), [^], x |}";
