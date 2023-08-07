@@ -18,9 +18,6 @@ pub enum Data {
 
 // TODO Denest operator 
 
-// TODO: macro that lets you use struct dot notation to access fields from struct item
-// TODO: derives needed so that Data can be used in hash?
-// TODO: Hash case for Data?
 
 impl From<Box<str>> for Data {
     fn from(item : Box<str>) -> Self {
