@@ -42,8 +42,6 @@ fn get_id() -> usize { // TODO:  Would like something different
     ID.fetch_add(1, Ordering::Relaxed)
 }
 
-// TODO : Vec<(Slot, Data)> might be better than HashMap                
-// Although naming it with an alias would probably be a good idea 
 pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
     macro_rules! pass { 
         () => { vec![ vec![] ] };
