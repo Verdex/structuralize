@@ -36,12 +36,6 @@ fn collapse<'a>(input : Vec<MatchMap<Slot, &'a Data>>) -> MatchMap<Slot, &'a Dat
     input.into_iter().flat_map(|hm| hm.into_iter()).collect()
 }
 
-fn get_id() -> usize { // TODO:  Would like something different
-    use std::sync::atomic::{AtomicUsize, Ordering};
-    static ID : AtomicUsize = AtomicUsize::new(0);
-    ID.fetch_add(1, Ordering::Relaxed)
-}
-
 pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
     macro_rules! pass { 
         () => { vec![ vec![] ] };
@@ -89,18 +83,16 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
         (Pattern::Number(p), Data::Number(d)) if p == d => pass!(),
         (Pattern::String(p), Data::String(d)) if p == d => pass!(),
         (Pattern::Symbol(p), Data::Symbol(d)) if p == d => pass!(), 
-        (Pattern::PathNext, data) => vec![ [(Slot::Next(get_id()), data)].into() ],
+        (Pattern::PathNext, data) => vec![ [(Slot::Next, data)].into() ],
         (Pattern::Path(ps), _) if ps.len() == 0 => pass!(),
         (Pattern::Path(ps), data) => {
             let mut outer : Vec<Vec<MatchMap<_, _>>> = vec![];
             let results = strict_pattern_match(&ps[0], data);
             for result in results {
                 let mut inner : Vec<Vec<MatchMap<_, _>>> = vec![];
-                let mut nexts : Vec<(usize, &Data)> = result.iter().filter_map(|r| match r { (Slot::Next(x), d) => Some((*x, *d)), _ => None }).collect();
-                nexts.sort_by_key(|(x, _)| *x);
-                let nexts : Vec<&Data> = nexts.into_iter().map(|(_, d)| d).collect();
+                let mut nexts : Vec<&Data> = result.iter().filter_map(|r| match r { (Slot::Next, d) => Some(*d), _ => None }).collect();
 
-                let top : MatchMap<Slot, &Data> = result.iter().filter_map(|r| match r { (Slot::Next(_), _) => None, (s, d) => Some((s.clone(), *d)) }).collect();
+                let top : MatchMap<Slot, &Data> = result.iter().filter_map(|r| match r { (Slot::Next, _) => None, (s, d) => Some((s.clone(), *d)) }).collect();
                 if nexts.len() == 0 {
                     inner.push(vec![top.clone()]);
                 }
