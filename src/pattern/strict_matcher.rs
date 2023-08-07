@@ -1,10 +1,10 @@
 
-use std::collections::HashMap;
-
 use crate::data::*;
 use super::data::*;
 
-fn product<'a>(mut input : Vec<Vec<HashMap<Slot, &'a Data>>> ) -> Vec<Vec<HashMap<Slot, &'a Data>>> {
+pub type MatchMap<K, V> = Vec<(K, V)>;
+
+fn product<'a>(mut input : Vec<Vec<MatchMap<Slot, &'a Data>>> ) -> Vec<Vec<MatchMap<Slot, &'a Data>>> {
     if input.len() == 1 {
         return input.pop().unwrap().into_iter().map(|x| vec![x]).collect();
     }
@@ -26,13 +26,13 @@ fn product<'a>(mut input : Vec<Vec<HashMap<Slot, &'a Data>>> ) -> Vec<Vec<HashMa
     }
 }
 
-fn collapse_all<'a>(input : Vec<Vec<HashMap<Slot, &'a Data>>>) -> Vec<HashMap<Slot, &'a Data>> {
+fn collapse_all<'a>(input : Vec<Vec<MatchMap<Slot, &'a Data>>>) -> Vec<MatchMap<Slot, &'a Data>> {
     input.into_iter()
          .map(collapse)
          .collect()
 }
 
-fn collapse<'a>(input : Vec<HashMap<Slot, &'a Data>>) -> HashMap<Slot, &'a Data> {
+fn collapse<'a>(input : Vec<MatchMap<Slot, &'a Data>>) -> MatchMap<Slot, &'a Data> {
     input.into_iter().flat_map(|hm| hm.into_iter()).collect()
 }
 
@@ -44,9 +44,9 @@ fn get_id() -> usize { // TODO:  Would like something different
 
 // TODO : Vec<(Slot, Data)> might be better than HashMap                
 // Although naming it with an alias would probably be a good idea 
-pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<HashMap<Slot, &'data Data>> {
+pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
     macro_rules! pass { 
-        () => { vec![ HashMap::new() ] };
+        () => { vec![ vec![] ] };
     } 
     macro_rules! fail {
         () => { vec![] };
@@ -56,7 +56,7 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
         (Pattern::CaptureVar(name), data) => vec![ [(name.into(), data)].into() ],
         (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == 0 && ds.len() == 0 => pass!(),
         (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
-            let results : Vec<Vec<HashMap<_, _>>> = ps.iter().zip(ds.iter()).map(|(p, d)| strict_pattern_match(p, d)).collect();
+            let results : Vec<Vec<MatchMap<_, _>>> = ps.iter().zip(ds.iter()).map(|(p, d)| strict_pattern_match(p, d)).collect();
             collapse_all(product(results))
         },
 
@@ -77,13 +77,13 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
             let ps = pfields.iter().map(|(_, p)| p);
             let ds = dfields.iter().map(|(_, d)| d);
 
-            let results : Vec<Vec<HashMap<_, _>>> = ps.zip(ds).map(|(p, d)| strict_pattern_match(p, d)).collect();
+            let results : Vec<Vec<MatchMap<_, _>>> = ps.zip(ds).map(|(p, d)| strict_pattern_match(p, d)).collect();
             collapse_all(product(results))
         },
         // TODO do empty cons need to be prevented?
         (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
             if pname == dname && pparams.len() == dparams.len() => {
-            let results : Vec<Vec<HashMap<_, _>>> = pparams.iter().zip(dparams.iter()).map(|(p, d)| strict_pattern_match(p, d)).collect();
+            let results : Vec<Vec<MatchMap<_, _>>> = pparams.iter().zip(dparams.iter()).map(|(p, d)| strict_pattern_match(p, d)).collect();
             collapse_all(product(results))
         },
          
@@ -94,25 +94,25 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
         (Pattern::PathNext, data) => vec![ [(Slot::Next(get_id()), data)].into() ],
         (Pattern::Path(ps), _) if ps.len() == 0 => pass!(),
         (Pattern::Path(ps), data) => {
-            let mut outer : Vec<Vec<HashMap<_, _>>> = vec![];
+            let mut outer : Vec<Vec<MatchMap<_, _>>> = vec![];
             let results = strict_pattern_match(&ps[0], data);
             for result in results {
-                let mut inner : Vec<Vec<HashMap<_, _>>> = vec![];
+                let mut inner : Vec<Vec<MatchMap<_, _>>> = vec![];
                 let mut nexts : Vec<(usize, &Data)> = result.iter().filter_map(|r| match r { (Slot::Next(x), d) => Some((*x, *d)), _ => None }).collect();
                 nexts.sort_by_key(|(x, _)| *x);
                 let nexts : Vec<&Data> = nexts.into_iter().map(|(_, d)| d).collect();
 
-                let top : HashMap<Slot, &Data> = result.iter().filter_map(|r| match r { (Slot::Next(_), _) => None, (s, d) => Some((s.clone(), *d)) }).collect();
+                let top : MatchMap<Slot, &Data> = result.iter().filter_map(|r| match r { (Slot::Next(_), _) => None, (s, d) => Some((s.clone(), *d)) }).collect();
                 if nexts.len() == 0 {
                     inner.push(vec![top.clone()]);
                 }
                 for next in nexts {
                     let rest = ps[1..].iter().map(|x| x.clone()).collect::<Vec<_>>();
                     let inner_results = strict_pattern_match(&Pattern::Path(rest), next);
-                    let inner_results_with_top : Vec<HashMap<_, _>> = inner_results.into_iter().map(|x| collapse(vec![top.clone(), x])).collect();
+                    let inner_results_with_top : Vec<MatchMap<_, _>> = inner_results.into_iter().map(|x| collapse(vec![top.clone(), x])).collect();
                     inner.push(inner_results_with_top);
                 }
-                let flat_inner : Vec<HashMap<_, _>> = inner.into_iter().flatten().collect();
+                let flat_inner : Vec<MatchMap<_, _>> = inner.into_iter().flatten().collect();
                 outer.push(flat_inner);
             }
             outer.into_iter().flatten().collect()
@@ -123,18 +123,22 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
 
 #[cfg(test)]
 mod test {
+    use std::collections::HashMap;
     use super::*;
 
     #[test]
     fn product_should_generate_hashmap_product() {
         let d1 = ":a".parse::<Data>().unwrap();
         let d2 = ":b".parse::<Data>().unwrap();
-        let input : Vec<Vec<HashMap<Slot, &Data>>> = vec![
+        let input : Vec<Vec<MatchMap<Slot, &Data>>> = vec![
             vec![ [("x".into(), &d1), ("y".into(), &d1)].into(), [("x".into(), &d2), ("y".into(), &d2)].into() ],
             vec![ [("z".into(), &d1), ("w".into(), &d1)].into(), [("z".into(), &d2), ("w".into(), &d2)].into() ]
         ];
 
-        let output = product(input);
+        let output = product(input).into_iter()
+                                   .map(|x| x.into_iter() 
+                                             .map(|y| y.into_iter() 
+                                                       .collect::<HashMap<_, _>>()).collect::<Vec<_>>()).collect::<Vec<_>>();
 
         assert_eq!( output.len(), 4 );
         assert_eq!( output[0].len(), 2 );
@@ -166,12 +170,13 @@ mod test {
     fn collapse_all_should_combine_hashmap_product() {
         let d1 = ":a".parse::<Data>().unwrap();
         let d2 = ":b".parse::<Data>().unwrap();
-        let input : Vec<Vec<HashMap<Slot, &Data>>> = vec![
+        let input : Vec<Vec<MatchMap<Slot, &Data>>> = vec![
             vec![ [("x".into(), &d1), ("y".into(), &d1)].into(), [("x".into(), &d2), ("y".into(), &d2)].into() ],
             vec![ [("z".into(), &d1), ("w".into(), &d1)].into(), [("z".into(), &d2), ("w".into(), &d2)].into() ]
         ];
 
-        let output = collapse_all(product(input));
+        let output = collapse_all(product(input)).into_iter()
+                                                 .map(|x| x.into_iter().collect::<HashMap<_, _>>()).collect::<Vec<_>>();
 
         assert_eq!( output.len(), 4 );
         assert_eq!( **output[0].get(&"x".into()).unwrap(), d1 );

@@ -22,10 +22,14 @@ mod tests {
         ($name:ident $matcher:ident = pattern $pat:expr; data $dat:expr; $({ $($s:expr => $d:expr);* })* ) => {
             #[test]
             fn $name() {
+                use std::collections::HashMap;
+
                 let pattern : Pattern = $pat.parse().unwrap();
                 let data : Data = $dat.parse().unwrap();
 
-                let mut results = $matcher(&pattern, &data).into_iter().collect::<Vec<_>>();
+                let mut results = $matcher(&pattern, &data).into_iter()
+                                                           .map(|x| x.into_iter().collect::<HashMap<_,_>>())
+                                                           .collect::<Vec<_>>();
 
                 $(
                     let _r = results.remove(0);
@@ -251,9 +255,6 @@ mod tests {
                         data "cons(:a, :b, :c)"; 
                         { "x" => ":a"; "y" => ":b"; "z" => ":c" } 
                 }
-
-                // TODO:  List with a path pattern inside of multiple entries
-
             }
         };
     }
