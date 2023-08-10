@@ -22,7 +22,6 @@ pub enum Pattern {
     Path(Vec<Pattern>),
     // TODO and pattern
     // TODO or pattern
-    // TODO not pattern? (with brakets or just traditional prefix not?)
     // TODO "array" pattern
     // TODO reference other pattern
     // TODO pattern function
