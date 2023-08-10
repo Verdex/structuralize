@@ -36,6 +36,9 @@ fn collapse<'a>(input : Vec<MatchMap<Slot, &'a Data>>) -> MatchMap<Slot, &'a Dat
     input.into_iter().flat_map(|hm| hm.into_iter()).collect()
 }
 
+// TODO : replace the public strict pattern match with another version that accepts cows 
+// and then calls the reference version
+
 pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
     macro_rules! pass { 
         () => { vec![ vec![] ] };
