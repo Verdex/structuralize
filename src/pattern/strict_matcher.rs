@@ -55,6 +55,8 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
             collapse_all(product(results))
         },
 
+        (Pattern::ListMatches(ps), _) if ps.len() == 0 => pass!(),
+
         // TODO add a test that fields are fine even if they are sorted differently
         (Pattern::Struct { name: pname, fields: pfields }, Data::Struct { name: dname, fields: dfields } )
             if pname == dname && pfields.len() == dfields.len() => {

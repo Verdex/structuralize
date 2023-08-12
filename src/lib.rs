@@ -51,6 +51,12 @@ mod tests {
                 use crate::data::*;
                 use crate::pattern::*;
 
+                t! { should_match_empty_list_matches $target =
+                        pattern "[| |]";
+                        data "[:whatever]";
+                        { }
+                }
+
                 t! { should_match_multiple_paths_in_struct $target = 
                         pattern "struct { a: {| cons(^, ^), [a, b] |}, b: {| cons(^, ^), [c, d] |} }";
                         data "struct { a: cons([1, 2], [3, 4]), b: cons([5, 6,], [7, 8]) }";
