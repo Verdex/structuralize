@@ -26,6 +26,8 @@ fn parse_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
         alt!(input => parse_data_float64; 
                       parse_cons; 
                       parse_struct;
+                      parse_list_matches;
+                      parse_nonoverlapping_list_matches;
                       parse_list; 
                       parse_wild;
                       // Note:  parse capture variable needs to happen after parse wild
@@ -41,6 +43,69 @@ fn parse_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
         pattern <= options;
         _after_clear <= parse_whitespace;
         select pattern 
+    })
+}
+
+fn parse_nonoverlapping_list_matches<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+    pat!(parse_l_square: char => () = '[' => ());
+    pat!(parse_r_square: char => () = ']' => ());
+    pat!(parse_l_paren: char => () = '(' => ());
+    pat!(parse_r_paren: char => () = ')' => ());
+
+    fn parse_l_bracket<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+        parser!(input => {
+            _square <= parse_l_square;
+            _paren <= parse_l_paren;
+            select ()
+        })
+    }
+
+    fn parse_r_bracket<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+        parser!(input => {
+            _paren <= parse_r_paren;
+            _square <= parse_r_square;
+            select ()
+        })
+    }
+
+    fn parse_points<'a>(input : &mut Chars<'a>) -> Result<Vec<Pattern>, ParseError> {
+        parse_list!(input => parse_l_bracket, parse_pattern : Pattern, parse_r_bracket)
+    }
+
+    parser!(input => {
+        points <= parse_points;
+        select Pattern::NonOverlappingListMatches(points)
+    })
+}
+
+fn parse_list_matches<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+    pat!(parse_l_square: char => () = '[' => ());
+    pat!(parse_r_square: char => () = ']' => ());
+    pat!(parse_bar: char => () = '|' => ());
+
+    fn parse_l_bracket<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+        parser!(input => {
+            _square <= parse_l_square;
+            _bar <= parse_bar;
+            select ()
+        })
+    }
+
+    fn parse_r_bracket<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+        parser!(input => {
+            _bar <= parse_bar;
+            _square <= parse_r_square;
+            select ()
+        })
+    }
+
+    fn parse_points<'a>(input : &mut Chars<'a>) -> Result<Vec<Pattern>, ParseError> {
+        parse_list!(input => parse_l_bracket, parse_pattern : Pattern, parse_r_bracket)
+    }
+
+    parser!(input => {
+        points <= parse_points;
+        select Pattern::ListMatches(points)
     })
 }
 
@@ -181,6 +246,27 @@ mod test {
         else {
             None
         }
+    }
+
+    #[test]
+    fn should_parse_nonoverlapping_list_matches() {
+        let input = "[( a, b, c )]";
+        let data = input.parse::<Pattern>().unwrap();
+        assert!(matches!(data, Pattern::NonOverlappingListMatches(_)));
+    }
+
+    #[test]
+    fn should_parse_path() {
+        let input = "{| a, b, c |}";
+        let data = input.parse::<Pattern>().unwrap();
+        assert!(matches!(data, Pattern::Path(_)));
+    }
+
+    #[test]
+    fn should_parse_list_matches() {
+        let input = "[| a, b, c |]";
+        let data = input.parse::<Pattern>().unwrap();
+        assert!(matches!(data, Pattern::ListMatches(_)));
     }
 
     #[test]
