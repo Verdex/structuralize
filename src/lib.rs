@@ -62,6 +62,11 @@ mod tests {
                         data ":whatever";
                 }
 
+                t! { should_not_match_list_path_with_more_patterns_than_list $target =
+                        pattern "[| :a, _ |]";
+                        data "[:a]";
+                }
+
                 t! { should_match_multiple_paths_in_struct $target = 
                         pattern "struct { a: {| cons(^, ^), [a, b] |}, b: {| cons(^, ^), [c, d] |} }";
                         data "struct { a: cons([1, 2], [3, 4]), b: cons([5, 6,], [7, 8]) }";

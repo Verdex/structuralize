@@ -56,7 +56,17 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
         },
 
         (Pattern::ListPath(ps), Data::List(_)) if ps.len() == 0 => pass!(),
-        //(Pattern::ListPath(ps), Data::List(ds))  // TODO if data is shorter than list path then it's going to fail
+        (Pattern::ListPath(ps), Data::List(ds)) if ps.len() > ds.len() => fail!(),
+        (Pattern::ListPath(ps), Data::List(ds)) => {
+            let p_len = ps.len();
+            let mut ret = vec![];
+            for i in 0..ds.len() { // TODO ds.len - plen or something
+                let blarg = &ds[i..=p_len];
+                let results : Vec<Vec<MatchMap<_, _>>> = ps.iter().zip(blarg.iter()).map(|(p, d)| strict_pattern_match(p, d)).collect();
+                ret.push(collapse_all(product(results)));
+            }
+            ret.into_iter().flatten().collect()
+        }
 
         // TODO add a test that fields are fine even if they are sorted differently
         (Pattern::Struct { name: pname, fields: pfields }, Data::Struct { name: dname, fields: dfields } )
