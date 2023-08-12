@@ -51,7 +51,7 @@ mod tests {
                 use crate::data::*;
                 use crate::pattern::*;
 
-                t! { should_match_empty_list_matches $target =
+                t! { should_match_empty_list_path $target =
                         pattern "[| |]";
                         data "[:whatever]";
                         { }

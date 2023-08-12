@@ -26,7 +26,7 @@ fn parse_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
         alt!(input => parse_data_float64; 
                       parse_cons; 
                       parse_struct;
-                      parse_list_matches;
+                      parse_list_path;
                       parse_list; 
                       parse_wild;
                       // Note:  parse capture variable needs to happen after parse wild
@@ -45,7 +45,7 @@ fn parse_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
     })
 }
 
-fn parse_list_matches<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+fn parse_list_path<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
     pat!(parse_l_square: char => () = '[' => ());
     pat!(parse_r_square: char => () = ']' => ());
     pat!(parse_bar: char => () = '|' => ());
@@ -72,7 +72,7 @@ fn parse_list_matches<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError>
 
     parser!(input => {
         points <= parse_points;
-        select Pattern::ListMatches(points)
+        select Pattern::ListPath(points)
     })
 }
 
@@ -223,10 +223,10 @@ mod test {
     }
 
     #[test]
-    fn should_parse_list_matches() {
+    fn should_parse_list_path() {
         let input = "[| a, b, c |]";
         let data = input.parse::<Pattern>().unwrap();
-        assert!(matches!(data, Pattern::ListMatches(_)));
+        assert!(matches!(data, Pattern::ListPath(_)));
     }
 
     #[test]
