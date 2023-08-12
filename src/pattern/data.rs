@@ -17,7 +17,6 @@ pub enum Pattern {
     Struct { name: Box<str>, fields: Vec<(Box<str>, Pattern)> },
     ExactList(Vec<Pattern>),
     ListMatches(Vec<Pattern>),
-    NonOverlappingListMatches(Vec<Pattern>), 
     // TODO allow parsing path next whereever, but make sure the type check
     // prevents path next anywhere except inside of a path pattern
     PathNext,
