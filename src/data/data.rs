@@ -1,12 +1,15 @@
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq)]
 pub enum Number {
     Float64(f64),
     Usize(usize),
     // TODO:  Indeterminate that's just a string or something?
 }
 
-#[derive(Debug, PartialEq, Clone)]
+// TODO: Add Data Trait
+// Guess is that either there needs to be a lot of is_* methods or a to_data method
+
+#[derive(Debug, PartialEq)]
 pub enum Data {
     Number(Number),
     String(Box<str>), 
