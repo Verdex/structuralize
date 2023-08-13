@@ -51,6 +51,37 @@ mod tests {
                 use crate::data::*;
                 use crate::pattern::*;
 
+                t! { should_match_list_path_in_list_path $target = 
+                        pattern "[| [| a, b |], [| c, d |] |]";
+                        data "[ [1, 2, 3], [4, 5, 6], [7, 8, 9] ]";
+                        { "a" => "1"; "b" => "2"; "c" => "4"; "d" => "5" }
+                        { "a" => "2"; "b" => "3"; "c" => "4"; "d" => "5" }
+                        { "a" => "1"; "b" => "2"; "c" => "5"; "d" => "6" }
+                        { "a" => "2"; "b" => "3"; "c" => "5"; "d" => "6" }
+                        { "a" => "4"; "b" => "5"; "c" => "7"; "d" => "8" }
+                        { "a" => "5"; "b" => "6"; "c" => "7"; "d" => "8" }
+                        { "a" => "4"; "b" => "5"; "c" => "8"; "d" => "9" }
+                        { "a" => "5"; "b" => "6"; "c" => "8"; "d" => "9" }
+                }
+
+                t! { should_match_multiple_items_list_path $target =
+                        pattern "[| a, b |]";
+                        data "[1, 2, 3, 4, 5]";
+                        { "a" => "1"; "b" => "2" }
+                        { "a" => "2"; "b" => "3" }
+                        { "a" => "3"; "b" => "4" }
+                        { "a" => "4"; "b" => "5" }
+                }
+
+                t! { should_match_single_item_list_path $target = 
+                        pattern "[| a |]";
+                        data "[1, 2, 3, 4]";
+                        { "a" => "1" }
+                        { "a" => "2" }
+                        { "a" => "3" }
+                        { "a" => "4" }
+                }
+
                 t! { should_match_empty_list_path $target =
                         pattern "[| |]";
                         data "[:whatever]";
