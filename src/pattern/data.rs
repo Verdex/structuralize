@@ -6,6 +6,9 @@ use std::collections::HashMap;
 use crate::data::*;
 
 
+// TODO make sure that pattern type checks ensure that slot names don't collide and that
+// if there are OR patterns both have the same 'signature'
+
 #[derive(Debug, Clone)]
 pub enum Pattern {
     Number(Number),
