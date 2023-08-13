@@ -73,6 +73,8 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
             if pname == dname && pfields.len() == dfields.len() => {
 
             // Note:  'Typechecking' will process structs such that their fields are sorted
+            // TODO: Right now you need all field names to match, but that's probably going to end up tedious
+            // to write a bunch of struct { a: _, b: _, c: P } etc.
 
             for (p_field_name, d_field_name) in pfields.iter()
                                                         .zip(dfields.iter())
