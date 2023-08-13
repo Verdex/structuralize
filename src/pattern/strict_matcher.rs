@@ -128,9 +128,13 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
 
         (Pattern::And(a, b), data) => {
             let a_results = strict_pattern_match(a, data);
-            let b_results = strict_pattern_match(b, data);
-
-            collapse_all(product(vec![a_results, b_results]))
+            if a_results.len() == 0 {
+                fail!()
+            }
+            else {
+                let b_results = strict_pattern_match(b, data);
+                collapse_all(product(vec![a_results, b_results]))
+            }
         },
 
         (Pattern::Or(a, b), data) => {
