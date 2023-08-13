@@ -21,8 +21,8 @@ pub enum Pattern {
     // prevents path next anywhere except inside of a path pattern
     PathNext,
     Path(Vec<Pattern>),
-    // TODO and pattern
-    // TODO or pattern
+    And(Box<Pattern>, Box<Pattern>),
+    Or(Box<Pattern>, Box<Pattern>),
     // TODO reference other pattern
     // TODO pattern function
     // TODO lessthan pattern

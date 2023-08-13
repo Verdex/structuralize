@@ -37,11 +37,98 @@ fn parse_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
                       parse_string_pattern)
     }
 
+    fn end_options<'a>(input : &mut Chars<'a>) -> Result<EndCombinator, ParseError> {
+        alt!(input => parse_and; parse_or)
+    }
+
     parser!(input => {
         _before_clear <= parse_whitespace;
         pattern <= options;
         _after_clear <= parse_whitespace;
-        select pattern 
+        ends <= * end_options;
+        _after_end_clear <= parse_whitespace;
+        select ends.into_iter().fold(pattern, 
+            |p, ec| match ec { 
+                EndCombinator::And(e) => Pattern::And(Box::new(p), Box::new(e)),
+                EndCombinator::Or(e) => Pattern::Or(Box::new(p), Box::new(e)),
+            })
+    })
+}
+
+enum EndCombinator {
+    And(Pattern),
+    Or(Pattern),
+}
+
+fn parse_or<'a>(input : &mut Chars<'a>) -> Result<EndCombinator, ParseError> {
+    pat!(parse_orbar: char => () = '|' => ());
+    pat!(parse_gt: char => () = '>' => ());
+    pat!(parse_l_paren: char => () = '(' => ());
+    pat!(parse_r_paren: char => () = ')' => ());
+
+    fn parse_pipe<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+        parser!(input => {
+            _orbar <= parse_orbar;
+            _gt <= parse_gt;
+            select ()
+        })
+    }
+
+    fn parse_and<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+        parser!(input => {
+            and <= parse_word;
+            where *and == *"or";
+            select ()
+        })
+    }
+
+    parser!(input => {
+        _ws0 <= parse_whitespace;
+        _pipe <= parse_pipe;
+        _ws1 <= parse_whitespace;
+        _and <= parse_and;
+        _ws2 <= parse_whitespace;
+        _paren_l <= ! parse_l_paren;
+        pattern <= ! parse_pattern;
+        _paren_r <= ! parse_r_paren; 
+        _ws3 <= parse_whitespace;
+        select EndCombinator::Or(pattern)
+    })
+}
+
+fn parse_and<'a>(input : &mut Chars<'a>) -> Result<EndCombinator, ParseError> {
+    pat!(parse_orbar: char => () = '|' => ());
+    pat!(parse_gt: char => () = '>' => ());
+    pat!(parse_l_paren: char => () = '(' => ());
+    pat!(parse_r_paren: char => () = ')' => ());
+
+    fn parse_pipe<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+        parser!(input => {
+            _orbar <= parse_orbar;
+            _gt <= parse_gt;
+            select ()
+        })
+    }
+
+    fn parse_and<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+        parser!(input => {
+            and <= parse_word;
+            where *and == *"and";
+            select ()
+        })
+    }
+
+    parser!(input => {
+        _ws0 <= parse_whitespace;
+        _pipe <= parse_pipe;
+        _ws1 <= parse_whitespace;
+        _and <= parse_and;
+        _ws2 <= parse_whitespace;
+        _paren_l <= ! parse_l_paren;
+        pattern <= ! parse_pattern;
+        _paren_r <= ! parse_r_paren; 
+        _ws3 <= parse_whitespace;
+        select EndCombinator::And(pattern)
     })
 }
 
@@ -204,7 +291,7 @@ mod test {
     use crate::data::Number;
 
     fn slice<'a, T>(input : &'a Vec<T>) -> &'a [T] { &input[..] }
-    fn unbox<'a, T>(input : &'a Box<T> ) -> &'a T { &**input }
+    fn unbox<T>(input : Box<T> ) -> T { *input }
 
     fn get_float(p : &Pattern) -> Option<f64> {
         if let Pattern::Number(Number::Float64(x)) = p {
@@ -213,6 +300,62 @@ mod test {
         else {
             None
         }
+    }
+
+    #[test]
+    fn should_parse_nested_ends() {
+        let input = "[] |> and( :c |> or ( \"e\" |> or( 1.0 ) ) )";
+        let data = input.parse::<Pattern>().unwrap();
+        let mut matched = false;
+        atom!(data => [Pattern::And(a, b)] b; unbox $ [Pattern::Or(c, d)] d; unbox $ [Pattern::Or(e, f)] =>  {
+            assert!( matches!( *a, Pattern::ExactList(_) ) );
+            assert!( matches!( *c, Pattern::Symbol(_) ) );
+            assert!( matches!( *e, Pattern::String(_) ) );
+            assert!( matches!( *f, Pattern::Number(_) ) );
+            matched = true;
+        } );
+        assert!(matched);
+    }
+    
+    #[test]
+    fn should_parse_multiple_alternating_ends() {
+        let input = "[] |> or ( 1.0 ) |> and ( :b ) |> or ( :c )";
+        let data = input.parse::<Pattern>().unwrap();
+        let mut matched = false;
+        atom!(data => [Pattern::Or(a, b)] a; unbox $ [Pattern::And(c, d)] c; unbox $ [Pattern::Or(e, f)] =>  {
+            assert!( matches!( *b, Pattern::Symbol(_) ) );
+            assert!( matches!( *d, Pattern::Symbol(_) ) );
+            assert!( matches!( *e, Pattern::ExactList(_) ) );
+            assert!( matches!( *f, Pattern::Number(_) ) );
+            matched = true;
+        } );
+        assert!(matched);
+    }
+    
+    #[test]
+    fn should_parse_or() {
+        let input = ":a |> or ( 1.0 )";
+        let data = input.parse::<Pattern>().unwrap();
+        let mut matched = false;
+        atom!(data => [Pattern::Or(a, b)] =>  {
+            assert!( matches!( *a, Pattern::Symbol(_) ) );
+            assert!( matches!( *b, Pattern::Number(_) ) );
+            matched = true;
+        } );
+        assert!(matched);
+    }
+
+    #[test]
+    fn should_parse_and() {
+        let input = ":a |> and ( 1.0 )";
+        let data = input.parse::<Pattern>().unwrap();
+        let mut matched = false;
+        atom!(data => [Pattern::And(a, b)] =>  {
+            assert!( matches!( *a, Pattern::Symbol(_) ) );
+            assert!( matches!( *b, Pattern::Number(_) ) );
+            matched = true;
+        } );
+        assert!(matched);
     }
 
     #[test]
