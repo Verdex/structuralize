@@ -51,6 +51,13 @@ mod tests {
                 use crate::data::*;
                 use crate::pattern::*;
 
+                t! { should_match_with_path_inside_of_list_path $target = 
+                        pattern "[| {| cons(^, ^), a |}, :target |]";
+                        data "[ cons(1, 2), :target, cons(3, 4), :other ]";
+                        { "a" => "1" }
+                        { "a" => "2" }
+                }
+
                 t! { should_match_list_path_in_list_path $target = 
                         pattern "[| [| a, b |], [| c, d |] |]";
                         data "[ [1, 2, 3], [4, 5, 6], [7, 8, 9] ]";
