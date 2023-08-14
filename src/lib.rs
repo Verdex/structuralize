@@ -51,6 +51,81 @@ mod tests {
                 use crate::data::*;
                 use crate::pattern::*;
 
+                t! { should_match_or_with_path $target =
+                        pattern "{| [^, ^], cons(a, 1) |} |> or({| [^, ^], cons(a, 2) |})";
+                        data "[cons(0, 2), cons(9, 2)]";
+                        { "a" => "0" }
+                        { "a" => "9" }
+                }
+
+                t! { should_match_and_with_list_path $target = 
+                        pattern "[| a, b |] |> and( [| c, 5, d |] )";
+                        data "[1, 5, 2, 3, 5, 4]";
+                        { "a" => "1"; "b" => "5"; "c" => "1"; "d" => "2" }
+                        { "a" => "5"; "b" => "2"; "c" => "1"; "d" => "2" }
+                        { "a" => "2"; "b" => "3"; "c" => "1"; "d" => "2" }
+                        { "a" => "3"; "b" => "5"; "c" => "1"; "d" => "2" }
+                        { "a" => "5"; "b" => "4"; "c" => "1"; "d" => "2" }
+                        { "a" => "1"; "b" => "5"; "c" => "3"; "d" => "4" }
+                        { "a" => "5"; "b" => "2"; "c" => "3"; "d" => "4" }
+                        { "a" => "2"; "b" => "3"; "c" => "3"; "d" => "4" }
+                        { "a" => "3"; "b" => "5"; "c" => "3"; "d" => "4" }
+                        { "a" => "5"; "b" => "4"; "c" => "3"; "d" => "4" }
+                }
+
+                t! { should_match_nested_or $target = 
+                        pattern "[x, 9, 9] |> or( [0, x, 2] |> or([9, 9, x]) )";
+                        data "[0, 1, 2]";
+                        { "x" => "1" }
+                }
+
+                t! { should_match_nested_and $target = 
+                        pattern "[x, 1, 2] |> and( [0, y, 2] |> and ([0, 1, z]) )";
+                        data "[0, 1, 2]";
+                        { "x" => "0"; "y" => "1"; "z" => "2" }
+                }
+
+                t! { should_match_and $target =
+                        pattern "[a] |> and(b)";
+                        data "[1]";
+                        { "a" => "1"; "b" => "[1]" }
+                }
+
+                t! { should_match_chained_ands $target =
+                        pattern "[a, _, _] |> and(b) |> and([_, :x, :y])";
+                        data "[1, :x, :y]";
+                        { "a" => "1"; "b" => "[1, :x, :y]" }
+                }
+
+                t! { should_not_match_chained_ands $target =
+                        pattern "[a, _, _] |> and(7) |> and([_, :x, :y])";
+                        data "[1, :x, :y]";
+                }
+
+                t! { should_match_or_with_first_passing $target = 
+                        pattern "[x] |> or(cons(x))";
+                        data "[1]";
+                        { "x" => "1" }
+                }
+
+                t! { should_match_or_with_second_passing $target = 
+                        pattern "[x] |> or(cons(x))";
+                        data "cons(1)";
+                        { "x" => "1" }
+                }
+
+                t! { should_match_or_both_passing $target = 
+                        pattern "cons(x) |> or(cons(x))";
+                        data "cons(1)";
+                        { "x" => "1" }
+                }
+
+                t! { should_match_chained_ors $target =
+                        pattern "[x, 1] |> or([x, 2]) |> or([x, 3])";
+                        data "[0, 3]";
+                        { "x" => "0" }
+                }
+
                 t! { should_match_with_path_inside_of_list_path $target = 
                         pattern "[| {| cons(^, ^), a |}, :target |]";
                         data "[ cons(1, 2), :target, cons(3, 4), :other ]";
