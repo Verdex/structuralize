@@ -4,11 +4,6 @@ use super::data::*;
 use super::check::*;
 
 
-// TODO:  phantom type type checked patterns
-// * in a path each step needs at least one next except for the last one which cannot have any nexts
-// * make sure that structs don't have duplicate field names
-// * also make sure that struct fields are sorted
-
 pub type MatchMap<K, V> = Vec<(K, V)>;
 
 fn product<'a>(mut input : Vec<Vec<MatchMap<Slot, &'a Data>>> ) -> Vec<Vec<MatchMap<Slot, &'a Data>>> {
@@ -89,6 +84,8 @@ pub fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMa
             if pname == dname && pfields.len() == dfields.len() => {
 
             // Note:  'Typechecking' will process structs such that their fields are sorted
+            // TODO: this isn't going to work unless you also sort the data
+            // Note:  'Typechecking' will process structs such that their fields are sorted
             // TODO: Right now you need all field names to match, but that's probably going to end up tedious
             // to write a bunch of struct { a: _, b: _, c: P } etc.
 
@@ -106,7 +103,6 @@ pub fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMa
             let results : Vec<Vec<MatchMap<_, _>>> = ps.zip(ds).map(|(p, d)| inner_match(p, d)).collect();
             collapse_all(product(results))
         },
-        // TODO do empty cons need to be prevented?
         (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
             if pname == dname && pparams.len() == dparams.len() => {
             let results : Vec<Vec<MatchMap<_, _>>> = pparams.iter().zip(dparams.iter()).map(|(p, d)| inner_match(p, d)).collect();

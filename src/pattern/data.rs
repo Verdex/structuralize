@@ -5,9 +5,6 @@ use std::hash::Hash;
 use crate::data::*;
 
 
-// TODO make sure that pattern type checks ensure that slot names don't collide and that
-// if there are OR patterns both have the same 'signature'
-
 #[derive(Debug, Clone)]
 pub enum Pattern {
     Number(Number),
@@ -19,23 +16,22 @@ pub enum Pattern {
     Struct { name: Box<str>, fields: Vec<(Box<str>, Pattern)> },
     ExactList(Vec<Pattern>),
     ListPath(Vec<Pattern>),
-    // TODO allow parsing path next whereever, but make sure the type check
-    // prevents path next anywhere except inside of a path pattern
     PathNext,
     Path(Vec<Pattern>),
     And(Box<Pattern>, Box<Pattern>),
     Or(Box<Pattern>, Box<Pattern>),
-    // TODO reference other pattern
-    // TODO pattern function
-    // TODO lessthan pattern
-    // TODO greater than pattern
-    // TODO greater than or equal pattern
-    // TODO less than or equal pattern
+    // TODO reference other pattern ? 
+    // TODO pattern function (really want to see if this can work)
+    // TODO lessthan pattern ? 
+    // TODO greater than pattern ? 
+    // TODO greater than or equal pattern ? 
+    // TODO less than or equal pattern ? 
 }
 
 // TODO a pattern that captures something probably shouldn't be allowed to convert that data into a pattern literal
 // and then use that as a reference other pattern in a later part of the pattern
 // specifically because that could depend on the evaluation order of the pattern as a whole 
+// (is this actually a real concern?)
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Slot {
