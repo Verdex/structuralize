@@ -1,8 +1,8 @@
 
 mod data;
-mod strict_matcher;
+mod matcher;
 
 pub mod parse;
 
 pub use data::*;
-pub use strict_matcher::*;
+pub use matcher::*;
