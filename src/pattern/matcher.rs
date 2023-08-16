@@ -42,10 +42,10 @@ fn collapse<'a>(input : Vec<MatchMap<Slot, &'a Data>>) -> MatchMap<Slot, &'a Dat
     input.into_iter().flat_map(|hm| hm.into_iter()).collect()
 }
 
-// TODO : replace the public strict pattern match with another version that accepts cows 
+// TODO : replace the public pattern match with another version that accepts cows 
 // and then calls the reference version
 
-pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
+pub fn pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
     macro_rules! pass { 
         () => { vec![ vec![] ] };
     } 
@@ -57,7 +57,7 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
         (Pattern::CaptureVar(name), data) => vec![ [(name.into(), data)].into() ],
         (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == 0 && ds.len() == 0 => pass!(),
         (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
-            let results : Vec<Vec<MatchMap<_, _>>> = ps.iter().zip(ds.iter()).map(|(p, d)| strict_pattern_match(p, d)).collect();
+            let results : Vec<Vec<MatchMap<_, _>>> = ps.iter().zip(ds.iter()).map(|(p, d)| pattern_match(p, d)).collect();
             collapse_all(product(results))
         },
 
@@ -68,7 +68,7 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
             let mut ret = vec![];
             for i in 0..=(ds.len() - p_len) {
                 let target = &ds[i..(i + p_len)];
-                let results : Vec<Vec<MatchMap<_, _>>> = ps.iter().zip(target.iter()).map(|(p, d)| strict_pattern_match(p, d)).collect();
+                let results : Vec<Vec<MatchMap<_, _>>> = ps.iter().zip(target.iter()).map(|(p, d)| pattern_match(p, d)).collect();
                 ret.push(collapse_all(product(results)));
             }
             ret.into_iter().flatten().collect()
@@ -93,13 +93,13 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
             let ps = pfields.iter().map(|(_, p)| p);
             let ds = dfields.iter().map(|(_, d)| d);
 
-            let results : Vec<Vec<MatchMap<_, _>>> = ps.zip(ds).map(|(p, d)| strict_pattern_match(p, d)).collect();
+            let results : Vec<Vec<MatchMap<_, _>>> = ps.zip(ds).map(|(p, d)| pattern_match(p, d)).collect();
             collapse_all(product(results))
         },
         // TODO do empty cons need to be prevented?
         (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
             if pname == dname && pparams.len() == dparams.len() => {
-            let results : Vec<Vec<MatchMap<_, _>>> = pparams.iter().zip(dparams.iter()).map(|(p, d)| strict_pattern_match(p, d)).collect();
+            let results : Vec<Vec<MatchMap<_, _>>> = pparams.iter().zip(dparams.iter()).map(|(p, d)| pattern_match(p, d)).collect();
             collapse_all(product(results))
         },
          
@@ -111,7 +111,7 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
         (Pattern::Path(ps), _) if ps.len() == 0 => pass!(),
         (Pattern::Path(ps), data) => {
             let mut outer : Vec<Vec<MatchMap<_, _>>> = vec![];
-            let results = strict_pattern_match(&ps[0], data);
+            let results = pattern_match(&ps[0], data);
             for result in results {
                 let mut inner : Vec<Vec<MatchMap<_, _>>> = vec![];
                 let mut nexts : Vec<&Data> = result.iter().filter_map(|r| match r { (Slot::Next, d) => Some(*d), _ => None }).collect();
@@ -122,7 +122,7 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
                 }
                 for next in nexts {
                     let rest = ps[1..].iter().map(|x| x.clone()).collect::<Vec<_>>();
-                    let inner_results = strict_pattern_match(&Pattern::Path(rest), next);
+                    let inner_results = pattern_match(&Pattern::Path(rest), next);
                     let inner_results_with_top : Vec<MatchMap<_, _>> = inner_results.into_iter().map(|x| collapse(vec![top.clone(), x])).collect();
                     inner.push(inner_results_with_top);
                 }
@@ -133,23 +133,23 @@ pub fn strict_pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Ve
         },
 
         (Pattern::And(a, b), data) => {
-            let a_results = strict_pattern_match(a, data);
+            let a_results = pattern_match(a, data);
             if a_results.len() == 0 {
                 fail!()
             }
             else {
-                let b_results = strict_pattern_match(b, data);
+                let b_results = pattern_match(b, data);
                 collapse_all(product(vec![a_results, b_results]))
             }
         },
 
         (Pattern::Or(a, b), data) => {
-            let a_results = strict_pattern_match(a, data);
+            let a_results = pattern_match(a, data);
             if a_results.len() != 0 {
                 a_results
             }
             else {
-                strict_pattern_match(b, data)
+                pattern_match(b, data)
             }
         },
         _ => fail!(),

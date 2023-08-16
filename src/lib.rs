@@ -427,7 +427,6 @@ mod tests {
         };
     }
 
-    //all!(pattern_match);
-    all!(strict_pattern_match);
+    all!(pattern_match);
 
 }
