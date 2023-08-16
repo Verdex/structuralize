@@ -2,6 +2,12 @@
 use crate::data::*;
 use super::data::*;
 
+
+// TODO:  phantom type type checked patterns
+// * in a path each step needs at least one next except for the last one which cannot have any nexts
+// * make sure that structs don't have duplicate field names
+// * also make sure that struct fields are sorted
+
 pub type MatchMap<K, V> = Vec<(K, V)>;
 
 fn product<'a>(mut input : Vec<Vec<MatchMap<Slot, &'a Data>>> ) -> Vec<Vec<MatchMap<Slot, &'a Data>>> {
