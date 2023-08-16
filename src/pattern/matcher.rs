@@ -1,6 +1,7 @@
 
 use crate::data::*;
 use super::data::*;
+use super::check::*;
 
 
 // TODO:  phantom type type checked patterns
@@ -46,7 +47,12 @@ fn collapse<'a>(input : Vec<MatchMap<Slot, &'a Data>>) -> MatchMap<Slot, &'a Dat
 // and then calls the reference version
 
 pub fn pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
-    inner_match(pattern, data)
+    if check_pattern(pattern) {
+        inner_match(pattern, data)
+    }
+    else {
+        vec![]
+    }
 }
 
 pub fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
