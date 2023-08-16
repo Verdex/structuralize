@@ -114,7 +114,7 @@ pub fn pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<Match
             let results = pattern_match(&ps[0], data);
             for result in results {
                 let mut inner : Vec<Vec<MatchMap<_, _>>> = vec![];
-                let mut nexts : Vec<&Data> = result.iter().filter_map(|r| match r { (Slot::Next, d) => Some(*d), _ => None }).collect();
+                let nexts : Vec<&Data> = result.iter().filter_map(|r| match r { (Slot::Next, d) => Some(*d), _ => None }).collect();
 
                 let top : MatchMap<Slot, &Data> = result.iter().filter_map(|r| match r { (Slot::Next, _) => None, (s, d) => Some((s.clone(), *d)) }).collect();
                 if nexts.len() == 0 {

@@ -38,51 +38,6 @@ pub enum Pattern {
 // and then use that as a reference other pattern in a later part of the pattern
 // specifically because that could depend on the evaluation order of the pattern as a whole 
 
-#[derive(Debug, Clone)]
-pub struct MatchResult<'a> {
-    map : HashMap<Slot, &'a Data>
-}
-
-// TODO does the final interface really need MatchResult or can it just use HashMap?
-// Also if MatchResult does end up being returned then maybe make some of these pub(crate)
-// Also also, if the final interface doesn't need match reuslt, then maybe the internal
-// one doesn't need it either
-impl<'a> MatchResult<'a> {
-    pub fn new() -> Self {
-        MatchResult { map: HashMap::new() }
-    }
-    
-    pub fn merge(&mut self, other : MatchResult<'a>) { 
-        // TODO: Is it faster to collect both self and other?
-        // TODO:  This can fail on duplicate slots unless pattern is type checked
-        for (key, value) in other.map.into_iter() {
-            self.map.insert(key, value);
-        }
-    }
-
-    pub fn get(&self, key : &Slot) -> Option<&'a Data> {
-        Some(*self.map.get(key)?)
-    }
-
-    pub fn add(&mut self, key : Slot, value : &'a Data) {
-        self.map.insert(key, value);
-    }
-}
-
-impl<'a, const N : usize> From<[(Slot, &'a Data); N]> for MatchResult<'a> {
-    fn from(item : [(Slot, &'a Data); N]) -> Self {
-        let map = item.into_iter().map(|(k,v)| (k, v)).collect::<HashMap<Slot, &'a Data>>();
-        MatchResult { map }
-    }
-}
-
-impl<'a> From<Vec<(Slot, &'a Data)>> for MatchResult<'a> {
-    fn from(item : Vec<(Slot, &'a Data)>) -> Self {
-        let map = item.into_iter().map(|(k,v)| (k, v)).collect::<HashMap<Slot, &'a Data>>();
-        MatchResult { map }
-    }
-}
-
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Slot {
     Next,
