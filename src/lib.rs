@@ -419,4 +419,19 @@ mod tests {
 
     all!(pattern_match);
 
+    #[test]
+    fn should_try_it() {
+
+        use crate::data::*;
+        use crate::pattern::*;
+
+        let pattern : Pattern = "[| [| a, b |], [| c, d |] |]".parse().unwrap();
+        let data : Data = "[ [1, 2, 3], [4, 5, 6], [7, 8, 9] ]".parse().unwrap();
+
+        let results = pattern_match(&pattern, &data);
+        for r in results {
+            println!("{:?}\n\n", r);
+        }
+    }
+
 }
