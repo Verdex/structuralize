@@ -27,6 +27,7 @@ mod tests {
                 let pattern : Pattern = $pat.parse().unwrap();
                 let data : Data = $dat.parse().unwrap();
 
+                #[allow(unused_mut)]
                 let mut results = $matcher(&pattern, &data).into_iter()
                                                            .map(|x| x.into_iter().collect::<HashMap<_,_>>())
                                                            .collect::<Vec<_>>();
