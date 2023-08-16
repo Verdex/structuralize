@@ -84,13 +84,3 @@ impl From<String> for Slot {
         Slot::Symbol(item.into())
     }
 }
-
-// TODO probably need comparison patterns in order to avoid needing expressions
-    // This probably means that if-patterns aren't going to work
-
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-}
