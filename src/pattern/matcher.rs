@@ -50,7 +50,7 @@ pub fn pattern_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<Match
     }
 }
 
-pub fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
+fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
     macro_rules! pass { 
         () => { vec![ vec![] ] };
     } 
