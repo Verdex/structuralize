@@ -81,14 +81,11 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Sl
         }
 
         // TODO add a test that fields are fine even if they are sorted differently
+        // TODO need to deal with unsorted slot names
+        // TODO need to deal with patterns that leave off slots that are irrelevant
+        // TODO on the other hand data that doesn't have a slot a pattern does is a failure
         (Pattern::Struct { name: pname, fields: pfields }, Data::Struct { name: dname, fields: dfields } )
             if pname == dname && pfields.len() == dfields.len() => {
-
-            // Note:  'Typechecking' will process structs such that their fields are sorted
-            // TODO: this isn't going to work unless you also sort the data
-            // Note:  'Typechecking' will process structs such that their fields are sorted
-            // TODO: Right now you need all field names to match, but that's probably going to end up tedious
-            // to write a bunch of struct { a: _, b: _, c: P } etc.
 
             for (p_field_name, d_field_name) in pfields.iter()
                                                         .zip(dfields.iter())
