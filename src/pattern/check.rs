@@ -1,4 +1,6 @@
 
+use denest::Linearizable;
+
 use super::data::*;
  
 pub type PatternSig = Vec<Box<str>>;
@@ -22,6 +24,8 @@ pub struct TypeMatches(TypeChecked);
 pub enum TypeCheckError {
     DuplicateSlot,
     OrPatternHasUnequalSig,
+    IncorrectNextUsage,
+    ConsPatternsNeedAtLeastOneParam,
     TypeDoesNotMatch { found: PatternSig, expected: PatternSig }
 }
 
@@ -31,6 +35,8 @@ impl std::fmt::Display for TypeCheckError {
         match self {
             DuplicateSlot => write!(f, "Pattern TypeCheckError: DuplicateSlot"),
             OrPatternHasUnequalSig => write!(f, "Pattern TypeCheckError: OrPatternHasUnequalSig"),
+            IncorrectNextUsage => write!(f, "Pattern TypeCheckError: IncorrectNextUsage"),
+            ConsPatternsNeedAtLeastOneParam => write!(f, "Pattern TypeCheckError: ConsPatternsNeedAtLeastOneParam"),
             TypeDoesNotMatch { found, expected } => write!(f, "Pattern TypeCheckError: Types do not match.  Found {:?}, but expected {:?}", found, expected),
         }
     }
@@ -40,7 +46,23 @@ impl std::error::Error for TypeCheckError { }
 
 pub fn check_pattern(pattern : Pattern) -> Result<TypeChecked, TypeCheckError> {
     let sig = pattern_sig(&pattern)?;
+
+    if !check_next_usage(&pattern) {
+        return Err(TypeCheckError::IncorrectNextUsage);
+    }
+
+    if ! pattern.to_lax().map(|p| check_cons_have_params(p)).all(|x| x) {
+        return Err(TypeCheckError::ConsPatternsNeedAtLeastOneParam);
+    }
+
     Ok(TypeChecked(pattern, sig))
+}
+
+fn check_cons_have_params(pattern : &Pattern) -> bool {
+    match pattern {
+        Pattern::Cons { params, .. } if params.len() == 0 => false,
+        _ => true,
+    }
 }
 
 fn check_next_usage(pattern : &Pattern) -> bool {
@@ -164,15 +186,10 @@ pub fn pattern_sig(pattern : &Pattern) -> Result<PatternSig, TypeCheckError> {
 
 // TODO make sure that pattern type checks ensure that slot names don't collide and that
 // if there are OR patterns both have the same 'signature'
-// also need to have something for function patterns
 
 // TODO:  phantom type type checked patterns
 // * make sure that structs don't have duplicate field names
 
-            
-
-
-        // TODO do empty cons need to be prevented? (let's say yes)
 
 #[cfg(test)]
 mod test {
