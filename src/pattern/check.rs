@@ -167,7 +167,6 @@ pub fn pattern_sig(pattern : &Pattern) -> Result<PatternSig, TypeCheckError> {
             sig.dedup();
 
             if total != sig.len() {
-                println!("blarg {:?}", sig);
                 Err(TypeCheckError::DuplicateSlot)
             }
             else {
@@ -182,8 +181,8 @@ pub fn pattern_sig(pattern : &Pattern) -> Result<PatternSig, TypeCheckError> {
         Symbol(_) => EMPTY,
         Wild => EMPTY,
         CaptureVar(v) => Ok(vec![v.clone()]),
-        Cons { name: _, params } => EMPTY,
-        Struct { name: _, fields } => EMPTY,
+        Cons { params, .. } => star!(params),
+        Struct { fields, .. } => star!(fields.iter().map(|(_, p)| p)),
         ExactList(ps) => star!(ps),
         ListPath(ps) => star!(ps),
         PathNext => EMPTY, 
