@@ -2,6 +2,8 @@
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 
+use denest::*;
+
 use crate::data::*;
 
 
@@ -26,6 +28,27 @@ pub enum Pattern {
     // TODO greater than pattern ? 
     // TODO greater than or equal pattern ? 
     // TODO less than or equal pattern ? 
+}
+
+impl<'a> Linearizable<'a> for Pattern {
+    fn l_next(&'a self) -> Vec<&'a Self> {
+        use Pattern::*;
+        match self {
+            Number(_) => vec![],
+            String(_) => vec![], 
+            Symbol(_) => vec![],
+            Wild => vec![],
+            CaptureVar(_) => vec![],
+            Cons { params, .. } => params.iter().collect(),
+            Struct { fields: fs, .. } => fs.iter().map(|(_, p)| p).collect(),
+            ExactList(ps) => ps.iter().collect(),
+            ListPath(ps) => ps.iter().collect(),
+            PathNext => vec![],
+            Path(ps) => ps.iter().collect(),
+            And(a, b) => vec![&**a, &**b],
+            Or(a, b) => vec![&**a, &**b],
+        }
+    }
 }
 
 // TODO a pattern that captures something probably shouldn't be allowed to convert that data into a pattern literal
