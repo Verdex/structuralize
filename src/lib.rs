@@ -13,11 +13,13 @@ mod tests {
             fn $name() {
                 use std::collections::HashMap;
 
-                let pattern : Pattern = $pat.parse().unwrap();
-                let data : Data = $dat.parse().unwrap();
+                let pattern : Pattern = $pat.parse().expect(&format!("{}", $pat));
+                let data : Data = $dat.parse().expect(&format!("{}", $pat));
+
+                let type_checked_pattern : TypeChecked = check_pattern(pattern).expect(&format!("{}", $pat));
 
                 #[allow(unused_mut)]
-                let mut results = $matcher(&pattern, &data).into_iter()
+                let mut results = $matcher(&type_checked_pattern, &data).into_iter()
                                                            .map(|x| x.into_iter().collect::<HashMap<_,_>>())
                                                            .collect::<Vec<_>>();
 
@@ -40,6 +42,7 @@ mod tests {
             mod $target {
                 use crate::data::*;
                 use crate::pattern::*;
+                use crate::pattern::check::*;
 
                 t! { should_match_path_with_next_inside_list_path $target =
                         pattern "{| [| ^, 1 |], cons(:a, a) |}";
@@ -432,11 +435,14 @@ mod tests {
 
         use crate::data::*;
         use crate::pattern::*;
+        use crate::pattern::check::*;
 
         let pattern : Pattern = "[| [| a, b |], [| c, d |] |]".parse().unwrap();
         let data : Data = "[ [1, 2, 3], [4, 5, 6], [7, 8, 9] ]".parse().unwrap();
 
-        let results = pattern_match(&pattern, &data);
+        let type_checked_pattern : TypeChecked = check_pattern(pattern).unwrap();
+
+        let results = pattern_match(&type_checked_pattern, &data);
         for r in results {
             println!("{:?}\n\n", r);
         }

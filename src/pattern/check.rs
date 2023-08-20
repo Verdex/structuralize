@@ -26,7 +26,7 @@ pub enum TypeCheckError {
     OrPatternHasUnequalSig,
     IncorrectNextUsage,
     ConsPatternsNeedAtLeastOneParam,
-    StructPatternsNeedUniqueSlots,
+    StructPatternsNeedUniqueFields,
     TypeDoesNotMatch { found: PatternSig, expected: PatternSig }
 }
 
@@ -38,7 +38,7 @@ impl std::fmt::Display for TypeCheckError {
             OrPatternHasUnequalSig => write!(f, "Pattern TypeCheckError: OrPatternHasUnequalSig"),
             IncorrectNextUsage => write!(f, "Pattern TypeCheckError: IncorrectNextUsage"),
             ConsPatternsNeedAtLeastOneParam => write!(f, "Pattern TypeCheckError: ConsPatternsNeedAtLeastOneParam"),
-            StructPatternsNeedUniqueSlots => write!(f, "Pattern TypecheckError: StructPatternsNeedUniqueSlots"),
+            StructPatternsNeedUniqueFields=> write!(f, "Pattern TypecheckError: StructPatternsNeedUniqueFields"),
             TypeDoesNotMatch { found, expected } => write!(f, "Pattern TypeCheckError: Types do not match.  Found {:?}, but expected {:?}", found, expected),
         }
     }
@@ -49,7 +49,7 @@ impl std::error::Error for TypeCheckError { }
 pub fn check_pattern(pattern : Pattern) -> Result<TypeChecked, TypeCheckError> {
 
     if ! pattern.to_lax().map(|p| check_structs_have_unique_slots(p)).all(|x| x) {
-        return Err(TypeCheckError::StructPatternsNeedUniqueSlots);
+        return Err(TypeCheckError::StructPatternsNeedUniqueFields);
     }
 
     if ! check_next_usage(&pattern) {
@@ -160,15 +160,18 @@ pub fn pattern_sig(pattern : &Pattern) -> Result<PatternSig, TypeCheckError> {
                 sig.push(s);
             }
 
+            let mut sig = sig.into_iter().flatten().collect::<Vec<_>>();
+
             sig.sort();
             let total = sig.len();
             sig.dedup();
 
             if total != sig.len() {
+                println!("blarg {:?}", sig);
                 Err(TypeCheckError::DuplicateSlot)
             }
             else {
-                Ok(sig.into_iter().flatten().collect())
+                Ok(sig)
             }
         }};
     }
