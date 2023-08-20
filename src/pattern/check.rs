@@ -26,6 +26,7 @@ pub enum TypeCheckError {
     OrPatternHasUnequalSig,
     IncorrectNextUsage,
     ConsPatternsNeedAtLeastOneParam,
+    StructPatternsNeedUniqueSlots,
     TypeDoesNotMatch { found: PatternSig, expected: PatternSig }
 }
 
@@ -37,6 +38,7 @@ impl std::fmt::Display for TypeCheckError {
             OrPatternHasUnequalSig => write!(f, "Pattern TypeCheckError: OrPatternHasUnequalSig"),
             IncorrectNextUsage => write!(f, "Pattern TypeCheckError: IncorrectNextUsage"),
             ConsPatternsNeedAtLeastOneParam => write!(f, "Pattern TypeCheckError: ConsPatternsNeedAtLeastOneParam"),
+            StructPatternsNeedUniqueSlots => write!(f, "Pattern TypecheckError: StructPatternsNeedUniqueSlots"),
             TypeDoesNotMatch { found, expected } => write!(f, "Pattern TypeCheckError: Types do not match.  Found {:?}, but expected {:?}", found, expected),
         }
     }
@@ -47,7 +49,11 @@ impl std::error::Error for TypeCheckError { }
 pub fn check_pattern(pattern : Pattern) -> Result<TypeChecked, TypeCheckError> {
     let sig = pattern_sig(&pattern)?;
 
-    if !check_next_usage(&pattern) {
+    if ! pattern.to_lax().map(|p| check_structs_have_unique_slots(p)).all(|x| x) {
+        return Err(TypeCheckError::StructPatternsNeedUniqueSlots);
+    }
+
+    if ! check_next_usage(&pattern) {
         return Err(TypeCheckError::IncorrectNextUsage);
     }
 
@@ -56,6 +62,19 @@ pub fn check_pattern(pattern : Pattern) -> Result<TypeChecked, TypeCheckError> {
     }
 
     Ok(TypeChecked(pattern, sig))
+}
+
+fn check_structs_have_unique_slots(pattern : &Pattern) -> bool {
+    match pattern {
+        Pattern::Struct { fields, .. } => {
+            let mut slots = fields.iter().map(|(n, _)| n).collect::<Vec<_>>();
+            let before_len = slots.len();
+            slots.sort();
+            slots.dedup();
+            slots.len() == before_len
+        }
+        _ => true,
+    }
 }
 
 fn check_cons_have_params(pattern : &Pattern) -> bool {
@@ -182,14 +201,6 @@ pub fn pattern_sig(pattern : &Pattern) -> Result<PatternSig, TypeCheckError> {
         },
     }
 }
-
-
-// TODO make sure that pattern type checks ensure that slot names don't collide and that
-// if there are OR patterns both have the same 'signature'
-
-// TODO:  phantom type type checked patterns
-// * make sure that structs don't have duplicate field names
-
 
 #[cfg(test)]
 mod test {
