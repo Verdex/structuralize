@@ -41,6 +41,14 @@ mod tests {
                 use crate::data::*;
                 use crate::pattern::*;
 
+                t! { should_match_path_with_next_inside_list_path $target =
+                        pattern "{| [| ^, 1 |], cons(:a, a) |}";
+                        data "[ cons(:a, :b), 1, cons(:a, :c), 1, cons(:a, :d), 2, cons(:x, :e), 1, cons(:a, :f), 1]";
+                        { "a" => ":b" }
+                        { "a" => ":c" }
+                        { "a" => ":f" }
+                }
+
                 t! { should_match_or_with_path $target =
                         pattern "{| [^, ^], cons(a, 1) |} |> or({| [^, ^], cons(a, 2) |})";
                         data "[cons(0, 2), cons(9, 2)]";
