@@ -6,20 +6,32 @@ pub type PatternSig = Vec<Box<str>>;
 #[derive(Debug)]
 pub struct TypeChecked(Pattern, PatternSig);
 
+impl TypeChecked {
+    pub fn pattern<'a>(&'a self) -> &'a Pattern {
+        &self.0
+    }
+    pub fn signature<'a>(&'a self) -> &'a PatternSig {
+        &self.1
+    }
+}
+
 #[derive(Debug)]
-pub struct TypeMatches(Pattern);
+pub struct TypeMatches(TypeChecked);
 
 #[derive(Debug)]
 pub enum TypeCheckError {
     DuplicateSlot,
     OrPatternHasUnequalSig,
+    TypeDoesNotMatch { found: PatternSig, expected: PatternSig }
 }
 
 impl std::fmt::Display for TypeCheckError {
     fn fmt(&self, f : &mut std::fmt::Formatter) -> std::fmt::Result {
+        use TypeCheckError::*;
         match self {
-            TypeCheckError::DuplicateSlot => write!(f, "Pattern TypeCheckError: DuplicateSlot"),
-            TypeCheckError::OrPatternHasUnequalSig=> write!(f, "Pattern TypeCheckError: OrPatternHasUnequalSig"),
+            DuplicateSlot => write!(f, "Pattern TypeCheckError: DuplicateSlot"),
+            OrPatternHasUnequalSig => write!(f, "Pattern TypeCheckError: OrPatternHasUnequalSig"),
+            TypeDoesNotMatch { found, expected } => write!(f, "Pattern TypeCheckError: Types do not match.  Found {:?}, but expected {:?}", found, expected),
         }
     }
 }
@@ -27,7 +39,17 @@ impl std::fmt::Display for TypeCheckError {
 impl std::error::Error for TypeCheckError { }
 
 pub fn check_pattern(pattern : Pattern) -> Result<TypeChecked, TypeCheckError> {
-    Err(TypeCheckError::DuplicateSlot)
+    let sig = pattern_sig(&pattern)?;
+    Ok(TypeChecked(pattern, sig))
+}
+
+pub fn pattern_sig_matches(pattern : TypeChecked, sig : PatternSig) -> Result<TypeMatches, TypeCheckError> {
+    if pattern.signature() == &sig {
+        Ok(TypeMatches(pattern))
+    }
+    else {
+        Err(TypeCheckError::TypeDoesNotMatch { found: pattern.signature().clone(), expected: sig.clone() })
+    }
 }
 
 pub fn pattern_sig(pattern : &Pattern) -> Result<PatternSig, TypeCheckError> {
@@ -75,7 +97,7 @@ pub fn pattern_sig(pattern : &Pattern) -> Result<PatternSig, TypeCheckError> {
             let b_sig = pattern_sig(b)?;
 
             if a_sig != b_sig {
-                Error(TypeCheckError::OrPatternHasUnequalSig)
+                Err(TypeCheckError::OrPatternHasUnequalSig)
             }
             else {
                 Ok(a_sig)
