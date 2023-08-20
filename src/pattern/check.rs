@@ -47,7 +47,6 @@ impl std::fmt::Display for TypeCheckError {
 impl std::error::Error for TypeCheckError { }
 
 pub fn check_pattern(pattern : Pattern) -> Result<TypeChecked, TypeCheckError> {
-    let sig = pattern_sig(&pattern)?;
 
     if ! pattern.to_lax().map(|p| check_structs_have_unique_slots(p)).all(|x| x) {
         return Err(TypeCheckError::StructPatternsNeedUniqueSlots);
@@ -61,6 +60,7 @@ pub fn check_pattern(pattern : Pattern) -> Result<TypeChecked, TypeCheckError> {
         return Err(TypeCheckError::ConsPatternsNeedAtLeastOneParam);
     }
 
+    let sig = pattern_sig(&pattern)?;
     Ok(TypeChecked(pattern, sig))
 }
 
