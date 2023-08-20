@@ -43,6 +43,45 @@ pub fn check_pattern(pattern : Pattern) -> Result<TypeChecked, TypeCheckError> {
     Ok(TypeChecked(pattern, sig))
 }
 
+fn check_next_usage(pattern : &Pattern) -> bool {
+    fn r(pattern : &Pattern, in_path : bool) -> Option<usize> {
+        use Pattern::*;
+        match pattern {
+            Number(_) => Some(0),
+            String(_) => Some(0), 
+            Symbol(_) => Some(0),
+            Wild => Some(0),
+            CaptureVar(_) => Some(0),
+            Cons { params, .. } => params.iter().map(|p| r(p, in_path)).sum(),
+            Struct { fields: fs, .. } => fs.iter().map(|(_, p)| r(p, in_path)).sum(),
+            ExactList(ps) => ps.iter().map(|p| r(p, in_path)).sum(),
+            ListPath(ps) => ps.iter().map(|p| r(p, in_path)).sum(),
+            PathNext if in_path => Some(1),
+            PathNext => None,
+            Path(ps) if ps.len() == 0 => Some(0),
+            Path(ps) => {
+                let last_count = r(ps.last().unwrap(), true);
+                if ! matches!(last_count, Some(0)) {
+                    None
+                }
+                else {
+                    let l = ps.len() - 1;
+                    if (&ps[..l]).iter().map(|p| r(p, true)).all(|x| match x { Some(v) if v > 0 => true, _ => false }) {
+                        Some(0)
+                    }
+                    else {
+                        None
+                    }
+                }
+            },
+            And(a, b) => [r(&**a, in_path), r(&**b, in_path)].into_iter().sum(),
+            Or(a, b) => [r(&**a, in_path), r(&**b, in_path)].into_iter().sum(),
+        }
+    }
+
+    r(pattern, false).is_some()
+}
+
 pub fn pattern_sig_matches(pattern : TypeChecked, sig : PatternSig) -> Result<TypeMatches, TypeCheckError> {
     if pattern.signature() == &sig {
         Ok(TypeMatches(pattern))
