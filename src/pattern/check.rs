@@ -44,6 +44,9 @@ pub fn check_pattern(pattern : Pattern) -> Result<TypeChecked, TypeCheckError> {
 }
 
 fn check_next_usage(pattern : &Pattern) -> bool {
+    fn sgtz(input : Option<usize>) -> bool {
+        match input { Some(v) if v > 0 => true, _ => false }
+    }
     fn r(pattern : &Pattern, in_path : bool) -> Option<usize> {
         use Pattern::*;
         match pattern {
@@ -66,7 +69,7 @@ fn check_next_usage(pattern : &Pattern) -> bool {
                 }
                 else {
                     let l = ps.len() - 1;
-                    if (&ps[..l]).iter().map(|p| r(p, true)).all(|x| match x { Some(v) if v > 0 => true, _ => false }) {
+                    if (&ps[..l]).iter().map(|p| r(p, true)).all(sgtz) {
                         Some(0)
                     }
                     else {
@@ -75,7 +78,20 @@ fn check_next_usage(pattern : &Pattern) -> bool {
                 }
             },
             And(a, b) => [r(&**a, in_path), r(&**b, in_path)].into_iter().sum(),
-            Or(a, b) => [r(&**a, in_path), r(&**b, in_path)].into_iter().sum(),
+            Or(a, b) => {
+                let a_s = r(&**a, in_path);
+                let b_s = r(&**b, in_path);
+
+                if a_s.is_none() || b_s.is_none() {
+                    None
+                }
+                else if !sgtz(a_s) || !sgtz(b_s) {
+                    Some(0)
+                }
+                else {
+                    Some(1)
+                }
+            },
         }
     }
 
@@ -169,4 +185,45 @@ pub fn pattern_sig(pattern : &Pattern) -> Result<PatternSig, TypeCheckError> {
 mod test {
     use super::*;
 
+    #[test]
+    fn check_next_usage_should_pass() {
+        fn t(input : &str) {
+            let p : Pattern = input.parse().unwrap();
+            let output = check_next_usage(&p);
+            assert!(output, "{input}");
+        }
+
+        t("5");
+        t(":symbol");
+        t("[1,2,3]");
+        t("[1,:symbol,3]");
+        t("cons(1, 2, 3)");
+        t("cons(1, [1, 2], 3)");
+        t("[| a, _, c |]");
+        t("x");
+        t("\"x\"");
+        t("\"x\" |> and( :symbol )");
+        t("\"x\" |> or( :symbol )");
+
+        t("{|  |}");
+        t("{| x |}");
+        t("{| [^, ^], 5 |}");
+        t("{| [cons( [8] |> and(^) ), 6], 5 |}");
+        t("{| [cons( [^] |> or(^) ), 6], 5 |}");
+        t("{| ^, cons(cons(^, ^)), a |}");
+        t("{| [ {| ^, 0 |}, ^], 4 |}");
+    }
+
+    #[test]
+    fn check_next_usage_should_fail() {
+        fn t(input : &str) {
+            let p : Pattern = input.parse().unwrap();
+            let output = check_next_usage(&p);
+            assert!(!output, "{input}");
+        }
+
+        t("{| [cons( [8] |> or(^) ), 6], 5 |}"); 
+        t("{| {| ^, 0 |}, 4 |}");
+        t("{| cons(^), ^ |}");
+    }
 }
