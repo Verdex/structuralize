@@ -51,11 +51,6 @@ impl<'a> Linearizable<'a> for Pattern {
     }
 }
 
-// TODO a pattern that captures something probably shouldn't be allowed to convert that data into a pattern literal
-// and then use that as a reference other pattern in a later part of the pattern
-// specifically because that could depend on the evaluation order of the pattern as a whole 
-// (is this actually a real concern?)
-
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Slot {
     Next,
