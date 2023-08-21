@@ -5,20 +5,39 @@ use renounce::*;
 use crate::parsing::*;
 use super::data::*;
 
+#[derive(Debug)]
+pub struct E(Box<str>);
+
+impl std::fmt::Display for E {
+    fn fmt(&self, f : &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            E(s) => write!(f, "{}", s),
+        }
+    }
+}
+
+impl std::error::Error for E { }
+
 impl std::str::FromStr for Data {
     type Err = Box<dyn std::error::Error>;  
 
     fn from_str(s : &str) -> Result<Self, Self::Err> {
-        // TODO:  the Chars struct will be returned at the point of failure
-        // in the event of a Fatal result.  Might be a good idea to somehow
-        // reflect that in a different concrete Error so that it can be shown
-        // to a consumer.
-        let mut x = s.chars();
-        let y = parse_data(&mut x);
-        println!("{}", x.collect::<String>());
-        Ok(y?)
-        //Ok(parse_data(&mut s.chars())?)
+        let mut cs = s.chars();
+        let result = parse(&mut cs);
+        match result {
+            Ok(v) => Ok(v),
+            Err(ParseError::Fatal(x)) => Err(Box::new(E(format!("Error Trace: {:?}\nAt: {}", x, cs.collect::<String>()).into()))),
+            Err(ParseError::Error) => Err(Box::new(E("Not Data".into()))),
+        }
     }
+}
+
+fn parse<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
+    parser!(input => {
+        data <= ! parse_data;
+        ! end;
+        select data
+    })
 }
 
 fn parse_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
