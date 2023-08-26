@@ -26,7 +26,6 @@ pub enum TypeCheckError {
     OrPatternHasUnequalSig,
     IncorrectNextUsage,
     ConsPatternsNeedAtLeastOneParam,
-    StructPatternsNeedUniqueFields,
     TypeDoesNotMatch { found: PatternSig, expected: PatternSig }
 }
 
@@ -38,7 +37,6 @@ impl std::fmt::Display for TypeCheckError {
             OrPatternHasUnequalSig => write!(f, "Pattern TypeCheckError: OrPatternHasUnequalSig"),
             IncorrectNextUsage => write!(f, "Pattern TypeCheckError: IncorrectNextUsage"),
             ConsPatternsNeedAtLeastOneParam => write!(f, "Pattern TypeCheckError: ConsPatternsNeedAtLeastOneParam"),
-            StructPatternsNeedUniqueFields=> write!(f, "Pattern TypecheckError: StructPatternsNeedUniqueFields"),
             TypeDoesNotMatch { found, expected } => write!(f, "Pattern TypeCheckError: Types do not match.  Found {:?}, but expected {:?}", found, expected),
         }
     }
@@ -47,10 +45,6 @@ impl std::fmt::Display for TypeCheckError {
 impl std::error::Error for TypeCheckError { }
 
 pub fn check_pattern(pattern : Pattern) -> Result<TypeChecked, TypeCheckError> {
-
-    if ! pattern.to_lax().map(|p| check_structs_have_unique_slots(p)).all(|x| x) {
-        return Err(TypeCheckError::StructPatternsNeedUniqueFields);
-    }
 
     if ! check_next_usage(&pattern) {
         return Err(TypeCheckError::IncorrectNextUsage);
@@ -62,19 +56,6 @@ pub fn check_pattern(pattern : Pattern) -> Result<TypeChecked, TypeCheckError> {
 
     let sig = pattern_sig(&pattern)?;
     Ok(TypeChecked(pattern, sig))
-}
-
-fn check_structs_have_unique_slots(pattern : &Pattern) -> bool {
-    match pattern {
-        Pattern::Struct { fields, .. } => {
-            let mut slots = fields.iter().map(|(n, _)| n).collect::<Vec<_>>();
-            let before_len = slots.len();
-            slots.sort();
-            slots.dedup();
-            slots.len() == before_len
-        }
-        _ => true,
-    }
 }
 
 fn check_cons_have_params(pattern : &Pattern) -> bool {
@@ -97,7 +78,6 @@ fn check_next_usage(pattern : &Pattern) -> bool {
             Wild => Some(0),
             CaptureVar(_) => Some(0),
             Cons { params, .. } => params.iter().map(|p| r(p, in_path)).sum(),
-            Struct { fields: fs, .. } => fs.iter().map(|(_, p)| r(p, in_path)).sum(),
             ExactList(ps) => ps.iter().map(|p| r(p, in_path)).sum(),
             ListPath(ps) => ps.iter().map(|p| r(p, in_path)).sum(),
             PathNext if in_path => Some(1),
@@ -182,7 +162,6 @@ pub fn pattern_sig(pattern : &Pattern) -> Result<PatternSig, TypeCheckError> {
         Wild => EMPTY,
         CaptureVar(v) => Ok(vec![v.clone()]),
         Cons { params, .. } => star!(params),
-        Struct { fields, .. } => star!(fields.iter().map(|(_, p)| p)),
         ExactList(ps) => star!(ps),
         ListPath(ps) => star!(ps),
         PathNext => EMPTY, 

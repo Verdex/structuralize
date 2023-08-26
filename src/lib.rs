@@ -181,15 +181,6 @@ mod tests {
                         data "[:a]";
                 }
 
-                t! { should_match_multiple_paths_in_struct $target = 
-                        pattern "struct { a: {| cons(^, ^), [a, b] |}, b: {| cons(^, ^), [c, d] |} }";
-                        data "struct { a: cons([1, 2], [3, 4]), b: cons([5, 6,], [7, 8]) }";
-                        { "a" => "1"; "b" => "2"; "c" => "5"; "d" => "6" }
-                        { "a" => "3"; "b" => "4"; "c" => "5"; "d" => "6" }
-                        { "a" => "1"; "b" => "2"; "c" => "7"; "d" => "8" }
-                        { "a" => "3"; "b" => "4"; "c" => "7"; "d" => "8" }
-                }
-
                 t! { should_match_multiple_paths_in_cons $target = 
                         pattern "cons( {| cons(^, ^), [a, b] |}, {| cons(^, ^), [c, d] |} )";
                         data "cons( cons([1, 2], [3, 4]), cons([5, 6,], [7, 8]) )";
@@ -365,22 +356,6 @@ mod tests {
                         data "cons(:a, :b, :c)";
                 }
 
-                t! { should_match_struct_with_inner_var $target = 
-                        pattern "struct { a: 1, b: 2, c: x }";
-                        data "struct { a: 1, b: 2, c: 3 }";
-                        { "x" => "3" }
-                }
-
-                t! { should_fail_match_struct_due_to_length $target = 
-                        pattern "struct { a: 1, b: 2 }";
-                        data "struct { a: 1, b: 2, c: 3 }";
-                }
-
-                t! { should_fail_match_struct_due_to_inner_name_mismatch $target = 
-                        pattern "struct { a: 1, b: 2, x: 3 }";
-                        data "struct { a: 1, b: 2, c: 3 }";
-                }
-
                 t! { should_match_exact_list $target = 
                         pattern "[1, x, :a]";
                         data "[1, 2, :a]";
@@ -411,12 +386,6 @@ mod tests {
                 t!{ should_fail_match_due_to_cons_length_mismatch $target =
                         pattern "cons( x, y, z )";
                         data "cons(:a, :b, :c, :d)";
-                }
-
-                t!{ should_match_struct $target =
-                        pattern "struct { a: 1, b: 2, c: 3 }";
-                        data "struct { a: 1, b: 2, c: 3 }";
-                        {  }
                 }
 
                 t!{ should_match_cons_with_vars $target = 

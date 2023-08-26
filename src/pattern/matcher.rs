@@ -74,27 +74,6 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Sl
             ret.into_iter().flatten().collect()
         }
 
-        // TODO add a test that fields are fine even if they are sorted differently
-        // TODO need to deal with unsorted slot names
-        // TODO need to deal with patterns that leave off slots that are irrelevant
-        // TODO on the other hand data that doesn't have a slot a pattern does is a failure
-        (Pattern::Struct { name: pname, fields: pfields }, Data::Struct { name: dname, fields: dfields } )
-            if pname == dname && pfields.len() == dfields.len() => {
-
-            for (p_field_name, d_field_name) in pfields.iter()
-                                                        .zip(dfields.iter())
-                                                        .map(|((p, _), (d, _))| (p, d)) {
-                if p_field_name != d_field_name {
-                    return fail!();
-                }
-            }
-
-            let ps = pfields.iter().map(|(_, p)| p);
-            let ds = dfields.iter().map(|(_, d)| d);
-
-            let results : Vec<Vec<MatchMap<_, _>>> = ps.zip(ds).map(|(p, d)| inner_match(p, d)).collect();
-            collapse_all(product(results))
-        },
         (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
             if pname == dname && pparams.len() == dparams.len() => {
             let results : Vec<Vec<MatchMap<_, _>>> = pparams.iter().zip(dparams.iter()).map(|(p, d)| inner_match(p, d)).collect();

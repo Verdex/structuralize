@@ -44,7 +44,6 @@ fn parse_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
     fn options<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
         alt!(input => parse_data_float64; 
                       parse_cons; 
-                      parse_struct;
                       parse_list_path;
                       parse_list; 
                       parse_wild;
@@ -215,34 +214,6 @@ fn parse_path<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
 
 pat!(parse_path_next<'a>: char => Pattern = '^' => Pattern::PathNext);
 
-fn parse_struct<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
-    pat!(parse_l_curl: char => () = '{' => ());
-    pat!(parse_r_curl: char => () = '}' => ());
-    pat!(parse_colon: char => () = ':' => ());
-
-    fn parse_field<'a>(input : &mut Chars<'a>) -> Result<(Box<str>, Pattern), ParseError> {
-        parser!(input => {
-            field_name <= parse_word;
-            _clear_1 <= parse_whitespace;
-            _colon <= ! parse_colon;
-            // Note: parse_pattern clears before and after itself
-            pattern <= parse_pattern; 
-            select (field_name, pattern)
-        })
-    }
-
-    fn parse_fields<'a>(input : &mut Chars<'a>) -> Result<Vec<(Box<str>, Pattern)>, ParseError> {
-        parse_list!(input => parse_l_curl, parse_field : (Box<str>, Pattern), parse_r_curl)
-    }
-
-    parser!(input => {
-        struct_name <= parse_word;
-        _clear <= parse_whitespace;
-        fields <= parse_fields;
-        select Pattern::Struct { name: struct_name, fields }
-    })
-}
-
 fn parse_cons<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
     pat!(parse_l_paren: char => () = '(' => ());
     pat!(parse_r_paren: char => () = ')' => ());
@@ -393,26 +364,10 @@ mod test {
 
     #[test]
     fn should_parse_complex_data() {
-        let input = " name  { first : other { first : one( 1, 2, num([3, 2, 3, [:blarg]]) ) } , second: :inner ,  }";
+        let input = " name ( other ( one( 1, 2, num([3, 2, 3, [:blarg]]) ) ) , :inner  )";
         let data = input.parse::<Pattern>().unwrap();
         let mut matched = false;
-        atom!(data => [Pattern::Struct { .. }] => { 
-            matched = true;
-        } );
-        assert!(matched);
-    }
-
-    #[test]
-    fn should_parse_struct() {
-        let input = " name  { first : 1.0 , second: :inner ,  }";
-        let data = input.parse::<Pattern>().unwrap();
-
-        let mut matched = false;
-        atom!(data => [Pattern::Struct { name, fields: ref fields}] fields; 
-                       slice $ [ [(first, Pattern::Number(Number::Float64(f))), (second, Pattern::Symbol(sym))] ] => { 
-            assert_eq!(*name, *"name");
-            assert_eq!(*f, 1f64);
-            assert_eq!(**sym, *"inner");
+        atom!(data => [Pattern::Cons { .. }] => { 
             matched = true;
         } );
         assert!(matched);
