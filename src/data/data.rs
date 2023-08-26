@@ -19,9 +19,6 @@ pub enum Data {
     List(Vec<Data>),
 }
 
-// TODO Denest operator 
-
-
 impl From<Box<str>> for Data {
     fn from(item : Box<str>) -> Self {
         Data::String(item.into())
