@@ -15,7 +15,6 @@ pub enum Data {
     String(Box<str>), 
     Symbol(Box<str>),
     Cons { name: Box<str>, params: Vec<Data> },
-    Struct { name: Box<str>, fields: Vec<(Box<str>, Data)> },
     List(Vec<Data>),
 }
 

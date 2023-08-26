@@ -44,7 +44,6 @@ fn parse_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     fn options<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
         alt!(input => parse_data_float64; 
                       parse_cons; 
-                      parse_struct;
                       parse_list; 
                       parse_symbol;
                       parse_string_data)
@@ -55,34 +54,6 @@ fn parse_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
         data <= options;
         _after_clear <= parse_whitespace;
         select data
-    })
-}
-
-fn parse_struct<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
-    pat!(parse_l_paren: char => () = '{' => ());
-    pat!(parse_r_paren: char => () = '}' => ());
-    pat!(parse_colon: char => () = ':' => ());
-
-    fn parse_field<'a>(input : &mut Chars<'a>) -> Result<(Box<str>, Data), ParseError> {
-        parser!(input => {
-            field_name <= parse_word;
-            _clear_1 <= parse_whitespace;
-            _colon <= ! parse_colon;
-            // Note: parse_data clears before and after itself
-            data <= parse_data; 
-            select (field_name, data)
-        })
-    }
-
-    fn parse_fields<'a>(input : &mut Chars<'a>) -> Result<Vec<(Box<str>, Data)>, ParseError> {
-        parse_list!(input => parse_l_paren, parse_field : (Box<str>, Data), parse_r_paren)
-    }
-
-    parser!(input => {
-        struct_name <= parse_word;
-        _clear <= parse_whitespace;
-        fields <= parse_fields;
-        select Data::Struct { name: struct_name, fields }
     })
 }
 
@@ -136,30 +107,13 @@ mod test {
     use super::*;
 
     fn slice<'a, T>(input : &'a Vec<T>) -> &'a [T] { &input[..] }
-    fn unbox<'a, T>(input : &'a Box<T> ) -> &'a T { &**input }
 
     #[test]
     fn should_parse_complex_data() {
-        let input = " name  { first : other { first : one( 1, 2, num([3, 2, 3, [:blarg]]) ) } , second: :inner ,  }";
+        let input = " name  (  other ( one( 1, 2, num([3, 2, 3, [:blarg]]) ) ) , :inner  )";
         let data = input.parse::<Data>().unwrap();
         let mut matched = false;
-        atom!(data => [Data::Struct { .. }] => { 
-            matched = true;
-        } );
-        assert!(matched);
-    }
-
-    #[test]
-    fn should_parse_struct() {
-        let input = " name  { first : 1.0 , second: :inner ,  }";
-        let data = input.parse::<Data>().unwrap();
-
-        let mut matched = false;
-        atom!(data => [Data::Struct { name, fields: ref fields}] fields; 
-                       slice $ [ [(first, Data::Number(Number::Float64(f))), (second, Data::Symbol(sym))] ] => { 
-            assert_eq!(*name, *"name");
-            assert_eq!(*f, 1f64);
-            assert_eq!(**sym, *"inner");
+        atom!(data => [Data::Cons { .. }] => { 
             matched = true;
         } );
         assert!(matched);
