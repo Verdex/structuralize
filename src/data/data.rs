@@ -1,6 +1,8 @@
 
 use std::fmt::{Display, Formatter};
 
+use denest::*;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Number {
     Float64(f64),
@@ -18,6 +20,18 @@ pub enum Data {
     Symbol(Box<str>),
     Cons { name: Box<str>, params: Vec<Data> },
     List(Vec<Data>),
+}
+
+impl<'a> Linearizable<'a> for Data {
+    fn l_next(&'a self) -> Vec<&'a Data> {
+        match self {
+            Data::Number(_) => vec![],
+            Data::String(_) => vec![],
+            Data::Symbol(_) => vec![],
+            Data::Cons { params, .. } => params.iter().collect(),
+            Data::List(ds) => ds.iter().collect(),
+        }
+    }
 }
 
 impl Display for Data {
