@@ -1,4 +1,6 @@
 
+use std::fmt::{Display, Formatter};
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Number {
     Float64(f64),
@@ -16,6 +18,19 @@ pub enum Data {
     Symbol(Box<str>),
     Cons { name: Box<str>, params: Vec<Data> },
     List(Vec<Data>),
+}
+
+impl Display for Data {
+    fn fmt(&self, f : &mut Formatter) -> std::fmt::Result {
+        match self {
+            Data::Number(Number::Float64(n)) => write!(f, "{}", n),
+            Data::Number(Number::Usize(n)) => write!(f, "{}", n),
+            Data::String(s) => write!(f, "\"{}\"", s), 
+            Data::Symbol(s) => write!(f, ":{}", s),
+            Data::Cons { name, params } => write!(f, "{}({})", name, params.iter().map(|x| format!("{}", x)).collect::<Vec<_>>().join(", ")),
+            Data::List(ds) => write!(f, "[{}]", ds.iter().map(|x| format!("{}", x)).collect::<Vec<_>>().join(", ")),
+        }
+    }
 }
 
 impl From<Box<str>> for Data {
