@@ -23,10 +23,6 @@ pub enum Pattern {
     Or(Box<Pattern>, Box<Pattern>),
     // TODO reference other pattern ? 
     // TODO pattern function (really want to see if this can work)
-    // TODO lessthan pattern ? 
-    // TODO greater than pattern ? 
-    // TODO greater than or equal pattern ? 
-    // TODO less than or equal pattern ? 
 }
 
 impl<'a> Linearizable<'a> for Pattern {

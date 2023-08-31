@@ -10,9 +10,6 @@ pub enum Number {
     // TODO:  Indeterminate that's just a string or something?
 }
 
-// TODO: Add Data Trait
-// Guess is that either there needs to be a lot of is_* methods or a to_data method
-
 #[derive(Debug, PartialEq)]
 pub enum Data {
     Number(Number),
