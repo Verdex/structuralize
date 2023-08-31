@@ -120,6 +120,7 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Sl
             }
         },
 
+        // TODO:  Should both branches generate results if they're both true?
         (Pattern::Or(a, b), data) => {
             let a_results = inner_match(a, data);
             if a_results.len() != 0 {
