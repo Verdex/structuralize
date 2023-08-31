@@ -38,7 +38,7 @@ fn collapse<'a>(input : Vec<MatchMap<Slot, &'a Data>>) -> MatchMap<Slot, &'a Dat
     input.into_iter().flat_map(|hm| hm.into_iter()).collect()
 }
 
-// TODO : replace the public pattern match with another version that accepts cows 
+// TODO : replace the (public:  actually just a internal one should do the trick) pattern match with another version that accepts cows 
 // and then calls the reference version
 
 pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
