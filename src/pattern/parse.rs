@@ -278,30 +278,20 @@ fn parse_list<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
 mod test {
     use intra::*;
     use super::*;
-    use crate::data::Number;
 
     fn slice<'a, T>(input : &'a Vec<T>) -> &'a [T] { &input[..] }
     fn unbox<T>(input : Box<T> ) -> T { *input }
 
-    fn get_float(p : &Pattern) -> Option<f64> {
-        if let Pattern::Number(Number::Float64(x)) = p {
-            Some(*x)
-        }
-        else {
-            None
-        }
-    }
-
     #[test]
     fn should_parse_nested_ends() {
-        let input = "[] |> and( :c |> or ( \"e\" |> or( 1.0 ) ) )";
+        let input = "[] |> and( :c |> or ( \"e\" |> or( \"1.0\" ) ) )";
         let data = input.parse::<Pattern>().unwrap();
         let mut matched = false;
         atom!(data => [Pattern::And(a, b)] b; unbox $ [Pattern::Or(c, d)] d; unbox $ [Pattern::Or(e, f)] =>  {
             assert!( matches!( *a, Pattern::ExactList(_) ) );
             assert!( matches!( *c, Pattern::Symbol(_) ) );
             assert!( matches!( *e, Pattern::String(_) ) );
-            assert!( matches!( *f, Pattern::Number(_) ) );
+            assert!( matches!( *f, Pattern::String(_) ) );
             matched = true;
         } );
         assert!(matched);
@@ -309,14 +299,14 @@ mod test {
     
     #[test]
     fn should_parse_multiple_alternating_ends() {
-        let input = "[] |> or ( 1.0 ) |> and ( :b ) |> or ( :c )";
+        let input = "[] |> or ( 1.0 ) |> and ( :b ) |> or ( \"c\" )";
         let data = input.parse::<Pattern>().unwrap();
         let mut matched = false;
         atom!(data => [Pattern::Or(a, b)] a; unbox $ [Pattern::And(c, d)] c; unbox $ [Pattern::Or(e, f)] =>  {
             assert!( matches!( *b, Pattern::Symbol(_) ) );
             assert!( matches!( *d, Pattern::Symbol(_) ) );
             assert!( matches!( *e, Pattern::ExactList(_) ) );
-            assert!( matches!( *f, Pattern::Number(_) ) );
+            assert!( matches!( *f, Pattern::String(_) ) );
             matched = true;
         } );
         assert!(matched);
@@ -324,12 +314,12 @@ mod test {
     
     #[test]
     fn should_parse_or() {
-        let input = ":a |> or ( 1.0 )";
+        let input = ":a |> or ( \"1.0\" )";
         let data = input.parse::<Pattern>().unwrap();
         let mut matched = false;
         atom!(data => [Pattern::Or(a, b)] =>  {
             assert!( matches!( *a, Pattern::Symbol(_) ) );
-            assert!( matches!( *b, Pattern::Number(_) ) );
+            assert!( matches!( *b, Pattern::String(_) ) );
             matched = true;
         } );
         assert!(matched);
@@ -337,12 +327,12 @@ mod test {
 
     #[test]
     fn should_parse_and() {
-        let input = ":a |> and ( 1.0 )";
+        let input = ":a |> and ( \"1.0\" )";
         let data = input.parse::<Pattern>().unwrap();
         let mut matched = false;
         atom!(data => [Pattern::And(a, b)] =>  {
             assert!( matches!( *a, Pattern::Symbol(_) ) );
-            assert!( matches!( *b, Pattern::Number(_) ) );
+            assert!( matches!( *b, Pattern::String(_) ) );
             matched = true;
         } );
         assert!(matched);
@@ -375,15 +365,16 @@ mod test {
 
     #[test]
     fn should_parse_cons() {
-        let input = " name  ( 1.0, :inner, 5.5 )";
+        let input = " name  ( :first, :inner, \"5.5\" )";
         let data = input.parse::<Pattern>().unwrap();
 
         let mut matched = false;
         atom!(data => [Pattern::Cons { name, params: ref params }] params; 
-                       slice $ [ [Pattern::Number(Number::Float64(a)), Pattern::Symbol(_), Pattern::Number(Number::Float64(b))] ] => { 
+                       slice $ [ [Pattern::Symbol(a), Pattern::Symbol(b), Pattern::String(c)] ] => { 
             assert_eq!(*name, *"name");
-            assert_eq!(*a, 1f64);
-            assert_eq!(*b, 5.5f64);
+            assert_eq!(**a, *"first");
+            assert_eq!(**b, *"inner");
+            assert_eq!(**c, *"5.5");
             matched = true;
         } );
         assert!(matched);
@@ -429,35 +420,29 @@ mod test {
 
     #[test]
     fn should_parse_exact_list() {
-        let input = " [ [], [1, 2], [1 , 2, 3], 4] ";
+
+        fn e(p : &Pattern) -> Box<str> {
+            match p {
+                Pattern::Symbol(x) => x.clone(),
+                _ => panic!("extraction failure"),
+            }
+        }
+        
+        let input = " [ [], [:a, :b], [:c , :d, :e], :f] ";
         let data = input.parse::<Pattern>().unwrap();
 
         let mut matched = false;
         atom!(data => [Pattern::ExactList(ref params)] params; 
-              slice $ [ [Pattern::ExactList(first), Pattern::ExactList(second), Pattern::ExactList(third), Pattern::Number(Number::Float64(f))] ] => { 
-            assert_eq!(*f, 4f64);
+              slice $ [ [Pattern::ExactList(first), Pattern::ExactList(second), Pattern::ExactList(third), Pattern::Symbol(f)] ] => { 
+            assert_eq!(**f, *"f");
             assert_eq!(first.len(), 0);
             assert_eq!(second.len(), 2);
-            assert_eq!(get_float(&second[0]).unwrap(), 1f64);
-            assert_eq!(get_float(&second[1]).unwrap(), 2f64);
+            assert_eq!(second[0], Pattern::Symbol("a".into()));
+            assert_eq!(second[1], Pattern::Symbol("b".into()));
             assert_eq!(third.len(), 3);
-            assert_eq!(get_float(&third[0]).unwrap(), 1f64);
-            assert_eq!(get_float(&third[1]).unwrap(), 2f64);
-            assert_eq!(get_float(&third[2]).unwrap(), 3f64);
-            matched = true;
-        } );
-
-        assert!(matched);
-    }
-
-    #[test]
-    fn should_parse_data_float64() {
-        let input = "-123.456E-2";
-        let data = input.parse::<Pattern>().unwrap();
-
-        let mut matched = false;
-        atom!(data => [Pattern::Number(Number::Float64(x))] => { 
-            assert_eq!(x, -123.456E-2);
+            assert_eq!(third[0], Pattern::Symbol("c".into()));
+            assert_eq!(third[1], Pattern::Symbol("d".into()));
+            assert_eq!(third[2], Pattern::Symbol("e".into()));
             matched = true;
         } );
 
