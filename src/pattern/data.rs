@@ -17,13 +17,14 @@ pub enum Pattern {
     Cons { name: Box<str>, params: Vec<Pattern> },
     ExactList(Vec<Pattern>),
     ListPath(Vec<Pattern>),
+    // TODO * pattern
     PathNext,
     Path(Vec<Pattern>),
     And(Box<Pattern>, Box<Pattern>),
     Or(Box<Pattern>, Box<Pattern>),
-    // TODO reference other pattern ? 
     // TODO pattern function (really want to see if this can work)
 }
+// TODO pattern template
 
 impl<'a> Linearizable<'a> for Pattern {
     fn l_next(&'a self) -> Vec<&'a Self> {
