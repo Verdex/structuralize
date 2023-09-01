@@ -299,11 +299,11 @@ mod test {
     
     #[test]
     fn should_parse_multiple_alternating_ends() {
-        let input = "[] |> or ( 1.0 ) |> and ( :b ) |> or ( \"c\" )";
+        let input = "[] |> or ( \"1.0\" ) |> and ( :b ) |> or ( \"c\" )";
         let data = input.parse::<Pattern>().unwrap();
         let mut matched = false;
         atom!(data => [Pattern::Or(a, b)] a; unbox $ [Pattern::And(c, d)] c; unbox $ [Pattern::Or(e, f)] =>  {
-            assert!( matches!( *b, Pattern::Symbol(_) ) );
+            assert!( matches!( *b, Pattern::String(_) ) );
             assert!( matches!( *d, Pattern::Symbol(_) ) );
             assert!( matches!( *e, Pattern::ExactList(_) ) );
             assert!( matches!( *f, Pattern::String(_) ) );
@@ -420,10 +420,9 @@ mod test {
 
     #[test]
     fn should_parse_exact_list() {
-
-        fn e(p : &Pattern) -> Box<str> {
+        fn extract<'a>(p : &'a Pattern) -> &'a str {
             match p {
-                Pattern::Symbol(x) => x.clone(),
+                Pattern::Symbol(x) => x,
                 _ => panic!("extraction failure"),
             }
         }
@@ -437,12 +436,12 @@ mod test {
             assert_eq!(**f, *"f");
             assert_eq!(first.len(), 0);
             assert_eq!(second.len(), 2);
-            assert_eq!(second[0], Pattern::Symbol("a".into()));
-            assert_eq!(second[1], Pattern::Symbol("b".into()));
+            assert_eq!(extract(&second[0]), "a");
+            assert_eq!(extract(&second[1]), "b");
             assert_eq!(third.len(), 3);
-            assert_eq!(third[0], Pattern::Symbol("c".into()));
-            assert_eq!(third[1], Pattern::Symbol("d".into()));
-            assert_eq!(third[2], Pattern::Symbol("e".into()));
+            assert_eq!(extract(&third[0]), "c");
+            assert_eq!(extract(&third[1]), "d");
+            assert_eq!(extract(&third[2]), "e");
             matched = true;
         } );
 
