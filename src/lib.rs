@@ -75,63 +75,63 @@ mod tests {
                 }
 
                 t! { should_match_nested_or $target = 
-                        pattern "[x, 9, 9] |> or( [0, x, 2] |> or([9, 9, x]) )";
-                        data "[0, 1, 2]";
-                        { "x" => "1" }
+                        pattern "[x, :nine, :nine] |> or( [:zero, x, :two] |> or([:nine, :nine, x]) )";
+                        data "[:zero, :one, :two]";
+                        { "x" => ":one" }
                 }
 
                 t! { should_match_nested_and $target = 
-                        pattern "[x, 1, 2] |> and( [0, y, 2] |> and ([0, 1, z]) )";
-                        data "[0, 1, 2]";
-                        { "x" => "0"; "y" => "1"; "z" => "2" }
+                        pattern "[x, :one, :two] |> and( [:zero, y, :two] |> and ([:zero, :one, z]) )";
+                        data "[:zero, :one, :two]";
+                        { "x" => ":zero"; "y" => ":one"; "z" => ":two" }
                 }
 
                 t! { should_match_and $target =
                         pattern "[a] |> and(b)";
-                        data "[1]";
-                        { "a" => "1"; "b" => "[1]" }
+                        data "[:one]";
+                        { "a" => ":one"; "b" => "[:one]" }
                 }
 
                 t! { should_match_chained_ands $target =
                         pattern "[a, _, _] |> and(b) |> and([_, :x, :y])";
-                        data "[1, :x, :y]";
-                        { "a" => "1"; "b" => "[1, :x, :y]" }
+                        data "[:one, :x, :y]";
+                        { "a" => ":one"; "b" => "[:one, :x, :y]" }
                 }
 
                 t! { should_not_match_chained_ands $target =
-                        pattern "[a, _, _] |> and(7) |> and([_, :x, :y])";
-                        data "[1, :x, :y]";
+                        pattern "[a, _, _] |> and(:seven) |> and([_, :x, :y])";
+                        data "[:one, :x, :y]";
                 }
 
                 t! { should_match_or_with_first_passing $target = 
                         pattern "[x] |> or(cons(x))";
-                        data "[1]";
-                        { "x" => "1" }
+                        data "[:one]";
+                        { "x" => ":one" }
                 }
 
                 t! { should_match_or_with_second_passing $target = 
                         pattern "[x] |> or(cons(x))";
-                        data "cons(1)";
-                        { "x" => "1" }
+                        data "cons(:one)";
+                        { "x" => ":one" }
                 }
 
                 t! { should_match_or_both_passing $target = 
                         pattern "cons(x) |> or(cons(x))";
-                        data "cons(1)";
-                        { "x" => "1" }
+                        data "cons(:one)";
+                        { "x" => ":one" }
                 }
 
                 t! { should_match_chained_ors $target =
-                        pattern "[x, 1] |> or([x, 2]) |> or([x, 3])";
-                        data "[0, 3]";
-                        { "x" => "0" }
+                        pattern "[x, :one] |> or([x, :two]) |> or([x, :three])";
+                        data "[:zero, :three]";
+                        { "x" => ":zero" }
                 }
 
                 t! { should_match_with_path_inside_of_list_path $target = 
                         pattern "[| {| cons(^, ^), a |}, :target |]";
-                        data "[ cons(1, 2), :target, cons(3, 4), :other ]";
-                        { "a" => "1" }
-                        { "a" => "2" }
+                        data "[ cons(:one, :two), :target, cons(:three, :four), :other ]";
+                        { "a" => ":one" }
+                        { "a" => ":two" }
                 }
 
                 t! { should_match_list_path_in_list_path $target = 
@@ -158,11 +158,11 @@ mod tests {
 
                 t! { should_match_single_item_list_path $target = 
                         pattern "[| a |]";
-                        data "[1, 2, 3, 4]";
-                        { "a" => "1" }
-                        { "a" => "2" }
-                        { "a" => "3" }
-                        { "a" => "4" }
+                        data "[:one, :two, :three, :four]";
+                        { "a" => ":one" }
+                        { "a" => ":two" }
+                        { "a" => ":three" }
+                        { "a" => ":four" }
                 }
 
                 t! { should_match_empty_list_path $target =
@@ -200,8 +200,8 @@ mod tests {
                 }
 
                 t! { should_match_path_pattern_inside_of_path_pattern $target = 
-                        pattern "{| cons( {| inner(^, ^), inner(1, a, b) |} , ^, ^), outer(1, c, d) |}";
-                        data "cons( inner(inner(1, :a, :b), inner(1, :c, :d)), outer(1, :e, :f), outer(1, :g, :h) )";
+                        pattern "{| cons( {| inner(^, ^), inner(1, a, b) |} , ^, ^), outer(:one, c, d) |}";
+                        data "cons( inner(inner(:one, :a, :b), inner(:one, :c, :d)), outer(:one, :e, :f), outer(:one, :g, :h) )";
                         { "a" => ":a"; "b" => ":b"; "c" => ":e"; "d" => ":f" }
                         { "a" => ":a"; "b" => ":b"; "c" => ":g"; "d" => ":h" }
                         { "a" => ":c"; "b" => ":d"; "c" => ":e"; "d" => ":f" }
@@ -209,8 +209,8 @@ mod tests {
                 }
 
                 t! { should_match_path_pattern_inside_of_path_pattern_and_ignore_failures $target = 
-                        pattern "{| cons( {| inner(^, ^), inner(1, a, b) |} , ^, ^), outer(1, c, d) |}";
-                        data "cons( inner(inner(2, :a, :b), inner(1, :c, :d)), outer(1, :e, :f), outer(2, :g, :h) )";
+                        pattern "{| cons( {| inner(^, ^), inner(:one, a, b) |} , ^, ^), outer(:one, c, d) |}";
+                        data "cons( inner(inner(:two, :a, :b), inner(:one, :c, :d)), outer(:one, :e, :f), outer(:two, :g, :h) )";
                         { "a" => ":c"; "b" => ":d"; "c" => ":e"; "d" => ":f" }
                 }
 
@@ -250,49 +250,49 @@ mod tests {
 
                 t! { should_match_path_and_path $target = 
                         pattern "cons( {| cons(^, ^), [^], x |}, {| cons(^, ^), [^], y |} )";
-                        data "cons( cons([:a], [1.1]), cons([:b], [2.2]) )";
+                        data "cons( cons([:a], [:one]), cons([:b], [:two]) )";
                         { "x" => ":a"; "y" => ":b" }
-                        { "x" => "1.1"; "y" => ":b" }
-                        { "x" => ":a"; "y" => "2.2" }
-                        { "x" => "1.1"; "y" => "2.2" }
+                        { "x" => ":one"; "y" => ":b" }
+                        { "x" => ":a"; "y" => ":two" }
+                        { "x" => ":one"; "y" => ":two" }
                 }
 
                 t! { should_match_path_and_capture_after $target =
                         pattern "cons( {| cons(^, ^), [^], x |}, outer )";
-                        data "cons( cons([:a], [1.1]), :outer )";
+                        data "cons( cons([:a], [:one]), :outer )";
                         { "x" => ":a"; "outer" => ":outer" }
-                        { "x" => "1.1"; "outer" => ":outer" }
+                        { "x" => ":one"; "outer" => ":outer" }
                 }
 
                 t! { should_match_path_and_capture_before $target =
                         pattern "cons( outer, {| cons(^, ^), [^], x |} )";
-                        data "cons( :outer, cons([:a], [1.1]) )";
+                        data "cons( :outer, cons([:a], [:one]) )";
                         { "x" => ":a"; "outer" => ":outer" }
-                        { "x" => "1.1"; "outer" => ":outer" }
+                        { "x" => ":one"; "outer" => ":outer" }
                 }
 
                 t! { should_match_multiple_paths_with_cons_and_list $target =
                         pattern "{| cons(^, ^), [^], x |}";
-                        data "cons([:a], [1.1])";
+                        data "cons([:a], [:one])";
                         { "x" => ":a" }
-                        { "x" => "1.1" }
+                        { "x" => ":one" }
                 }
 
                 t! { should_match_path_with_capture_before $target = 
                         pattern "{| cons(a, ^), [^], x |}";
-                        data "cons(1.1, [:a])";
-                        { "a" => "1.1"; "x" => ":a" }
+                        data "cons(:one, [:a])";
+                        { "a" => ":one"; "x" => ":a" }
                 }
 
                 t! { should_match_path_with_capture_after $target = 
                         pattern "{| cons(^, a), [^], x |}";
-                        data "cons([:a], 1.1)";
-                        { "a" => "1.1"; "x" => ":a" }
+                        data "cons([:a], :one)";
+                        { "a" => ":one"; "x" => ":a" }
                 }
 
                 t! { should_match_path_with_cons_and_list $target = 
                         pattern "{| cons(^, _), [^], x |}";
-                        data "cons([:a], 1.1)";
+                        data "cons([:a], :one)";
                         { "x" => ":a" }
                 }
 
@@ -346,9 +346,9 @@ mod tests {
                 }
 
                 t! { should_match_exact_list $target = 
-                        pattern "[1, x, :a]";
-                        data "[1, 2, :a]";
-                        { "x" => "2" }
+                        pattern "[:one, x, :a]";
+                        data "[:one, :two, :a]";
+                        { "x" => ":two" }
                 }
 
                 t! { should_match_empty_exact_list $target =
@@ -358,18 +358,18 @@ mod tests {
                 }
 
                 t! { should_fail_match_exact_list_due_to_length $target = 
-                        pattern "[1, x, :a, :x]";
-                        data "[1, 2, :a]";
+                        pattern "[:one, x, :a, :x]";
+                        data "[:one, :two, :a]";
                 }
 
                 t! { should_fail_match_exact_list_due_to_value $target = 
-                        pattern "[1, x, :a, :x]";
-                        data "[1, 2, :a, :y]";
+                        pattern "[:one, x, :a, :x]";
+                        data "[:one, :two, :a, :y]";
                 }
 
                 t! { should_fail_match_exact_list_due_to_nested_list_mismatch $target =
-                        pattern "[1, x, :a, [:x, :x]]";
-                        data "[1, 2, :a, [:x, :y]]";
+                        pattern "[:one, x, :a, [:x, :x]]";
+                        data "[:one, :two, :a, [:x, :y]]";
                 }
 
                 t!{ should_fail_match_due_to_cons_length_mismatch $target =
