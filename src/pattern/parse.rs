@@ -42,8 +42,7 @@ fn parse<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
 
 fn parse_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
     fn options<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
-        alt!(input => parse_data_float64; 
-                      parse_cons; 
+        alt!(input => parse_cons; 
                       parse_list_path;
                       parse_list; 
                       parse_wild;
@@ -259,11 +258,6 @@ fn parse_string_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseErro
         string <= parse_string;
         select Pattern::String(string)
     })
-}
-
-fn parse_data_float64<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
-    use crate::data::Number;
-    Ok(Pattern::Number(Number::Float64(parse_float64(input)?)))
 }
 
 fn parse_list<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
