@@ -81,7 +81,6 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Sl
         },
          
         (Pattern::Wild, _) => pass!(),
-        (Pattern::Number(p), Data::Number(d)) if p == d => pass!(),
         (Pattern::String(p), Data::String(d)) if p == d => pass!(),
         (Pattern::Symbol(p), Data::Symbol(d)) if p == d => pass!(), 
         (Pattern::PathNext, data) => vec![ [(Slot::Next, data)].into() ],

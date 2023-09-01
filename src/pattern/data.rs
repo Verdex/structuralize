@@ -4,12 +4,9 @@ use std::hash::Hash;
 
 use denest::*;
 
-use crate::data::*;
-
 
 #[derive(Debug, Clone)]
 pub enum Pattern {
-    Number(Number),
     String(Box<str>), 
     Symbol(Box<str>),
     Wild,
@@ -30,7 +27,6 @@ impl<'a> Linearizable<'a> for Pattern {
     fn l_next(&'a self) -> Vec<&'a Self> {
         use Pattern::*;
         match self {
-            Number(_) => vec![],
             String(_) => vec![], 
             Symbol(_) => vec![],
             Wild => vec![],

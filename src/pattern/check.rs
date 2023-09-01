@@ -72,7 +72,6 @@ fn check_next_usage(pattern : &Pattern) -> bool {
     fn r(pattern : &Pattern, in_path : bool) -> Option<usize> {
         use Pattern::*;
         match pattern {
-            Number(_) => Some(0),
             String(_) => Some(0), 
             Symbol(_) => Some(0),
             Wild => Some(0),
@@ -156,7 +155,6 @@ pub fn pattern_sig(pattern : &Pattern) -> Result<PatternSig, TypeCheckError> {
     }
 
     match pattern {
-        Number(_) => EMPTY,
         String(_) => EMPTY, 
         Symbol(_) => EMPTY,
         Wild => EMPTY,
