@@ -45,18 +45,18 @@ mod tests {
                 use crate::pattern::check::*;
 
                 t! { should_match_path_with_next_inside_list_path $target =
-                        pattern "{| [| ^, 1 |], cons(:a, a) |}";
-                        data "[ cons(:a, :b), 1, cons(:a, :c), 1, cons(:a, :d), 2, cons(:x, :e), 1, cons(:a, :f), 1]";
+                        pattern "{| [| ^, :one |], cons(:a, a) |}";
+                        data "[ cons(:a, :b), :one, cons(:a, :c), :one, cons(:a, :d), :two, cons(:x, :e), :one, cons(:a, :f), :one]";
                         { "a" => ":b" }
                         { "a" => ":c" }
                         { "a" => ":f" }
                 }
 
                 t! { should_match_or_with_path $target =
-                        pattern "{| [^, ^], cons(a, 1) |} |> or({| [^, ^], cons(a, 2) |})";
-                        data "[cons(0, 2), cons(9, 2)]";
-                        { "a" => "0" }
-                        { "a" => "9" }
+                        pattern "{| [^, ^], cons(a, :one) |} |> or({| [^, ^], cons(a, :two) |})";
+                        data "[cons(:zero, :two), cons(:nine, :two)]";
+                        { "a" => ":zero" }
+                        { "a" => ":nine" }
                 }
 
                 t! { should_match_and_with_list_path $target = 
