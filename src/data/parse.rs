@@ -42,8 +42,7 @@ fn parse<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
 
 fn parse_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     fn options<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
-        alt!(input => parse_data_float64; 
-                      parse_cons; 
+        alt!(input => parse_cons; 
                       parse_list; 
                       parse_symbol;
                       parse_string_data)
@@ -87,10 +86,6 @@ fn parse_string_data<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
         string <= parse_string;
         select Data::String(string)
     })
-}
-
-fn parse_data_float64<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
-    Ok(Data::Number(Number::Float64(parse_float64(input)?)))
 }
 
 fn parse_list<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
@@ -165,20 +160,6 @@ mod test {
             assert_eq!(third[0], Data::Number(Number::Float64(1f64)));
             assert_eq!(third[1], Data::Number(Number::Float64(2f64)));
             assert_eq!(third[2], Data::Number(Number::Float64(3f64)));
-            matched = true;
-        } );
-
-        assert!(matched);
-    }
-
-    #[test]
-    fn should_parse_data_float64() {
-        let input = "-123.456E-2";
-        let data = input.parse::<Data>().unwrap();
-
-        let mut matched = false;
-        atom!(data => [Data::Number(Number::Float64(x))] => { 
-            assert_eq!(x, -123.456E-2);
             matched = true;
         } );
 
