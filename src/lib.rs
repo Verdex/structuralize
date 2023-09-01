@@ -60,18 +60,18 @@ mod tests {
                 }
 
                 t! { should_match_and_with_list_path $target = 
-                        pattern "[| a, b |] |> and( [| c, 5, d |] )";
-                        data "[1, 5, 2, 3, 5, 4]";
-                        { "a" => "1"; "b" => "5"; "c" => "1"; "d" => "2" }
-                        { "a" => "5"; "b" => "2"; "c" => "1"; "d" => "2" }
-                        { "a" => "2"; "b" => "3"; "c" => "1"; "d" => "2" }
-                        { "a" => "3"; "b" => "5"; "c" => "1"; "d" => "2" }
-                        { "a" => "5"; "b" => "4"; "c" => "1"; "d" => "2" }
-                        { "a" => "1"; "b" => "5"; "c" => "3"; "d" => "4" }
-                        { "a" => "5"; "b" => "2"; "c" => "3"; "d" => "4" }
-                        { "a" => "2"; "b" => "3"; "c" => "3"; "d" => "4" }
-                        { "a" => "3"; "b" => "5"; "c" => "3"; "d" => "4" }
-                        { "a" => "5"; "b" => "4"; "c" => "3"; "d" => "4" }
+                        pattern "[| a, b |] |> and( [| c, :five, d |] )";
+                        data "[:one, :five, :two, :three, :five, :four]";
+                        { "a" => ":one";   "b" => ":five";  "c" => ":one";   "d" => ":two" }
+                        { "a" => ":five";  "b" => ":two";   "c" => ":one";   "d" => ":two" }
+                        { "a" => ":two";   "b" => ":three"; "c" => ":one";   "d" => ":two" }
+                        { "a" => ":three"; "b" => ":five";  "c" => ":one";   "d" => ":two" }
+                        { "a" => ":five";  "b" => ":four";  "c" => ":one";   "d" => ":two" }
+                        { "a" => ":one";   "b" => ":five";  "c" => ":three"; "d" => ":four" }
+                        { "a" => ":five";  "b" => ":two";   "c" => ":three"; "d" => ":four" }
+                        { "a" => ":two";   "b" => ":three"; "c" => ":three"; "d" => ":four" }
+                        { "a" => ":three"; "b" => ":five";  "c" => ":three"; "d" => ":four" }
+                        { "a" => ":five";  "b" => ":four";  "c" => ":three"; "d" => ":four" }
                 }
 
                 t! { should_match_nested_or $target = 
@@ -136,24 +136,24 @@ mod tests {
 
                 t! { should_match_list_path_in_list_path $target = 
                         pattern "[| [| a, b |], [| c, d |] |]";
-                        data "[ [1, 2, 3], [4, 5, 6], [7, 8, 9] ]";
-                        { "a" => "1"; "b" => "2"; "c" => "4"; "d" => "5" }
-                        { "a" => "2"; "b" => "3"; "c" => "4"; "d" => "5" }
-                        { "a" => "1"; "b" => "2"; "c" => "5"; "d" => "6" }
-                        { "a" => "2"; "b" => "3"; "c" => "5"; "d" => "6" }
-                        { "a" => "4"; "b" => "5"; "c" => "7"; "d" => "8" }
-                        { "a" => "5"; "b" => "6"; "c" => "7"; "d" => "8" }
-                        { "a" => "4"; "b" => "5"; "c" => "8"; "d" => "9" }
-                        { "a" => "5"; "b" => "6"; "c" => "8"; "d" => "9" }
+                        data "[ [:a, :b, :c], [:d, :e, :f], [:g, :h, :i] ]";
+                        { "a" => ":a"; "b" => ":b"; "c" => ":d"; "d" => ":e" }
+                        { "a" => ":b"; "b" => ":c"; "c" => ":d"; "d" => ":e" }
+                        { "a" => ":a"; "b" => ":b"; "c" => ":e"; "d" => ":f" }
+                        { "a" => ":b"; "b" => ":c"; "c" => ":e"; "d" => ":f" }
+                        { "a" => ":d"; "b" => ":e"; "c" => ":g"; "d" => ":h" }
+                        { "a" => ":e"; "b" => ":f"; "c" => ":g"; "d" => ":h" }
+                        { "a" => ":d"; "b" => ":e"; "c" => ":h"; "d" => ":i" }
+                        { "a" => ":e"; "b" => ":f"; "c" => ":h"; "d" => ":i" }
                 }
 
                 t! { should_match_multiple_items_list_path $target =
                         pattern "[| a, b |]";
-                        data "[1, 2, 3, 4, 5]";
-                        { "a" => "1"; "b" => "2" }
-                        { "a" => "2"; "b" => "3" }
-                        { "a" => "3"; "b" => "4" }
-                        { "a" => "4"; "b" => "5" }
+                        data "[:a, :b, :c, :d, :e]";
+                        { "a" => ":a"; "b" => ":b" }
+                        { "a" => ":b"; "b" => ":c" }
+                        { "a" => ":c"; "b" => ":d" }
+                        { "a" => ":d"; "b" => ":e" }
                 }
 
                 t! { should_match_single_item_list_path $target = 
@@ -183,20 +183,20 @@ mod tests {
 
                 t! { should_match_multiple_paths_in_cons $target = 
                         pattern "cons( {| cons(^, ^), [a, b] |}, {| cons(^, ^), [c, d] |} )";
-                        data "cons( cons([1, 2], [3, 4]), cons([5, 6,], [7, 8]) )";
-                        { "a" => "1"; "b" => "2"; "c" => "5"; "d" => "6" }
-                        { "a" => "3"; "b" => "4"; "c" => "5"; "d" => "6" }
-                        { "a" => "1"; "b" => "2"; "c" => "7"; "d" => "8" }
-                        { "a" => "3"; "b" => "4"; "c" => "7"; "d" => "8" }
+                        data "cons( cons([:one, :two], [:three, :four]), cons([:five, :six,], [:seven, :eight]) )";
+                        { "a" => ":one";   "b" => ":two";  "c" => ":five";  "d" => ":six" }
+                        { "a" => ":three"; "b" => ":four"; "c" => ":five";  "d" => ":six" }
+                        { "a" => ":one";   "b" => ":two";  "c" => ":seven"; "d" => ":eight" }
+                        { "a" => ":three"; "b" => ":four"; "c" => ":seven"; "d" => ":eight" }
                 }
 
                 t! { should_match_multiple_paths_in_list $target = 
                         pattern "[ {| cons(^, ^), [a, b] |}, {| cons(^, ^), [c, d] |} ]";
-                        data "[ cons([1, 2], [3, 4]), cons([5, 6,], [7, 8]) ]";
-                        { "a" => "1"; "b" => "2"; "c" => "5"; "d" => "6" }
-                        { "a" => "3"; "b" => "4"; "c" => "5"; "d" => "6" }
-                        { "a" => "1"; "b" => "2"; "c" => "7"; "d" => "8" }
-                        { "a" => "3"; "b" => "4"; "c" => "7"; "d" => "8" }
+                        data "[ cons([:one, :two], [:three, :four]), cons([:five, :six,], [:seven, :eight]) ]";
+                        { "a" => ":one";   "b" => ":two";  "c" => ":five";  "d" => ":six" }
+                        { "a" => ":three"; "b" => ":four"; "c" => ":five";  "d" => ":six" }
+                        { "a" => ":one";   "b" => ":two";  "c" => ":seven"; "d" => ":eight" }
+                        { "a" => ":three"; "b" => ":four"; "c" => ":seven"; "d" => ":eight" }
                 }
 
                 t! { should_match_path_pattern_inside_of_path_pattern $target = 
@@ -396,7 +396,7 @@ mod tests {
         use crate::pattern::check::*;
 
         let pattern : Pattern = "[| [| a, b |], [| c, d |] |]".parse().unwrap();
-        let data : Data = "[ [1, 2, 3], [4, 5, 6], [7, 8, 9] ]".parse().unwrap();
+        let data : Data = "[ [:a, :b, :c], [:d, :e, :f], [:g, :h, :i] ]".parse().unwrap();
 
         let type_checked_pattern : TypeChecked = check_pattern(pattern).unwrap();
 
