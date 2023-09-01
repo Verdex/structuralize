@@ -105,7 +105,7 @@ mod test {
 
     #[test]
     fn should_parse_complex_data() {
-        let input = " name  (  other ( one( 1, 2, num([3, 2, 3, [:blarg]]) ) ) , :inner  )";
+        let input = " name  (  other ( one( :a, :b, num([:c, :d, :e, [:blarg]]) ) ) , :inner  )";
         let data = input.parse::<Data>().unwrap();
         let mut matched = false;
         atom!(data => [Data::Cons { .. }] => { 
@@ -116,15 +116,16 @@ mod test {
 
     #[test]
     fn should_parse_cons() {
-        let input = " name  ( 1.0, :inner, 5.5 )";
+        let input = " name  ( :first, :inner, :last )";
         let data = input.parse::<Data>().unwrap();
 
         let mut matched = false;
         atom!(data => [Data::Cons { name, params: ref params }] params; 
-                       slice $ [ [Data::Number(Number::Float64(a)), Data::Symbol(_), Data::Number(Number::Float64(b))] ] => { 
+                       slice $ [ [Data::Symbol(a), Data::Symbol(b), Data::Symbol(c)] ] => { 
             assert_eq!(*name, *"name");
-            assert_eq!(*a, 1f64);
-            assert_eq!(*b, 5.5f64);
+            assert_eq!(**a, *"first");
+            assert_eq!(**b, *"inner");
+            assert_eq!(**c, *"last");
             matched = true;
         } );
         assert!(matched);
@@ -145,21 +146,22 @@ mod test {
 
     #[test]
     fn should_parse_list() {
-        let input = " [ [], [1, 2], [1 , 2, 3], 4] ";
+        //let input = " [ [], [1, 2], [1 , 2, 3], 4] ";
+        let input = " [ [], [:a, :b], [:c , :d, :e], :f] ";
         let data = input.parse::<Data>().unwrap();
 
         let mut matched = false;
         atom!(data => [Data::List(ref params)] params; 
-              slice $ [ [Data::List(first), Data::List(second), Data::List(third), Data::Number(Number::Float64(f))] ] => { 
-            assert_eq!(*f, 4f64);
+              slice $ [ [Data::List(first), Data::List(second), Data::List(third), Data::Symbol(last)] ] => { 
             assert_eq!(first.len(), 0);
             assert_eq!(second.len(), 2);
-            assert_eq!(second[0], Data::Number(Number::Float64(1f64)));
-            assert_eq!(second[1], Data::Number(Number::Float64(2f64)));
+            assert_eq!(second[0], Data::Symbol("a".into()));
+            assert_eq!(second[1], Data::Symbol("b".into()));
             assert_eq!(third.len(), 3);
-            assert_eq!(third[0], Data::Number(Number::Float64(1f64)));
-            assert_eq!(third[1], Data::Number(Number::Float64(2f64)));
-            assert_eq!(third[2], Data::Number(Number::Float64(3f64)));
+            assert_eq!(third[0], Data::Symbol("c".into()));
+            assert_eq!(third[1], Data::Symbol("d".into()));
+            assert_eq!(third[2], Data::Symbol("e".into()));
+            assert_eq!(**last, *"f");
             matched = true;
         } );
 

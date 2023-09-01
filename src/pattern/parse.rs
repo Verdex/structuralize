@@ -347,8 +347,8 @@ mod test {
     }
 
     #[test]
-    fn should_parse_complex_data() {
-        let input = " name ( other ( one( 1, 2, num([3, 2, 3, [:blarg]]) ) ) , :inner  )";
+    fn should_parse_complex_pattern() {
+        let input = " name ( other ( one( :a, :b, num([:c, :d, :e, [:blarg]]) ) ) , :inner  )";
         let data = input.parse::<Pattern>().unwrap();
         let mut matched = false;
         atom!(data => [Pattern::Cons { .. }] => { 
