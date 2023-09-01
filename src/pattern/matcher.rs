@@ -89,21 +89,22 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Sl
             let mut outer : Vec<Vec<MatchMap<_, _>>> = vec![];
             let results = inner_match(&ps[0], data);
             for result in results {
-                let mut inner : Vec<Vec<MatchMap<_, _>>> = vec![];
                 let nexts : Vec<&Data> = result.iter().filter_map(|r| match r { (Slot::Next, d) => Some(*d), _ => None }).collect();
 
                 let top : MatchMap<Slot, &Data> = result.iter().filter_map(|r| match r { (Slot::Next, _) => None, (s, d) => Some((s.clone(), *d)) }).collect();
                 if nexts.len() == 0 {
-                    inner.push(vec![top.clone()]);
+                    outer.push(vec![top]);
                 }
-                for next in nexts {
-                    let rest = ps[1..].iter().map(|x| x.clone()).collect::<Vec<_>>();
-                    let inner_results = inner_match(&Pattern::Path(rest), next);
-                    let inner_results_with_top : Vec<MatchMap<_, _>> = inner_results.into_iter().map(|x| collapse(vec![top.clone(), x])).collect();
-                    inner.push(inner_results_with_top);
+                else {
+                    let mut inner : Vec<MatchMap<_, _>> = vec![];
+                    for next in nexts {
+                        let rest = ps[1..].iter().map(|x| x.clone()).collect::<Vec<_>>();
+                        let inner_results = inner_match(&Pattern::Path(rest), next);
+                        let mut inner_results_with_top : Vec<MatchMap<_, _>> = inner_results.into_iter().map(|x| collapse(vec![top.clone(), x])).collect();
+                        inner.append(&mut inner_results_with_top);
+                    }
+                    outer.push(inner);
                 }
-                let flat_inner : Vec<MatchMap<_, _>> = inner.into_iter().flatten().collect();
-                outer.push(flat_inner);
             }
             outer.into_iter().flatten().collect()
         },
