@@ -14,7 +14,6 @@ pub enum Pattern {
     Cons { name: Box<str>, params: Vec<Pattern> },
     ExactList(Vec<Pattern>),
     ListPath(Vec<Pattern>),
-    // TODO * pattern
     PathNext,
     Path(Vec<Pattern>),
     And(Box<Pattern>, Box<Pattern>),
