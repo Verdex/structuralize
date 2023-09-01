@@ -200,7 +200,7 @@ mod tests {
                 }
 
                 t! { should_match_path_pattern_inside_of_path_pattern $target = 
-                        pattern "{| cons( {| inner(^, ^), inner(1, a, b) |} , ^, ^), outer(:one, c, d) |}";
+                        pattern "{| cons( {| inner(^, ^), inner(:one, a, b) |} , ^, ^), outer(:one, c, d) |}";
                         data "cons( inner(inner(:one, :a, :b), inner(:one, :c, :d)), outer(:one, :e, :f), outer(:one, :g, :h) )";
                         { "a" => ":a"; "b" => ":b"; "c" => ":e"; "d" => ":f" }
                         { "a" => ":a"; "b" => ":b"; "c" => ":g"; "d" => ":h" }
