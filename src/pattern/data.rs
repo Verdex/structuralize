@@ -19,6 +19,7 @@ pub enum Pattern {
     And(Box<Pattern>, Box<Pattern>),
     Or(Box<Pattern>, Box<Pattern>),
     // TODO pattern function (really want to see if this can work)
+    // TODO map 
 }
 // TODO pattern template
 

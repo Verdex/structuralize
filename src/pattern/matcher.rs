@@ -6,6 +6,7 @@ use super::check::*;
 
 pub type MatchMap<K, V> = Vec<(K, V)>;
 
+
 fn product<'a>(mut input : Vec<Vec<MatchMap<Slot, &'a Data>>> ) -> Vec<Vec<MatchMap<Slot, &'a Data>>> {
     if input.len() == 1 {
         return input.pop().unwrap().into_iter().map(|x| vec![x]).collect();
