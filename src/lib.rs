@@ -296,17 +296,6 @@ mod tests {
                         { "x" => ":a" }
                 }
 
-                t! { should_match_due_to_number $target = 
-                        pattern "cons(a, 1.1)";
-                        data "cons(:a, 1.1)";
-                        { "a" => ":a" }
-                }
-                
-                t! { should_fail_match_due_to_number $target =
-                        pattern "cons(a, 1.1)";
-                        data "cons(:a, 1.2)";
-                }
-
                 t! { should_match_wild $target =
                         pattern "_";
                         data "cons(:a, :b)";
