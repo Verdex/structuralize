@@ -30,6 +30,8 @@ pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Vec<M
     inner_match(pattern.pattern(), data)
 }
 
+// TODO : input : Vec<MatchMap<Slot, &'data Data>>
+// only the function has to worry about what to do with multiple results (ie return multiple reults)
 fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
     macro_rules! pass { 
         () => { vec![ vec![] ] };

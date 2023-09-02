@@ -20,6 +20,10 @@ pub enum Pattern {
     Or(Box<Pattern>, Box<Pattern>),
     // TODO pattern function (really want to see if this can work)
 }
+
+pub enum PatternTemplate {
+
+}
 // TODO pattern template
 
 impl<'a> Linearizable<'a> for Pattern {
