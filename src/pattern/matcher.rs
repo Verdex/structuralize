@@ -6,7 +6,6 @@ use super::check::*;
 
 pub type MatchMap<K, V> = Vec<(K, V)>;
 
-
 fn product2<'a>(a : Vec<MatchMap<Slot, &'a Data>>, b : Vec<MatchMap<Slot, &'a Data>>) -> Vec<MatchMap<Slot, &'a Data>> {
     let mut ret = vec![];
     for result in b {
@@ -18,34 +17,6 @@ fn product2<'a>(a : Vec<MatchMap<Slot, &'a Data>>, b : Vec<MatchMap<Slot, &'a Da
         }
     }
     ret
-}
-
-fn product<'a>(mut input : Vec<Vec<MatchMap<Slot, &'a Data>>> ) -> Vec<Vec<MatchMap<Slot, &'a Data>>> {
-    if input.len() == 1 {
-        return input.pop().unwrap().into_iter().map(|x| vec![x]).collect();
-    }
-
-    match input.pop() {
-        None => vec![],
-        Some(results) => {
-            let mut sub_solution = product(input);
-            let mut ret = vec![];
-            for result in results {
-                for solution in sub_solution.iter_mut() {
-                    let mut s = solution.clone();
-                    s.push(result.clone());
-                    ret.push(s);
-                }
-            }
-            ret
-        },
-    }
-}
-
-fn collapse_all<'a>(input : Vec<Vec<MatchMap<Slot, &'a Data>>>) -> Vec<MatchMap<Slot, &'a Data>> {
-    input.into_iter()
-         .map(collapse)
-         .collect()
 }
 
 fn collapse<'a>(input : Vec<MatchMap<Slot, &'a Data>>) -> MatchMap<Slot, &'a Data> {
@@ -161,56 +132,13 @@ mod test {
     use super::*;
 
     #[test]
-    fn product_should_generate_hashmap_product() {
+    fn product2_should_work() {
         let d1 = ":a".parse::<Data>().unwrap();
         let d2 = ":b".parse::<Data>().unwrap();
-        let input : Vec<Vec<MatchMap<Slot, &Data>>> = vec![
-            vec![ [("x".into(), &d1), ("y".into(), &d1)].into(), [("x".into(), &d2), ("y".into(), &d2)].into() ],
-            vec![ [("z".into(), &d1), ("w".into(), &d1)].into(), [("z".into(), &d2), ("w".into(), &d2)].into() ]
-        ];
+        let a = vec![ [("x".into(), &d1), ("y".into(), &d1)].into(), [("x".into(), &d2), ("y".into(), &d2)].into() ];
+        let b = vec![ [("z".into(), &d1), ("w".into(), &d1)].into(), [("z".into(), &d2), ("w".into(), &d2)].into() ];
 
-        let output = product(input).into_iter()
-                                   .map(|x| x.into_iter() 
-                                             .map(|y| y.into_iter() 
-                                                       .collect::<HashMap<_, _>>()).collect::<Vec<_>>()).collect::<Vec<_>>();
-
-        assert_eq!( output.len(), 4 );
-        assert_eq!( output[0].len(), 2 );
-        assert_eq!( **output[0][0].get(&"x".into()).unwrap(), d1 );
-        assert_eq!( **output[0][0].get(&"y".into()).unwrap(), d1 );
-        assert_eq!( **output[0][1].get(&"z".into()).unwrap(), d1 );
-        assert_eq!( **output[0][1].get(&"w".into()).unwrap(), d1 );
-
-        assert_eq!( output[1].len(), 2 );
-        assert_eq!( **output[1][0].get(&"x".into()).unwrap(), d2 );
-        assert_eq!( **output[1][0].get(&"y".into()).unwrap(), d2 );
-        assert_eq!( **output[1][1].get(&"z".into()).unwrap(), d1 );
-        assert_eq!( **output[1][1].get(&"w".into()).unwrap(), d1 );
-
-        assert_eq!( output[2].len(), 2 );
-        assert_eq!( **output[2][0].get(&"x".into()).unwrap(), d1 );
-        assert_eq!( **output[2][0].get(&"y".into()).unwrap(), d1 );
-        assert_eq!( **output[2][1].get(&"z".into()).unwrap(), d2 );
-        assert_eq!( **output[2][1].get(&"w".into()).unwrap(), d2 );
-
-        assert_eq!( output[3].len(), 2 );
-        assert_eq!( **output[3][0].get(&"x".into()).unwrap(), d2 );
-        assert_eq!( **output[3][0].get(&"y".into()).unwrap(), d2 );
-        assert_eq!( **output[3][1].get(&"z".into()).unwrap(), d2 );
-        assert_eq!( **output[3][1].get(&"w".into()).unwrap(), d2 );
-    }
-
-    #[test]
-    fn collapse_all_should_combine_hashmap_product() {
-        let d1 = ":a".parse::<Data>().unwrap();
-        let d2 = ":b".parse::<Data>().unwrap();
-        let input : Vec<Vec<MatchMap<Slot, &Data>>> = vec![
-            vec![ [("x".into(), &d1), ("y".into(), &d1)].into(), [("x".into(), &d2), ("y".into(), &d2)].into() ],
-            vec![ [("z".into(), &d1), ("w".into(), &d1)].into(), [("z".into(), &d2), ("w".into(), &d2)].into() ]
-        ];
-
-        let output = collapse_all(product(input)).into_iter()
-                                                 .map(|x| x.into_iter().collect::<HashMap<_, _>>()).collect::<Vec<_>>();
+        let output = product2(a, b).into_iter().map(|x| x.into_iter().collect::<HashMap<_, _>>()).collect::<Vec<_>>();
 
         assert_eq!( output.len(), 4 );
         assert_eq!( **output[0].get(&"x".into()).unwrap(), d1 );
