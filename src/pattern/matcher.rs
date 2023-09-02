@@ -71,8 +71,10 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Sl
         (Pattern::CaptureVar(name), data) => vec![ [(name.into(), data)].into() ],
         (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == 0 && ds.len() == 0 => pass!(),
         (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
-            let results : Vec<Vec<MatchMap<_, _>>> = ps.iter().zip(ds.iter()).map(|(p, d)| inner_match(p, d)).collect();
-            collapse_all(product(results))
+            ps.iter().zip(ds.iter()).fold(pass!(), |accum, (p, d)| { 
+                let r = inner_match(p, d);
+                product2(accum, r)
+            })
         },
 
         (Pattern::ListPath(ps), Data::List(_)) if ps.len() == 0 => pass!(),
@@ -82,16 +84,21 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Sl
             let mut ret = vec![];
             for i in 0..=(ds.len() - p_len) {
                 let target = &ds[i..(i + p_len)];
-                let results : Vec<Vec<MatchMap<_, _>>> = ps.iter().zip(target.iter()).map(|(p, d)| inner_match(p, d)).collect();
-                ret.push(collapse_all(product(results)));
+                let results = ps.iter().zip(target.iter()).fold(pass!(), |accum, (p, d)| { 
+                    let r = inner_match(p, d);
+                    product2(accum, r)
+                });
+                ret.push(results);
             }
             ret.into_iter().flatten().collect()
         }
 
         (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
             if pname == dname && pparams.len() == dparams.len() => {
-            let results : Vec<Vec<MatchMap<_, _>>> = pparams.iter().zip(dparams.iter()).map(|(p, d)| inner_match(p, d)).collect();
-            collapse_all(product(results))
+            pparams.iter().zip(dparams.iter()).fold(pass!(), |accum, (p, d)| { 
+                let r = inner_match(p, d);
+                product2(accum, r)
+            })
         },
          
         (Pattern::Wild, _) => pass!(),
@@ -130,7 +137,7 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Sl
             }
             else {
                 let b_results = inner_match(b, data);
-                collapse_all(product(vec![a_results, b_results]))
+                product2(a_results, b_results)
             }
         },
 
