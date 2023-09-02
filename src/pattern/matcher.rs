@@ -6,7 +6,7 @@ use super::check::*;
 
 pub type MatchMap<K, V> = Vec<(K, V)>;
 
-fn product2<'a>(a : Vec<MatchMap<Slot, &'a Data>>, b : Vec<MatchMap<Slot, &'a Data>>) -> Vec<MatchMap<Slot, &'a Data>> {
+fn product<'a>(a : Vec<MatchMap<Slot, &'a Data>>, b : Vec<MatchMap<Slot, &'a Data>>) -> Vec<MatchMap<Slot, &'a Data>> {
     let mut ret = vec![];
     for result in b {
         for blarg in a.iter() {
@@ -44,7 +44,7 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Sl
         (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
             ps.iter().zip(ds.iter()).fold(pass!(), |accum, (p, d)| { 
                 let r = inner_match(p, d);
-                product2(accum, r)
+                product(accum, r)
             })
         },
 
@@ -57,7 +57,7 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Sl
                 let target = &ds[i..(i + p_len)];
                 let results = ps.iter().zip(target.iter()).fold(pass!(), |accum, (p, d)| { 
                     let r = inner_match(p, d);
-                    product2(accum, r)
+                    product(accum, r)
                 });
                 ret.push(results);
             }
@@ -68,7 +68,7 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Sl
             if pname == dname && pparams.len() == dparams.len() => {
             pparams.iter().zip(dparams.iter()).fold(pass!(), |accum, (p, d)| { 
                 let r = inner_match(p, d);
-                product2(accum, r)
+                product(accum, r)
             })
         },
          
@@ -108,7 +108,7 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Sl
             }
             else {
                 let b_results = inner_match(b, data);
-                product2(a_results, b_results)
+                product(a_results, b_results)
             }
         },
 
@@ -132,13 +132,13 @@ mod test {
     use super::*;
 
     #[test]
-    fn product2_should_work() {
+    fn product_should_work() {
         let d1 = ":a".parse::<Data>().unwrap();
         let d2 = ":b".parse::<Data>().unwrap();
         let a = vec![ [("x".into(), &d1), ("y".into(), &d1)].into(), [("x".into(), &d2), ("y".into(), &d2)].into() ];
         let b = vec![ [("z".into(), &d1), ("w".into(), &d1)].into(), [("z".into(), &d2), ("w".into(), &d2)].into() ];
 
-        let output = product2(a, b).into_iter().map(|x| x.into_iter().collect::<HashMap<_, _>>()).collect::<Vec<_>>();
+        let output = product(a, b).into_iter().map(|x| x.into_iter().collect::<HashMap<_, _>>()).collect::<Vec<_>>();
 
         assert_eq!( output.len(), 4 );
         assert_eq!( **output[0].get(&"x".into()).unwrap(), d1 );
