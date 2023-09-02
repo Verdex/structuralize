@@ -7,6 +7,19 @@ use super::check::*;
 pub type MatchMap<K, V> = Vec<(K, V)>;
 
 
+fn product2<'a>(a : Vec<MatchMap<Slot, &'a Data>>, b : Vec<MatchMap<Slot, &'a Data>>) -> Vec<MatchMap<Slot, &'a Data>> {
+    let mut ret = vec![];
+    for result in b {
+        for blarg in a.iter() {
+            let mut w = blarg.clone();
+            let mut ww = result.clone();
+            w.append(&mut ww);
+            ret.push(w);
+        }
+    }
+    ret
+}
+
 fn product<'a>(mut input : Vec<Vec<MatchMap<Slot, &'a Data>>> ) -> Vec<Vec<MatchMap<Slot, &'a Data>>> {
     if input.len() == 1 {
         return input.pop().unwrap().into_iter().map(|x| vec![x]).collect();
