@@ -8,12 +8,12 @@ pub type MatchMap<K, V> = Vec<(K, V)>;
 
 fn product<'a>(a : Vec<MatchMap<Slot, &'a Data>>, b : Vec<MatchMap<Slot, &'a Data>>) -> Vec<MatchMap<Slot, &'a Data>> {
     let mut ret = vec![];
-    for result in b {
-        for blarg in a.iter() {
-            let mut w = blarg.clone();
-            let mut ww = result.clone();
-            w.append(&mut ww);
-            ret.push(w);
+    for blet in b {
+        for alet in a.iter() {
+            let mut alet = alet.clone();
+            let mut blet = blet.clone();
+            alet.append(&mut blet);
+            ret.push(alet);
         }
     }
     ret
