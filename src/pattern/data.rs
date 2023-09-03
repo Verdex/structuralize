@@ -20,7 +20,7 @@ pub enum Pattern {
     Or(Box<Pattern>, Box<Pattern>),
     TemplateVar(Box<str>), // TODO : need to typecheck that these only occur in a ret pattern 
     Func { params : Vec<Box<str>>, ret : Box<Pattern> },
-    // <| [a, b, c] => cons( a , b , c) |> // a => pat <==> (a : a) => pat
+    // <| [a, b, c] => cons( a , b , c) |> 
     // (a : [| h |] ) b c => cons( $a , $b , $c, d)
     // TODO pattern function (really want to see if this can work)
 }

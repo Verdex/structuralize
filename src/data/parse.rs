@@ -95,7 +95,6 @@ fn parse_list<'a>(input : &mut Chars<'a>) -> Result<Data, ParseError> {
     Ok(Data::List(parse_list!(input => parse_l_square, parse_data : Data, parse_r_square)?))
 }
 
-
 #[cfg(test)]
 mod test {
     use intra::*;
@@ -146,7 +145,6 @@ mod test {
 
     #[test]
     fn should_parse_list() {
-        //let input = " [ [], [1, 2], [1 , 2, 3], 4] ";
         let input = " [ [], [:a, :b], [:c , :d, :e], :f] ";
         let data = input.parse::<Data>().unwrap();
 
