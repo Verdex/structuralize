@@ -281,8 +281,8 @@ fn parse_template_variable(input : &mut Chars) -> Result<Pattern, ParseError> {
     })
 }
 
-    // <| [a, b, c] => cons( a , b , c) |> 
 fn parse_pattern_function(input : &mut Chars) -> Result<Pattern, ParseError> {
+    // TODO remove this comment <| [a, b, c] => cons( a , b , c) |> 
     pat!(parse_l_angle: char => () = '<' => ());
     pat!(parse_r_angle: char => () = '>' => ());
     pat!(parse_l_square: char => () = '[' => ());
@@ -315,7 +315,7 @@ fn parse_pattern_function(input : &mut Chars) -> Result<Pattern, ParseError> {
     }
 
     fn parse_params(input : &mut Chars) -> Result<Vec<Box<str>>, ParseError> {
-        parse_list!(input => parse_l_angle, parse_word : Box<str> , parse_r_angle)
+        parse_list!(input => parse_l_square, parse_word : Box<str> , parse_r_square)
     }
 
     parser!(input => {
@@ -340,6 +340,19 @@ mod test {
 
     fn slice<'a, T>(input : &'a Vec<T>) -> &'a [T] { &input[..] }
     fn unbox<T>(input : Box<T> ) -> T { *input }
+
+    #[test]
+    fn should_parse_function() {
+        let input = "<| [a, b, c] => cons($a, [$b, $c, d, :e] ) |>";
+        let pattern = input.parse::<Pattern>().unwrap();
+        let mut matched = false;
+        atom!(pattern => [ Pattern::Func { .. } ] =>  {
+            matched = true;
+        } );
+        assert!(matched);
+    }
+
+    // TODO : apparently I copied and pasted 'data' quite a bit
 
     #[test]
     fn should_parse_nested_ends() {
