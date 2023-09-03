@@ -112,6 +112,7 @@ fn check_next_usage(pattern : &Pattern) -> bool {
                     Some(1)
                 }
             },
+            _ => todo!(),
         }
     }
 
@@ -178,6 +179,7 @@ pub fn pattern_sig(pattern : &Pattern) -> Result<PatternSig, TypeCheckError> {
                 Ok(a_sig)
             }
         },
+        _ => todo!(),
     }
 }
 
