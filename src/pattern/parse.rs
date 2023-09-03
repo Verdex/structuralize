@@ -53,7 +53,9 @@ fn parse_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
                       parse_path;
                       parse_path_next;
                       parse_symbol;
-                      parse_string_pattern)
+                      parse_string_pattern;
+                      parse_pattern_function;
+                      parse_template_variable)
     }
 
     fn end_options<'a>(input : &mut Chars<'a>) -> Result<EndCombinator, ParseError> {
@@ -269,6 +271,67 @@ fn parse_list<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
     Ok(Pattern::ExactList(parse_list!(input => parse_l_square, parse_pattern : Pattern, parse_r_square)?))
 }
 
+fn parse_template_variable(input : &mut Chars) -> Result<Pattern, ParseError> {
+    pat!(parse_dollar: char => () = '$' => ());
+
+    parser!(input => {
+        _dollar <= parse_dollar;
+        word <= ! parse_word;
+        select Pattern::TemplateVar(word)
+    })
+}
+
+    // <| [a, b, c] => cons( a , b , c) |> 
+fn parse_pattern_function(input : &mut Chars) -> Result<Pattern, ParseError> {
+    pat!(parse_l_angle: char => () = '<' => ());
+    pat!(parse_r_angle: char => () = '>' => ());
+    pat!(parse_l_square: char => () = '[' => ());
+    pat!(parse_r_square: char => () = ']' => ());
+    pat!(parse_eq: char => () = '=' => ());
+    pat!(parse_bar: char => () = '|' => ());
+
+    fn parse_l_bracket(input : &mut Chars) -> Result<(), ParseError> {
+        parser!(input => {
+            _angle <= parse_l_angle;
+            _bar <= parse_bar;
+            select ()
+        })
+    }
+    
+    fn parse_r_bracket(input : &mut Chars) -> Result<(), ParseError> {
+        parser!(input => {
+            _bar <= parse_bar;
+            _angle <= parse_r_angle;
+            select ()
+        })
+    }
+
+    fn parse_arrow(input : &mut Chars) -> Result<(), ParseError> {
+        parser!(input => {
+            _eq <= parse_eq;
+            _gt <= ! parse_r_angle;
+            select ()
+        })
+    }
+
+    fn parse_params(input : &mut Chars) -> Result<Vec<Box<str>>, ParseError> {
+        parse_list!(input => parse_l_angle, parse_word : Box<str> , parse_r_angle)
+    }
+
+    parser!(input => {
+        _l_bracket <= parse_l_bracket;
+        _ws0 <= parse_whitespace;
+        params <= ! parse_params;
+        _ws1 <= parse_whitespace;
+        _arrow <= ! parse_arrow;
+        _ws2 <= parse_whitespace;
+        ret <= ! parse_pattern;
+        let ret = Box::new(ret);
+        _ws3 <= parse_whitespace;
+        _r_bracket <= parse_r_bracket;
+        select Pattern::Func { params, ret }
+    })
+}
 
 #[cfg(test)]
 mod test {
