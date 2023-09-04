@@ -395,8 +395,8 @@ mod tests {
         use crate::pattern::*;
         use crate::pattern::check::*;
 
-        let pattern : Pattern = "[| [| a, b |], [| c, d |] |]".parse().unwrap();
-        let data : Data = "[ [:a, :b, :c], [:d, :e, :f], [:g, :h, :i] ]".parse().unwrap();
+        let pattern : Pattern = "[a, <| [a] => cons($a, b) |>]".parse().unwrap();
+        let data : Data = "[ :sym, cons(:sym1, :other) ]".parse().unwrap();
 
         let type_checked_pattern : TypeChecked = check_pattern(pattern).unwrap();
 

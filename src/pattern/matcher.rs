@@ -126,7 +126,19 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &Vec<Mat
         },
 
         (Pattern::Func { params, ret }, data) => {
-            fail!()
+
+            let mut results = vec![];
+            for m in matches {
+                let map : HashMap<Slot, &Data> = m.iter().map(|(k, v)| (k.clone(), *v)).collect();
+
+                let p = template_pattern(ret, &map);
+
+                let mut output = inner_match(&p, data, &pass!()); // TODO this seems incorrect because then you can't have a func return a func
+
+                results.append(&mut output);
+            }
+
+            results
         },
 
         _ => fail!(),
@@ -136,6 +148,7 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &Vec<Mat
 fn template_pattern(p : &Pattern, map : &HashMap<Slot, &Data>) -> Pattern {
     use Pattern::*;
     match p {
+        // TODO type checking should ensure that the var is in the map
         TemplateVar(var) => data_to_pattern(*map.get(&var.into()).unwrap()),
 
         x @ String(_) => x.clone(), 

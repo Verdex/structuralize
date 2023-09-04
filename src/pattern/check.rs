@@ -112,6 +112,7 @@ fn check_next_usage(pattern : &Pattern) -> bool {
                     Some(1)
                 }
             },
+            Func { .. } => Some(0), // TODO fix
             _ => todo!(),
         }
     }
@@ -179,6 +180,7 @@ pub fn pattern_sig(pattern : &Pattern) -> Result<PatternSig, TypeCheckError> {
                 Ok(a_sig)
             }
         },
+        Func { .. } => EMPTY, // TODO fix
         _ => todo!(),
     }
 }
