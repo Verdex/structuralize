@@ -19,17 +19,8 @@ pub enum Pattern {
     And(Box<Pattern>, Box<Pattern>),
     Or(Box<Pattern>, Box<Pattern>),
     TemplateVar(Box<str>), // TODO : need to typecheck that these only occur in a ret pattern 
-    Func { params : Vec<Box<str>>, ret : Box<Pattern> },
-    // <| [a, b, c] => cons( a , b , c) |> 
-    // (a : [| h |] ) b c => cons( $a , $b , $c, d)
-    // TODO pattern function (really want to see if this can work)
+    Func(Box<Pattern>),
 }
-
-// TODO remove
-// a b c => cons($a, $b, $c, d) 
-// <| [a, b, c] : pat1 => pat2, ... |>
-//    the exact list here is just syntax, the pat1 will still match against a list, but the user doesn't get an opportunity to put in something exotic
-//    should the captures in pat1 be available for producing pat2 ?
 
 impl<'a> Linearizable<'a> for Pattern {
     fn l_next(&'a self) -> Vec<&'a Self> {
@@ -47,7 +38,7 @@ impl<'a> Linearizable<'a> for Pattern {
             And(a, b) => vec![&**a, &**b],
             Or(a, b) => vec![&**a, &**b],
             TemplateVar(_) => vec![],
-            Func { params: _, ret } => vec![&**ret],
+            Func(p) => vec![&**p],
         }
     }
 }
