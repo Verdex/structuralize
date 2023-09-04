@@ -131,6 +131,15 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &Vec<Mat
     }
 }
 
+fn data_to_pattern(data : &Data) -> Pattern {
+    match data {
+        Data::String(s) => Pattern::String(s.clone()), 
+        Data::Symbol(s) => Pattern::Symbol(s.clone()),
+        Data::Cons { name, params } => Pattern::Cons { name: name.clone(), params: params.iter().map(data_to_pattern).collect() },
+        Data::List(ds) => Pattern::ExactList(ds.iter().map(data_to_pattern).collect()),
+    }
+}
+
 #[cfg(test)]
 mod test {
     use std::collections::HashMap;
