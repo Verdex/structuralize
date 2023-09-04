@@ -27,12 +27,10 @@ fn collapse<'a>(input : Vec<MatchMap<Slot, &'a Data>>) -> MatchMap<Slot, &'a Dat
 // and then calls the reference version
 
 pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
-    inner_match(pattern.pattern(), data)
+    inner_match(pattern.pattern(), data, &vec![ vec![] ])
 }
 
-// TODO : input : Vec<MatchMap<Slot, &'data Data>>
-// only the function has to worry about what to do with multiple results (ie return multiple reults)
-fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
+fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &Vec<MatchMap<Slot, &'data Data>>) -> Vec<MatchMap<Slot, &'data Data>> {
     macro_rules! pass { 
         () => { vec![ vec![] ] };
     } 
@@ -45,7 +43,7 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Sl
         (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == 0 && ds.len() == 0 => pass!(),
         (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
             ps.iter().zip(ds.iter()).fold(pass!(), |accum, (p, d)| { 
-                let r = inner_match(p, d);
+                let r = inner_match(p, d, &accum);
                 product(accum, r)
             })
         },
@@ -58,7 +56,7 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Sl
             for i in 0..=(ds.len() - p_len) {
                 let target = &ds[i..(i + p_len)];
                 let results = ps.iter().zip(target.iter()).fold(pass!(), |accum, (p, d)| { 
-                    let r = inner_match(p, d);
+                    let r = inner_match(p, d, &accum);
                     product(accum, r)
                 });
                 ret.push(results);
@@ -69,7 +67,7 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Sl
         (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
             if pname == dname && pparams.len() == dparams.len() => {
             pparams.iter().zip(dparams.iter()).fold(pass!(), |accum, (p, d)| { 
-                let r = inner_match(p, d);
+                let r = inner_match(p, d, &accum);
                 product(accum, r)
             })
         },
@@ -81,7 +79,7 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Sl
         (Pattern::Path(ps), _) if ps.len() == 0 => pass!(),
         (Pattern::Path(ps), data) => {
             let mut outer : Vec<Vec<MatchMap<_, _>>> = vec![];
-            let results = inner_match(&ps[0], data);
+            let results = inner_match(&ps[0], data, &pass!());
             for result in results {
                 let nexts : Vec<&Data> = result.iter().filter_map(|r| match r { (Slot::Next, d) => Some(*d), _ => None }).collect();
 
@@ -93,7 +91,7 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Sl
                     let mut inner : Vec<MatchMap<_, _>> = vec![];
                     for next in nexts {
                         let rest = ps[1..].iter().map(|x| x.clone()).collect::<Vec<_>>();
-                        let inner_results = inner_match(&Pattern::Path(rest), next);
+                        let inner_results = inner_match(&Pattern::Path(rest), next, &pass!());
                         let mut inner_results_with_top : Vec<MatchMap<_, _>> = inner_results.into_iter().map(|x| collapse(vec![top.clone(), x])).collect();
                         inner.append(&mut inner_results_with_top);
                     }
@@ -104,26 +102,31 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data) -> Vec<MatchMap<Sl
         },
 
         (Pattern::And(a, b), data) => {
-            let a_results = inner_match(a, data);
+            let a_results = inner_match(a, data, &pass!());
             if a_results.len() == 0 {
                 fail!()
             }
             else {
-                let b_results = inner_match(b, data);
+                let b_results = inner_match(b, data, &pass!());
                 product(a_results, b_results)
             }
         },
 
         // TODO:  Should both branches generate results if they're both true?
         (Pattern::Or(a, b), data) => {
-            let a_results = inner_match(a, data);
+            let a_results = inner_match(a, data, &pass!());
             if a_results.len() != 0 {
                 a_results
             }
             else {
-                inner_match(b, data)
+                inner_match(b, data, &pass!())
             }
         },
+
+        (Pattern::Func { params, ret }, data) => {
+            fail!()
+        },
+
         _ => fail!(),
     }
 }

@@ -25,6 +25,7 @@ pub enum Pattern {
     // TODO pattern function (really want to see if this can work)
 }
 
+// TODO remove
 // a b c => cons($a, $b, $c, d) 
 // <| [a, b, c] : pat1 => pat2, ... |>
 //    the exact list here is just syntax, the pat1 will still match against a list, but the user doesn't get an opportunity to put in something exotic
