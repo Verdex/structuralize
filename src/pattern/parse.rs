@@ -321,15 +321,11 @@ fn parse_pattern_function(input : &mut Chars) -> Result<Pattern, ParseError> {
     parser!(input => {
         _l_bracket <= parse_l_bracket;
         _ws0 <= parse_whitespace;
-        params <= ! parse_params;
+        pattern <= ! parse_pattern;
+        let pattern = Box::new(pattern);
         _ws1 <= parse_whitespace;
-        _arrow <= ! parse_arrow;
-        _ws2 <= parse_whitespace;
-        ret <= ! parse_pattern;
-        let ret = Box::new(ret);
-        _ws3 <= parse_whitespace;
         _r_bracket <= parse_r_bracket;
-        select Pattern::Func { params, ret }
+        select Pattern::Func( pattern ) 
     })
 }
 
@@ -343,7 +339,7 @@ mod test {
 
     #[test]
     fn should_parse_function() {
-        let input = "<| [a, b, c] => cons($a, [$b, $c, d, :e] ) |>";
+        let input = "<| cons($a, [$b, $c, d, :e] ) |>";
         let pattern = input.parse::<Pattern>().unwrap();
         let mut matched = false;
         atom!(pattern => [ Pattern::Func { .. } ] =>  {
