@@ -282,12 +282,8 @@ fn parse_template_variable(input : &mut Chars) -> Result<Pattern, ParseError> {
 }
 
 fn parse_pattern_function(input : &mut Chars) -> Result<Pattern, ParseError> {
-    // TODO remove this comment <| [a, b, c] => cons( a , b , c) |> 
     pat!(parse_l_angle: char => () = '<' => ());
     pat!(parse_r_angle: char => () = '>' => ());
-    pat!(parse_l_square: char => () = '[' => ());
-    pat!(parse_r_square: char => () = ']' => ());
-    pat!(parse_eq: char => () = '=' => ());
     pat!(parse_bar: char => () = '|' => ());
 
     fn parse_l_bracket(input : &mut Chars) -> Result<(), ParseError> {
@@ -304,18 +300,6 @@ fn parse_pattern_function(input : &mut Chars) -> Result<Pattern, ParseError> {
             _angle <= parse_r_angle;
             select ()
         })
-    }
-
-    fn parse_arrow(input : &mut Chars) -> Result<(), ParseError> {
-        parser!(input => {
-            _eq <= parse_eq;
-            _gt <= ! parse_r_angle;
-            select ()
-        })
-    }
-
-    fn parse_params(input : &mut Chars) -> Result<Vec<Box<str>>, ParseError> {
-        parse_list!(input => parse_l_square, parse_word : Box<str> , parse_r_square)
     }
 
     parser!(input => {
