@@ -138,12 +138,12 @@ mod tests {
                         pattern "[| [| a, b |], [| c, d |] |]";
                         data "[ [:a, :b, :c], [:d, :e, :f], [:g, :h, :i] ]";
                         { "a" => ":a"; "b" => ":b"; "c" => ":d"; "d" => ":e" }
-                        { "a" => ":b"; "b" => ":c"; "c" => ":d"; "d" => ":e" }
                         { "a" => ":a"; "b" => ":b"; "c" => ":e"; "d" => ":f" }
+                        { "a" => ":b"; "b" => ":c"; "c" => ":d"; "d" => ":e" }
                         { "a" => ":b"; "b" => ":c"; "c" => ":e"; "d" => ":f" }
                         { "a" => ":d"; "b" => ":e"; "c" => ":g"; "d" => ":h" }
-                        { "a" => ":e"; "b" => ":f"; "c" => ":g"; "d" => ":h" }
                         { "a" => ":d"; "b" => ":e"; "c" => ":h"; "d" => ":i" }
+                        { "a" => ":e"; "b" => ":f"; "c" => ":g"; "d" => ":h" }
                         { "a" => ":e"; "b" => ":f"; "c" => ":h"; "d" => ":i" }
                 }
 
@@ -194,8 +194,8 @@ mod tests {
                         pattern "[ {| cons(^, ^), [a, b] |}, {| cons(^, ^), [c, d] |} ]";
                         data "[ cons([:one, :two], [:three, :four]), cons([:five, :six,], [:seven, :eight]) ]";
                         { "a" => ":one";   "b" => ":two";  "c" => ":five";  "d" => ":six" }
-                        { "a" => ":three"; "b" => ":four"; "c" => ":five";  "d" => ":six" }
                         { "a" => ":one";   "b" => ":two";  "c" => ":seven"; "d" => ":eight" }
+                        { "a" => ":three"; "b" => ":four"; "c" => ":five";  "d" => ":six" }
                         { "a" => ":three"; "b" => ":four"; "c" => ":seven"; "d" => ":eight" }
                 }
 
@@ -395,8 +395,8 @@ mod tests {
         use crate::pattern::*;
         use crate::pattern::check::*;
 
-        let pattern : Pattern = "[a, <| cons($a, b) |>]".parse().unwrap();
-        let data : Data = "[ :sym, cons(:sym1, :other) ]".parse().unwrap();
+        let pattern : Pattern = "[[| a |], [| <| cons($a, b) |> |]]".parse().unwrap();
+        let data : Data = "[ [:sym, :jabber], [cons(:sym, :other), cons(:jabber, :second)] ]".parse().unwrap();
 
         //"[cons(a) |> and(b), [<| cons($a) |>]]"
 
