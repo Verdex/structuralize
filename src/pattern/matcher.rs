@@ -89,9 +89,8 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMa
 
         (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
             if pname == dname && pparams.len() == dparams.len() => {
-            pparams.iter().zip(dparams.iter()).fold(pass!(), |accum, (p, d)| { 
-                let r = inner_match(p, d, &vec![]);
-                product(accum, r)
+            pparams.iter().zip(dparams.iter()).fold(pass!(), |previous_match_groups, (p, d)| { 
+                alt_inner_matches(p, d, previous_match_groups, matches)
             })
         },
          
@@ -125,24 +124,23 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMa
         },
 
         (Pattern::And(a, b), data) => {
-            let a_results = inner_match(a, data, &vec![]);
+            let a_results = inner_match(a, data, matches);
             if a_results.len() == 0 {
                 fail!()
             }
             else {
-                let b_results = inner_match(b, data, &vec![]);
-                product(a_results, b_results)
+                alt_inner_matches(b, data, a_results, matches)
             }
         },
 
         // TODO:  Should both branches generate results if they're both true?
         (Pattern::Or(a, b), data) => {
-            let a_results = inner_match(a, data, &vec![]);
+            let a_results = inner_match(a, data, matches);
             if a_results.len() != 0 {
                 a_results
             }
             else {
-                inner_match(b, data, &vec![])
+                inner_match(b, data, matches)
             }
         },
 
@@ -152,7 +150,7 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMa
 
             let p = template_pattern(ret, &map);
 
-            let output = inner_match(&p, data, &vec![]); // TODO this seems incorrect because then you can't have a func return a func
+            let output = inner_match(&p, data, matches); 
 
             output
 
