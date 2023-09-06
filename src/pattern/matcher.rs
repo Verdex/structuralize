@@ -25,6 +25,28 @@ fn collapse<'a>(input : Vec<MatchMap<Slot, &'a Data>>) -> MatchMap<Slot, &'a Dat
     input.into_iter().flat_map(|hm| hm.into_iter()).collect()
 }
 
+fn alt_inner_matches<'a>(pattern : &Pattern, 
+                         data : &'a Data, 
+                         previous_match_groups : Vec<MatchMap<Slot, &'a Data>>,
+                         top_matches : &MatchMap<Slot, &'a Data>) 
+    -> Vec<MatchMap<Slot, &'a Data>> {
+
+    let mut results = vec![];
+    for previous_matches in &previous_match_groups {
+        let matches = previous_matches.iter().chain(top_matches.iter()).map(|(k, v)| (k.clone(), *v)).collect::<Vec<_>>();
+        let mut current_result_groups = inner_match(pattern, data, &matches);
+
+        for mut current_results in &mut current_result_groups {
+            let mut prev = previous_matches.clone();
+            prev.append(&mut current_results);
+            std::mem::swap(current_results, &mut prev);
+        }
+
+        results.append(&mut current_result_groups);
+    }
+    results 
+}
+
 // TODO : replace the (public:  actually just a internal one should do the trick) pattern match with another version that accepts cows 
 // and then calls the reference version
 
@@ -33,6 +55,7 @@ pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Vec<M
 }
 
 fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMap<Slot, &'data Data>) -> Vec<MatchMap<Slot, &'data Data>> {
+
     macro_rules! pass { 
         () => { vec![ vec![] ] };
     } 
@@ -44,20 +67,8 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMa
         (Pattern::CaptureVar(name), data) => vec![ [(name.into(), data)].into() ],
         (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == 0 && ds.len() == 0 => pass!(),
         (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
-            ps.iter().zip(ds.iter()).fold(vec![matches.clone()], |previous_match_groups, (p, d)| { 
-                let mut results = vec![];
-                for previous_matches in &previous_match_groups {
-                    let mut current_result_groups = inner_match(p, d, &previous_matches);
-
-                    for mut current_results in &mut current_result_groups {
-                        let mut prev = previous_matches.clone();
-                        prev.append(&mut current_results);
-                        std::mem::swap(current_results, &mut prev);
-                    }
-
-                    results.append(&mut current_result_groups);
-                }
-                results 
+            ps.iter().zip(ds.iter()).fold(pass!(), |previous_match_groups, (p, d)| { 
+                alt_inner_matches(p, d, previous_match_groups, matches)
             })
         },
 
@@ -68,20 +79,8 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMa
             let mut ret = vec![];
             for i in 0..=(ds.len() - p_len) {
                 let target = &ds[i..(i + p_len)];
-                let results = ps.iter().zip(target.iter()).fold(vec![matches.clone()], |previous_match_groups, (p, d)| { 
-                    let mut results = vec![];
-                    for previous_matches in &previous_match_groups {
-                        let mut current_result_groups = inner_match(p, d, &previous_matches);
-
-                        for mut current_results in &mut current_result_groups {
-                            let mut prev = previous_matches.clone();
-                            prev.append(&mut current_results);
-                            std::mem::swap(current_results, &mut prev);
-                        }
-
-                        results.append(&mut current_result_groups);
-                    }
-                    results 
+                let results = ps.iter().zip(target.iter()).fold(pass!(), |previous_match_groups, (p, d)| { 
+                    alt_inner_matches(p, d, previous_match_groups, matches)
                 });
                 ret.push(results);
             }
@@ -149,16 +148,14 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMa
 
         (Pattern::Func(ret), data) => {
 
-            let mut results = vec![];
-                let map : HashMap<Slot, &Data> = matches.iter().map(|(k, v)| (k.clone(), *v)).collect();
+            let map : HashMap<Slot, &Data> = matches.iter().map(|(k, v)| (k.clone(), *v)).collect();
 
-                let p = template_pattern(ret, &map);
+            let p = template_pattern(ret, &map);
 
-                let mut output = inner_match(&p, data, &vec![]); // TODO this seems incorrect because then you can't have a func return a func
+            let output = inner_match(&p, data, &vec![]); // TODO this seems incorrect because then you can't have a func return a func
 
-                results.append(&mut output);
+            output
 
-            results
         },
 
         _ => fail!(),
