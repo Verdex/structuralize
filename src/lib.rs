@@ -70,14 +70,14 @@ mod tests {
                         pattern "[| a, b |] |> and( [| c, :five, d |] )";
                         data "[:one, :five, :two, :three, :five, :four]";
                         { "a" => ":one";   "b" => ":five";  "c" => ":one";   "d" => ":two" }
-                        { "a" => ":five";  "b" => ":two";   "c" => ":one";   "d" => ":two" }
-                        { "a" => ":two";   "b" => ":three"; "c" => ":one";   "d" => ":two" }
-                        { "a" => ":three"; "b" => ":five";  "c" => ":one";   "d" => ":two" }
-                        { "a" => ":five";  "b" => ":four";  "c" => ":one";   "d" => ":two" }
                         { "a" => ":one";   "b" => ":five";  "c" => ":three"; "d" => ":four" }
+                        { "a" => ":five";  "b" => ":two";   "c" => ":one";   "d" => ":two" }
                         { "a" => ":five";  "b" => ":two";   "c" => ":three"; "d" => ":four" }
+                        { "a" => ":two";   "b" => ":three"; "c" => ":one";   "d" => ":two" }
                         { "a" => ":two";   "b" => ":three"; "c" => ":three"; "d" => ":four" }
+                        { "a" => ":three"; "b" => ":five";  "c" => ":one";   "d" => ":two" }
                         { "a" => ":three"; "b" => ":five";  "c" => ":three"; "d" => ":four" }
+                        { "a" => ":five";  "b" => ":four";  "c" => ":one";   "d" => ":two" }
                         { "a" => ":five";  "b" => ":four";  "c" => ":three"; "d" => ":four" }
                 }
 
@@ -192,8 +192,8 @@ mod tests {
                         pattern "cons( {| cons(^, ^), [a, b] |}, {| cons(^, ^), [c, d] |} )";
                         data "cons( cons([:one, :two], [:three, :four]), cons([:five, :six,], [:seven, :eight]) )";
                         { "a" => ":one";   "b" => ":two";  "c" => ":five";  "d" => ":six" }
-                        { "a" => ":three"; "b" => ":four"; "c" => ":five";  "d" => ":six" }
                         { "a" => ":one";   "b" => ":two";  "c" => ":seven"; "d" => ":eight" }
+                        { "a" => ":three"; "b" => ":four"; "c" => ":five";  "d" => ":six" }
                         { "a" => ":three"; "b" => ":four"; "c" => ":seven"; "d" => ":eight" }
                 }
 
@@ -259,8 +259,8 @@ mod tests {
                         pattern "cons( {| cons(^, ^), [^], x |}, {| cons(^, ^), [^], y |} )";
                         data "cons( cons([:a], [:one]), cons([:b], [:two]) )";
                         { "x" => ":a"; "y" => ":b" }
-                        { "x" => ":one"; "y" => ":b" }
                         { "x" => ":a"; "y" => ":two" }
+                        { "x" => ":one"; "y" => ":b" }
                         { "x" => ":one"; "y" => ":two" }
                 }
 
