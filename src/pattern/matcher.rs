@@ -101,7 +101,7 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMa
         (Pattern::Path(ps), _) if ps.len() == 0 => pass!(),
         (Pattern::Path(ps), data) => {
             let mut outer : Vec<Vec<MatchMap<_, _>>> = vec![];
-            let results = inner_match(&ps[0], data, &vec![]);
+            let results = inner_match(&ps[0], data, matches);
             for result in results {
                 let nexts : Vec<&Data> = result.iter().filter_map(|r| match r { (Slot::Next, d) => Some(*d), _ => None }).collect();
 
@@ -113,7 +113,7 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMa
                     let mut inner : Vec<MatchMap<_, _>> = vec![];
                     for next in nexts {
                         let rest = ps[1..].iter().map(|x| x.clone()).collect::<Vec<_>>();
-                        let inner_results = inner_match(&Pattern::Path(rest), next, &vec![]);
+                        let inner_results = alt_inner_matches(&Pattern::Path(rest), next, vec![top.clone()], matches);
                         let mut inner_results_with_top : Vec<MatchMap<_, _>> = inner_results.into_iter().map(|x| collapse(vec![top.clone(), x])).collect();
                         inner.append(&mut inner_results_with_top);
                     }
