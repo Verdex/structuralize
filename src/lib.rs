@@ -402,8 +402,12 @@ mod tests {
         use crate::pattern::*;
         use crate::pattern::check::*;
 
-        let pattern : Pattern = "[[| a |], [| <| cons($a, b) |> |]]".parse().unwrap();
-        let data : Data = "[ [:sym, :jabber], [cons(:sym, :other), cons(:jabber, :second)] ]".parse().unwrap();
+        //let pattern : Pattern = "[ {| [^, ^], a |}, {| [^, ^], <| cons($a, b) |> |} ]".parse().unwrap();
+        //let data : Data = "[ [:sym, :jabber], [cons(:sym, :other), cons(:jabber, :second)] ]".parse().unwrap();
+
+        let pattern : Pattern = "a |> and( <| $a |> )".parse().unwrap();
+        let data : Data = "[ cons(:sym, :jabber), cons(cons(:sym, :other), cons(:jabber, :second)) ]".parse().unwrap();
+
 
         //"[cons(a) |> and(b), [<| cons($a) |>]]"
 
@@ -413,6 +417,7 @@ mod tests {
         let type_checked_pattern : TypeChecked = check_pattern(pattern).unwrap();
 
         let results = pattern_match(&type_checked_pattern, &data);
+
         for r in results {
             println!("{:?}\n\n", r);
         }
