@@ -24,12 +24,19 @@ mod tests {
                                                            .collect::<Vec<_>>();
 
                 $(
-                    let _r = results.remove(0);
+                    let r = results.remove(0);
+
+                    #[allow(unused_mut)]
+                    let mut expected_map_count = 0;
 
                     $(
-                        let data = *_r.get(&$s.into()).unwrap();
+                        let data = *r.get(&$s.into()).unwrap();
+                        expected_map_count += 1;
+                        println!("{:?}", data);
                         assert_eq!( data, &$d.parse::<Data>().unwrap());
                     )*
+
+                    assert_eq!( r.len(), expected_map_count );
                 )*
 
                 assert_eq!( results.len(), 0 );
