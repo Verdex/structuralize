@@ -8,23 +8,6 @@ use super::check::*;
 
 pub type MatchMap<K, V> = Vec<(K, V)>;
 
-fn product<'a>(a : Vec<MatchMap<Slot, &'a Data>>, b : Vec<MatchMap<Slot, &'a Data>>) -> Vec<MatchMap<Slot, &'a Data>> {
-    let mut ret = vec![];
-    for blet in b {
-        for alet in a.iter() {
-            let mut alet = alet.clone();
-            let mut blet = blet.clone();
-            alet.append(&mut blet);
-            ret.push(alet);
-        }
-    }
-    ret
-}
-
-fn collapse<'a>(input : Vec<MatchMap<Slot, &'a Data>>) -> MatchMap<Slot, &'a Data> {
-    input.into_iter().flat_map(|hm| hm.into_iter()).collect()
-}
-
 fn alt_inner_matches<'a>(pattern : &Pattern, 
                          data : &'a Data, 
                          previous_match_groups : Vec<MatchMap<Slot, &'a Data>>,
@@ -186,42 +169,5 @@ fn data_to_pattern(data : &Data) -> Pattern {
         Data::Symbol(s) => Pattern::Symbol(s.clone()),
         Data::Cons { name, params } => Pattern::Cons { name: name.clone(), params: params.iter().map(data_to_pattern).collect() },
         Data::List(ds) => Pattern::ExactList(ds.iter().map(data_to_pattern).collect()),
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use std::collections::HashMap;
-    use super::*;
-
-    #[test]
-    fn product_should_work() {
-        let d1 = ":a".parse::<Data>().unwrap();
-        let d2 = ":b".parse::<Data>().unwrap();
-        let a = vec![ [("x".into(), &d1), ("y".into(), &d1)].into(), [("x".into(), &d2), ("y".into(), &d2)].into() ];
-        let b = vec![ [("z".into(), &d1), ("w".into(), &d1)].into(), [("z".into(), &d2), ("w".into(), &d2)].into() ];
-
-        let output = product(a, b).into_iter().map(|x| x.into_iter().collect::<HashMap<_, _>>()).collect::<Vec<_>>();
-
-        assert_eq!( output.len(), 4 );
-        assert_eq!( **output[0].get(&"x".into()).unwrap(), d1 );
-        assert_eq!( **output[0].get(&"y".into()).unwrap(), d1 );
-        assert_eq!( **output[0].get(&"z".into()).unwrap(), d1 );
-        assert_eq!( **output[0].get(&"w".into()).unwrap(), d1 );
-
-        assert_eq!( **output[1].get(&"x".into()).unwrap(), d2 );
-        assert_eq!( **output[1].get(&"y".into()).unwrap(), d2 );
-        assert_eq!( **output[1].get(&"z".into()).unwrap(), d1 );
-        assert_eq!( **output[1].get(&"w".into()).unwrap(), d1 );
-
-        assert_eq!( **output[2].get(&"x".into()).unwrap(), d1 );
-        assert_eq!( **output[2].get(&"y".into()).unwrap(), d1 );
-        assert_eq!( **output[2].get(&"z".into()).unwrap(), d2 );
-        assert_eq!( **output[2].get(&"w".into()).unwrap(), d2 );
-
-        assert_eq!( **output[3].get(&"x".into()).unwrap(), d2 );
-        assert_eq!( **output[3].get(&"y".into()).unwrap(), d2 );
-        assert_eq!( **output[3].get(&"z".into()).unwrap(), d2 );
-        assert_eq!( **output[3].get(&"w".into()).unwrap(), d2 );
     }
 }
