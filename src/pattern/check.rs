@@ -112,8 +112,8 @@ fn check_next_usage(pattern : &Pattern) -> bool {
                     Some(1)
                 }
             },
-            Func { .. } => Some(0), // TODO fix
-            _ => todo!(),
+            Func(p) => r(p, in_path), 
+            TemplateVar(_) => Some(0),
         }
     }
 
