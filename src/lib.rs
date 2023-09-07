@@ -11,6 +11,7 @@ mod tests {
         ($name:ident $matcher:ident = pattern $pat:expr; data $dat:expr; $({ $($s:expr => $d:expr);* })* ) => {
             #[test]
             fn $name() {
+                #[allow(unused_imports)]
                 use std::collections::HashMap;
 
                 let pattern : Pattern = $pat.parse().expect(&format!("{}", $pat));
@@ -19,20 +20,27 @@ mod tests {
                 let type_checked_pattern : TypeChecked = check_pattern(pattern).expect(&format!("{}", $pat));
 
                 #[allow(unused_mut)]
-                let mut results = $matcher(&type_checked_pattern, &data).into_iter()
-                                                           .map(|x| x.into_iter().collect::<HashMap<_,_>>())
-                                                           .collect::<Vec<_>>();
+                let mut results = $matcher(&type_checked_pattern, &data);
 
                 $(
-                    let _r = results.remove(0);
+                    let r = results.remove(0);
+                    let r_len = r.len();
+
+                    let _r = r.into_iter().collect::<HashMap<_, _>>();
+
+                    #[allow(unused_mut)]
+                    let mut expected_map_count = 0;
 
                     $(
                         let data = *_r.get(&$s.into()).unwrap();
-                        assert_eq!( data, &$d.parse::<Data>().unwrap());
+                        expected_map_count += 1;
+                        assert_eq!( data, &$d.parse::<Data>().unwrap(), "{} found incorrect result", $s);
                     )*
+
+                    assert_eq!( r_len, expected_map_count, "more captures found than were tested" );
                 )*
 
-                assert_eq!( results.len(), 0 );
+                assert_eq!( results.len(), 0, "more results than were tested" );
             }
         };
     }
@@ -63,14 +71,14 @@ mod tests {
                         pattern "[| a, b |] |> and( [| c, :five, d |] )";
                         data "[:one, :five, :two, :three, :five, :four]";
                         { "a" => ":one";   "b" => ":five";  "c" => ":one";   "d" => ":two" }
-                        { "a" => ":five";  "b" => ":two";   "c" => ":one";   "d" => ":two" }
-                        { "a" => ":two";   "b" => ":three"; "c" => ":one";   "d" => ":two" }
-                        { "a" => ":three"; "b" => ":five";  "c" => ":one";   "d" => ":two" }
-                        { "a" => ":five";  "b" => ":four";  "c" => ":one";   "d" => ":two" }
                         { "a" => ":one";   "b" => ":five";  "c" => ":three"; "d" => ":four" }
+                        { "a" => ":five";  "b" => ":two";   "c" => ":one";   "d" => ":two" }
                         { "a" => ":five";  "b" => ":two";   "c" => ":three"; "d" => ":four" }
+                        { "a" => ":two";   "b" => ":three"; "c" => ":one";   "d" => ":two" }
                         { "a" => ":two";   "b" => ":three"; "c" => ":three"; "d" => ":four" }
+                        { "a" => ":three"; "b" => ":five";  "c" => ":one";   "d" => ":two" }
                         { "a" => ":three"; "b" => ":five";  "c" => ":three"; "d" => ":four" }
+                        { "a" => ":five";  "b" => ":four";  "c" => ":one";   "d" => ":two" }
                         { "a" => ":five";  "b" => ":four";  "c" => ":three"; "d" => ":four" }
                 }
 
@@ -138,12 +146,12 @@ mod tests {
                         pattern "[| [| a, b |], [| c, d |] |]";
                         data "[ [:a, :b, :c], [:d, :e, :f], [:g, :h, :i] ]";
                         { "a" => ":a"; "b" => ":b"; "c" => ":d"; "d" => ":e" }
-                        { "a" => ":b"; "b" => ":c"; "c" => ":d"; "d" => ":e" }
                         { "a" => ":a"; "b" => ":b"; "c" => ":e"; "d" => ":f" }
+                        { "a" => ":b"; "b" => ":c"; "c" => ":d"; "d" => ":e" }
                         { "a" => ":b"; "b" => ":c"; "c" => ":e"; "d" => ":f" }
                         { "a" => ":d"; "b" => ":e"; "c" => ":g"; "d" => ":h" }
-                        { "a" => ":e"; "b" => ":f"; "c" => ":g"; "d" => ":h" }
                         { "a" => ":d"; "b" => ":e"; "c" => ":h"; "d" => ":i" }
+                        { "a" => ":e"; "b" => ":f"; "c" => ":g"; "d" => ":h" }
                         { "a" => ":e"; "b" => ":f"; "c" => ":h"; "d" => ":i" }
                 }
 
@@ -185,8 +193,8 @@ mod tests {
                         pattern "cons( {| cons(^, ^), [a, b] |}, {| cons(^, ^), [c, d] |} )";
                         data "cons( cons([:one, :two], [:three, :four]), cons([:five, :six,], [:seven, :eight]) )";
                         { "a" => ":one";   "b" => ":two";  "c" => ":five";  "d" => ":six" }
-                        { "a" => ":three"; "b" => ":four"; "c" => ":five";  "d" => ":six" }
                         { "a" => ":one";   "b" => ":two";  "c" => ":seven"; "d" => ":eight" }
+                        { "a" => ":three"; "b" => ":four"; "c" => ":five";  "d" => ":six" }
                         { "a" => ":three"; "b" => ":four"; "c" => ":seven"; "d" => ":eight" }
                 }
 
@@ -194,8 +202,8 @@ mod tests {
                         pattern "[ {| cons(^, ^), [a, b] |}, {| cons(^, ^), [c, d] |} ]";
                         data "[ cons([:one, :two], [:three, :four]), cons([:five, :six,], [:seven, :eight]) ]";
                         { "a" => ":one";   "b" => ":two";  "c" => ":five";  "d" => ":six" }
-                        { "a" => ":three"; "b" => ":four"; "c" => ":five";  "d" => ":six" }
                         { "a" => ":one";   "b" => ":two";  "c" => ":seven"; "d" => ":eight" }
+                        { "a" => ":three"; "b" => ":four"; "c" => ":five";  "d" => ":six" }
                         { "a" => ":three"; "b" => ":four"; "c" => ":seven"; "d" => ":eight" }
                 }
 
@@ -252,8 +260,8 @@ mod tests {
                         pattern "cons( {| cons(^, ^), [^], x |}, {| cons(^, ^), [^], y |} )";
                         data "cons( cons([:a], [:one]), cons([:b], [:two]) )";
                         { "x" => ":a"; "y" => ":b" }
-                        { "x" => ":one"; "y" => ":b" }
                         { "x" => ":a"; "y" => ":two" }
+                        { "x" => ":one"; "y" => ":b" }
                         { "x" => ":one"; "y" => ":two" }
                 }
 
@@ -382,6 +390,76 @@ mod tests {
                         data "cons(:a, :b, :c)"; 
                         { "x" => ":a"; "y" => ":b"; "z" => ":c" } 
                 }
+
+                t!{ should_match_func_in_cons $target =
+                        pattern "cons( a, <| $a |> )";
+                        data "cons(:a, :a)";
+                        { "a" => ":a" }
+                }
+
+                t!{ should_not_match_func_in_cons $target =
+                        pattern "cons( a, <| $a |> )";
+                        data "cons(:a, :b)";
+                }
+
+                t!{ should_match_func_in_exact_list $target =
+                        pattern "[ a, <| $a |> ]";
+                        data "[:a, :a]";
+                        { "a" => ":a" }
+                }
+
+                t!{ should_not_match_func_in_exact_list $target =
+                        pattern "[ a, <| $a |> ]";
+                        data "[:a, :b]";
+                }
+
+                t!{ should_match_func_in_list_path $target =
+                        pattern "[| a, <| $a |> |]";
+                        data "[:a, :a, :b, :b, :c, :d, :d]";
+                        { "a" => ":a" }
+                        { "a" => ":b" }
+                        { "a" => ":d" }
+                }
+
+                t!{ should_match_func_in_path $target =
+                        pattern "{| [^, ^, ^], cons(a, <| $a |>) |}";
+                        data "[ cons(:a, :a), cons(:b, :b), cons(:c, :d)]";
+                        { "a" => ":a" }
+                        { "a" => ":b" }
+                }
+
+                t!{ should_match_func_in_and $target =
+                        pattern "a |> and( <| $a |> )";
+                        data ":a";
+                        { "a" => ":a" }
+                }
+
+                t!{ should_not_match_func_in_and $target =
+                        pattern "a |> and( <| [$a] |> )";
+                        data ":a";
+                }
+
+                t!{ should_match_func_in_or $target =
+                        pattern "cons(a, <| [$a] |>) |> or( cons(a, <| $a |>) )";
+                        data "cons(:a, :a)";
+                        { "a" => ":a" }
+                }
+
+                t!{ should_not_match_func_in_or $target =
+                        pattern "cons(a, <| $a |>) |> or( cons(a, <| $a |> ) )";
+                        data "cons(:a, :b)";
+                }
+
+                t!{ should_match_func_in_func $target = 
+                        pattern "cons(a, <| [b, $a, <| $b |>] |>)";
+                        data "cons(:a, [:b, :a, :b])";
+                        { "a" => ":a"; "b" => ":b" }
+                }
+
+                t!{ should_not_match_func_in_func $target = 
+                        pattern "cons(a, <| [b, $a, <| $b |>] |>)";
+                        data "cons(:a, [:b, :a, :c])";
+                }
             }
         };
     }
@@ -395,8 +473,19 @@ mod tests {
         use crate::pattern::*;
         use crate::pattern::check::*;
 
-        let pattern : Pattern = "[a, <| cons($a, b) |>]".parse().unwrap();
-        let data : Data = "[ :sym, cons(:sym1, :other) ]".parse().unwrap();
+        //let pattern : Pattern = "[ {| [^, ^], a |}, {| [^, ^], <| cons($a, b) |> |} ]".parse().unwrap();
+        //let data : Data = "[ [:sym, :jabber], [cons(:sym, :other), cons(:jabber, :second)] ]".parse().unwrap();
+
+        //let pattern : Pattern = "a |> and( <| $a |> )".parse().unwrap();
+        //let data : Data = "[ cons(:sym, :jabber), cons(cons(:sym, :other), cons(:jabber, :second)) ]".parse().unwrap();
+
+        let pattern : Pattern = "[a, <| $a |>]".parse().unwrap();
+        let data : Data = "[:a, :a]".parse().unwrap();
+
+        //"[cons(a) |> and(b), [<| cons($a) |>]]"
+
+        //"[cons(a), [ <| cons($a) |> ]] |> or( [other(a), [ <| other($a) |> ]] )"
+
 
         //"[cons(a) |> and(b), [<| cons($a) |>]]"
 
@@ -406,6 +495,7 @@ mod tests {
         let type_checked_pattern : TypeChecked = check_pattern(pattern).unwrap();
 
         let results = pattern_match(&type_checked_pattern, &data);
+
         for r in results {
             println!("{:?}\n\n", r);
         }
