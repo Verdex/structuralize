@@ -180,8 +180,8 @@ pub fn pattern_sig(pattern : &Pattern) -> Result<PatternSig, TypeCheckError> {
                 Ok(a_sig)
             }
         },
-        Func { .. } => EMPTY, // TODO fix
-        _ => todo!(),
+        Func(p) => pattern_sig(p), 
+        TemplateVar(_) => EMPTY,
     }
 }
 
