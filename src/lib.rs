@@ -11,6 +11,7 @@ mod tests {
         ($name:ident $matcher:ident = pattern $pat:expr; data $dat:expr; $({ $($s:expr => $d:expr);* })* ) => {
             #[test]
             fn $name() {
+                #[allow(unused_imports)]
                 use std::collections::HashMap;
 
                 let pattern : Pattern = $pat.parse().expect(&format!("{}", $pat));
@@ -25,13 +26,13 @@ mod tests {
                     let r = results.remove(0);
                     let r_len = r.len();
 
-                    let r = r.into_iter().collect::<HashMap<_, _>>();
+                    let _r = r.into_iter().collect::<HashMap<_, _>>();
 
                     #[allow(unused_mut)]
                     let mut expected_map_count = 0;
 
                     $(
-                        let data = *r.get(&$s.into()).unwrap();
+                        let data = *_r.get(&$s.into()).unwrap();
                         expected_map_count += 1;
                         assert_eq!( data, &$d.parse::<Data>().unwrap(), "{} found incorrect result", $s);
                     )*
