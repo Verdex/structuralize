@@ -449,6 +449,17 @@ mod tests {
                         pattern "cons(a, <| $a |>) |> or( cons(a, <| $a |> ) )";
                         data "cons(:a, :b)";
                 }
+
+                t!{ should_match_func_in_func $target = 
+                        pattern "cons(a, <| [b, $a, <| $b |>] |>)";
+                        data "cons(:a, [:b, :a, :b])";
+                        { "a" => ":a"; "b" => ":b" }
+                }
+
+                t!{ should_not_match_func_in_func $target = 
+                        pattern "cons(a, <| [b, $a, <| $b |>] |>)";
+                        data "cons(:a, [:b, :a, :c])";
+                }
             }
         };
     }
