@@ -37,10 +37,10 @@ mod tests {
                         assert_eq!( data, &$d.parse::<Data>().unwrap(), "{} found incorrect result", $s);
                     )*
 
-                    assert_eq!( r_len, expected_map_count, "more results found than were tested" );
+                    assert_eq!( r_len, expected_map_count, "more captures found than were tested" );
                 )*
 
-                assert_eq!( results.len(), 0 );
+                assert_eq!( results.len(), 0, "more results than were tested" );
             }
         };
     }
@@ -390,6 +390,65 @@ mod tests {
                         data "cons(:a, :b, :c)"; 
                         { "x" => ":a"; "y" => ":b"; "z" => ":c" } 
                 }
+
+                t!{ should_match_func_in_cons $target =
+                        pattern "cons( a, <| $a |> )";
+                        data "cons(:a, :a)";
+                        { "a" => ":a" }
+                }
+
+                t!{ should_not_match_func_in_cons $target =
+                        pattern "cons( a, <| $a |> )";
+                        data "cons(:a, :b)";
+                }
+
+                t!{ should_match_func_in_exact_list $target =
+                        pattern "[ a, <| $a |> ]";
+                        data "[:a, :a]";
+                        { "a" => ":a" }
+                }
+
+                t!{ should_not_match_func_in_exact_list $target =
+                        pattern "[ a, <| $a |> ]";
+                        data "[:a, :b]";
+                }
+
+                t!{ should_match_func_in_list_path $target =
+                        pattern "[| a, <| $a |> |]";
+                        data "[:a, :a, :b, :b, :c, :d, :d]";
+                        { "a" => ":a" }
+                        { "a" => ":b" }
+                        { "a" => ":d" }
+                }
+
+                t!{ should_match_func_in_path $target =
+                        pattern "{| [^, ^, ^], cons(a, <| $a |>) |}";
+                        data "[ cons(:a, :a), cons(:b, :b), cons(:c, :d)]";
+                        { "a" => ":a" }
+                        { "a" => ":b" }
+                }
+
+                t!{ should_match_func_in_and $target =
+                        pattern "a |> and( <| $a |> )";
+                        data ":a";
+                        { "a" => ":a" }
+                }
+
+                t!{ should_not_match_func_in_and $target =
+                        pattern "a |> and( <| [$a] |> )";
+                        data ":a";
+                }
+
+                t!{ should_match_func_in_or $target =
+                        pattern "cons(a, <| [$a] |>) |> or( cons(a, <| $a |>) )";
+                        data "cons(:a, :a)";
+                        { "a" => ":a" }
+                }
+
+                t!{ should_not_match_func_in_or $target =
+                        pattern "cons(a, <| $a |>) |> or( cons(a, <| $a |> ) )";
+                        data "cons(:a, :b)";
+                }
             }
         };
     }
@@ -406,9 +465,11 @@ mod tests {
         //let pattern : Pattern = "[ {| [^, ^], a |}, {| [^, ^], <| cons($a, b) |> |} ]".parse().unwrap();
         //let data : Data = "[ [:sym, :jabber], [cons(:sym, :other), cons(:jabber, :second)] ]".parse().unwrap();
 
-        let pattern : Pattern = "a |> and( <| $a |> )".parse().unwrap();
-        let data : Data = "[ cons(:sym, :jabber), cons(cons(:sym, :other), cons(:jabber, :second)) ]".parse().unwrap();
+        //let pattern : Pattern = "a |> and( <| $a |> )".parse().unwrap();
+        //let data : Data = "[ cons(:sym, :jabber), cons(cons(:sym, :other), cons(:jabber, :second)) ]".parse().unwrap();
 
+        let pattern : Pattern = "[a, <| $a |>]".parse().unwrap();
+        let data : Data = "[:a, :a]".parse().unwrap();
 
         //"[cons(a) |> and(b), [<| cons($a) |>]]"
 
