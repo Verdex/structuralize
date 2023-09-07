@@ -65,6 +65,52 @@ fn check_cons_have_params(pattern : &Pattern) -> bool {
     }
 }
 
+fn check_template_usage(pattern : &Pattern) -> Option<TypeCheckError> {
+    fn problem(x : &Option<TypeCheckError>) -> bool {
+        match x {
+            Some(_) => true,
+            None => false,
+        }
+    }
+
+    fn r(pattern : &Pattern, available_captures : &mut Vec<Box<str>>, in_func : bool) -> Option<TypeCheckError> {
+        use Pattern::*;
+        match pattern {
+            String(_) => None, 
+            Symbol(_) => None,
+            Wild => None,
+            CaptureVar(var) => { available_captures.push(var.clone()); None },
+            // TODO
+            /*Cons { params, .. } => params.iter().map(|p| r(p, available_captures, in_func)).find(problem),
+            ExactList(ps) => ps.iter().map(|p| r(p, available_captures, in_func)).find(problem),
+            ListPath(ps) => ps.iter().map(|p| r(p, available_captures, in_func)).find(problem),
+            PathNext => true,
+            Path(ps) => ps.iter().map(|p| r(p, available_captures, in_func)).find(problem), 
+
+            And(a, b) => r(a, available_captures, in_func) && r(b, available_captures, in_func),
+            Or(a, b) => {
+                let a_s = r(&**a, in_path);
+                let b_s = r(&**b, in_path);
+
+                if a_s.is_none() || b_s.is_none() {
+                    None
+                }
+                else if !sgtz(a_s) || !sgtz(b_s) {
+                    Some(0)
+                }
+                else {
+                    Some(1)
+                }
+            },
+            Func(p) => r(p, in_path), 
+            TemplateVar(_) => Some(0),*/
+            _ => todo!(),
+        }
+    }
+
+    r(pattern, &mut vec![], false)
+}
+
 fn check_next_usage(pattern : &Pattern) -> bool {
     fn sgtz(input : Option<usize>) -> bool {
         match input { Some(v) if v > 0 => true, _ => false }
