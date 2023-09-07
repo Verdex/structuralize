@@ -154,7 +154,7 @@ fn template_pattern(p : &Pattern, map : &HashMap<Slot, &Data>) -> Pattern {
         Path(ps) => Path(ps.iter().map(|p| template_pattern(p, map)).collect()),
         And(a, b) => And(Box::new(template_pattern(a, map)), Box::new(template_pattern(b, map))),
         Or(a, b) => Or(Box::new(template_pattern(a, map)), Box::new(template_pattern(b, map))),
-        Func(p) => Func(Box::new(template_pattern(p, map))),
+        x @ Func(_) => x.clone(),
     }
 }
 
