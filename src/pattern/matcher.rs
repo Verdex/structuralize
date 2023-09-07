@@ -113,9 +113,8 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMa
                     let mut inner : Vec<MatchMap<_, _>> = vec![];
                     for next in nexts {
                         let rest = ps[1..].iter().map(|x| x.clone()).collect::<Vec<_>>();
-                        let inner_results = alt_inner_matches(&Pattern::Path(rest), next, vec![top.clone()], matches);
-                        let mut inner_results_with_top : Vec<MatchMap<_, _>> = inner_results.into_iter().map(|x| collapse(vec![top.clone(), x])).collect();
-                        inner.append(&mut inner_results_with_top);
+                        let mut inner_results = alt_inner_matches(&Pattern::Path(rest), next, vec![top.clone()], matches);
+                        inner.append(&mut inner_results);
                     }
                     outer.push(inner);
                 }
