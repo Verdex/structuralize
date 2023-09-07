@@ -82,18 +82,9 @@ enum EndCombinator {
 }
 
 fn parse_or<'a>(input : &mut Chars<'a>) -> Result<EndCombinator, ParseError> {
-    pat!(parse_orbar: char => () = '|' => ());
-    pat!(parse_gt: char => () = '>' => ());
+    pat!(parse_dot: char => () = '.' => ());
     pat!(parse_l_paren: char => () = '(' => ());
     pat!(parse_r_paren: char => () = ')' => ());
-
-    fn parse_pipe<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
-        parser!(input => {
-            _orbar <= parse_orbar;
-            _gt <= parse_gt;
-            select ()
-        })
-    }
 
     fn parse_and<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
         parser!(input => {
@@ -105,7 +96,7 @@ fn parse_or<'a>(input : &mut Chars<'a>) -> Result<EndCombinator, ParseError> {
 
     parser!(input => {
         _ws0 <= parse_whitespace;
-        _pipe <= parse_pipe;
+        _dot <= parse_dot;
         _ws1 <= parse_whitespace;
         _and <= parse_and;
         _ws2 <= parse_whitespace;
@@ -118,18 +109,9 @@ fn parse_or<'a>(input : &mut Chars<'a>) -> Result<EndCombinator, ParseError> {
 }
 
 fn parse_and<'a>(input : &mut Chars<'a>) -> Result<EndCombinator, ParseError> {
-    pat!(parse_orbar: char => () = '|' => ());
-    pat!(parse_gt: char => () = '>' => ());
+    pat!(parse_dot: char => () = '.' => ());
     pat!(parse_l_paren: char => () = '(' => ());
     pat!(parse_r_paren: char => () = ')' => ());
-
-    fn parse_pipe<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
-        parser!(input => {
-            _orbar <= parse_orbar;
-            _gt <= parse_gt;
-            select ()
-        })
-    }
 
     fn parse_and<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
         parser!(input => {
@@ -141,7 +123,7 @@ fn parse_and<'a>(input : &mut Chars<'a>) -> Result<EndCombinator, ParseError> {
 
     parser!(input => {
         _ws0 <= parse_whitespace;
-        _pipe <= parse_pipe;
+        _dot <= parse_dot;
         _ws1 <= parse_whitespace;
         _and <= parse_and;
         _ws2 <= parse_whitespace;
@@ -336,7 +318,7 @@ mod test {
 
     #[test]
     fn should_parse_nested_ends() {
-        let input = "[] |> and( :c |> or ( \"e\" |> or( \"1.0\" ) ) )";
+        let input = "[] . and( :c . or ( \"e\" . or( \"1.0\" ) ) )";
         let data = input.parse::<Pattern>().unwrap();
         let mut matched = false;
         atom!(data => [Pattern::And(a, b)] b; unbox $ [Pattern::Or(c, d)] d; unbox $ [Pattern::Or(e, f)] =>  {
@@ -351,7 +333,7 @@ mod test {
     
     #[test]
     fn should_parse_multiple_alternating_ends() {
-        let input = "[] |> or ( \"1.0\" ) |> and ( :b ) |> or ( \"c\" )";
+        let input = "[] . or ( \"1.0\" ) . and ( :b ) . or ( \"c\" )";
         let data = input.parse::<Pattern>().unwrap();
         let mut matched = false;
         atom!(data => [Pattern::Or(a, b)] a; unbox $ [Pattern::And(c, d)] c; unbox $ [Pattern::Or(e, f)] =>  {
@@ -366,7 +348,7 @@ mod test {
     
     #[test]
     fn should_parse_or() {
-        let input = ":a |> or ( \"1.0\" )";
+        let input = ":a . or ( \"1.0\" )";
         let data = input.parse::<Pattern>().unwrap();
         let mut matched = false;
         atom!(data => [Pattern::Or(a, b)] =>  {
@@ -379,7 +361,7 @@ mod test {
 
     #[test]
     fn should_parse_and() {
-        let input = ":a |> and ( \"1.0\" )";
+        let input = ":a . and ( \"1.0\" )";
         let data = input.parse::<Pattern>().unwrap();
         let mut matched = false;
         atom!(data => [Pattern::And(a, b)] =>  {

@@ -205,14 +205,14 @@ mod test {
         t("[| a, _, c |]");
         t("x");
         t("\"x\"");
-        t("\"x\" |> and( :symbol )");
-        t("\"x\" |> or( :symbol )");
+        t("\"x\".and( :symbol )");
+        t("\"x\".or( :symbol )");
 
         t("{|  |}");
         t("{| x |}");
         t("{| [^, ^], :five |}");
-        t("{| [cons( [:eight] |> and(^) ), :six], :five |}");
-        t("{| [cons( [^] |> or(^) ), :six], :five |}");
+        t("{| [cons( [:eight].and(^) ), :six], :five |}");
+        t("{| [cons( [^].or(^) ), :six], :five |}");
         t("{| ^, cons(cons(^, ^)), a |}");
         t("{| [ {| ^, :zero |}, ^], :four |}");
     }
@@ -225,7 +225,7 @@ mod test {
             assert!(!output, "{input}");
         }
 
-        t("{| [cons( [:eight] |> or(^) ), :six], :five |}"); 
+        t("{| [cons( [:eight].or(^) ), :six], :five |}"); 
         t("{| {| ^, :zero |}, :four |}");
         t("{| cons(^), ^ |}");
         t("cons(^)");
