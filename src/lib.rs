@@ -19,12 +19,13 @@ mod tests {
                 let type_checked_pattern : TypeChecked = check_pattern(pattern).expect(&format!("{}", $pat));
 
                 #[allow(unused_mut)]
-                let mut results = $matcher(&type_checked_pattern, &data).into_iter()
-                                                           .map(|x| x.into_iter().collect::<HashMap<_,_>>())
-                                                           .collect::<Vec<_>>();
+                let mut results = $matcher(&type_checked_pattern, &data);
 
                 $(
                     let r = results.remove(0);
+                    let r_len = r.len();
+
+                    let r = r.into_iter().collect::<HashMap<_, _>>();
 
                     #[allow(unused_mut)]
                     let mut expected_map_count = 0;
@@ -32,11 +33,10 @@ mod tests {
                     $(
                         let data = *r.get(&$s.into()).unwrap();
                         expected_map_count += 1;
-                        println!("{:?}", data);
-                        assert_eq!( data, &$d.parse::<Data>().unwrap());
+                        assert_eq!( data, &$d.parse::<Data>().unwrap(), "{} found incorrect result", $s);
                     )*
 
-                    assert_eq!( r.len(), expected_map_count );
+                    assert_eq!( r_len, expected_map_count, "more results found than were tested" );
                 )*
 
                 assert_eq!( results.len(), 0 );
