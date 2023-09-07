@@ -127,15 +127,10 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMa
         },
 
         (Pattern::Func(ret), data) => {
-
             let map : HashMap<Slot, &Data> = matches.iter().map(|(k, v)| (k.clone(), *v)).collect();
-
             let p = template_pattern(ret, &map);
-
             let output = inner_match(&p, data, matches); 
-
             output
-
         },
 
         _ => fail!(),
