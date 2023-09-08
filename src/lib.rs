@@ -460,6 +460,43 @@ mod tests {
                         pattern "cons(a, <| [b, $a, <| $b |>] |>)";
                         data "cons(:a, [:b, :a, :c])";
                 }
+                
+                t! { should_match_exact_list_nested_func $target =
+                        pattern "[a, b, [[ <| $a |>, c ]], <| $c |> ]";
+                        data "[:a, :b, [[:a, :c]], :c]";
+                        { "a" => ":a"; "b" => ":b"; "c" => ":c" }
+                }
+
+                t! { should_match_cons_nested_func $target =
+                        pattern "cons(a, b, cons(cons( <| $a |>, c )), <| $c |> )";
+                        data "cons(:a, :b, cons(cons( :a, :c)), :c)";
+                        { "a" => ":a"; "b" => ":b"; "c" => ":c" }
+                }
+
+                t! { should_match_list_path_nested_func $target =
+                        pattern "[a, b, [[| <| $a |>, c |]], <| $c |> ]";
+                        data "[:a, :b, [[:a, :c, :a, :c]], :c]";
+                        { "a" => ":a"; "b" => ":b"; "c" => ":c" }
+                        { "a" => ":a"; "b" => ":b"; "c" => ":c" }
+                }
+
+                t! { should_match_path_nested_func $target =
+                        pattern "[a, b, [{| [^, ^, <| $a |>], c |}], <| $c |> ]";
+                        data "[:a, :b, [[:x, :y, :a]], :x]";
+                        { "a" => ":a"; "b" => ":b"; "c" => ":x" }
+                }
+
+                t! { should_match_and_nested_func $target =
+                        pattern "[a, b.and(<| [$a, c] |>), <| $c |>]";
+                        data "[:a, [:a, :c], :c]";
+                        { "a" => ":a"; "b" => "[:a, :c]"; "c" => ":c" }
+                }
+
+                t! { should_match_or_nested_func $target =
+                        pattern "[a, [c].or(<| [$a, c] |>), <| $c |>]";
+                        data "[:a, [:a, :c], :c]";
+                        { "a" => ":a"; "c" => ":c" }
+                }
             }
         };
     }
