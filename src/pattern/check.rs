@@ -26,7 +26,9 @@ pub enum TypeCheckError {
     OrPatternHasUnequalSig,
     IncorrectNextUsage,
     ConsPatternsNeedAtLeastOneParam,
-    TypeDoesNotMatch { found: PatternSig, expected: PatternSig }
+    TypeDoesNotMatch { found: PatternSig, expected: PatternSig },
+    FuncReferencesUnknownCaptureVariable(Box<str>),
+    TemplateVariableFoundOutsideFunc(Box<str>),
 }
 
 impl std::fmt::Display for TypeCheckError {
@@ -38,6 +40,8 @@ impl std::fmt::Display for TypeCheckError {
             IncorrectNextUsage => write!(f, "Pattern TypeCheckError: IncorrectNextUsage"),
             ConsPatternsNeedAtLeastOneParam => write!(f, "Pattern TypeCheckError: ConsPatternsNeedAtLeastOneParam"),
             TypeDoesNotMatch { found, expected } => write!(f, "Pattern TypeCheckError: Types do not match.  Found {:?}, but expected {:?}", found, expected),
+            FuncReferencesUnknownCaptureVariable(var) => write!(f, "Pattern TypeCheckError:  Function references unknown variable: {}", var),
+            TemplateVariableFoundOutsideFunc(var) => write!(f, "Pattern TypeCheckError:  Template variable found outside of function: {}", var),
         }
     }
 }
@@ -52,6 +56,10 @@ pub fn check_pattern(pattern : Pattern) -> Result<TypeChecked, TypeCheckError> {
 
     if ! pattern.to_lax().map(|p| check_cons_have_params(p)).all(|x| x) {
         return Err(TypeCheckError::ConsPatternsNeedAtLeastOneParam);
+    }
+
+    if let Some(error) = check_template_usage(&pattern) {
+        return Err(error);
     }
 
     let sig = pattern_sig(&pattern)?;
@@ -80,31 +88,19 @@ fn check_template_usage(pattern : &Pattern) -> Option<TypeCheckError> {
             Symbol(_) => None,
             Wild => None,
             CaptureVar(var) => { available_captures.push(var.clone()); None },
-            // TODO
-            /*Cons { params, .. } => params.iter().map(|p| r(p, available_captures, in_func)).find(problem),
-            ExactList(ps) => ps.iter().map(|p| r(p, available_captures, in_func)).find(problem),
-            ListPath(ps) => ps.iter().map(|p| r(p, available_captures, in_func)).find(problem),
-            PathNext => true,
-            Path(ps) => ps.iter().map(|p| r(p, available_captures, in_func)).find(problem), 
+            Cons { params, .. } => params.iter().map(|p| r(p, available_captures, in_func)).find(problem)?,
+            ExactList(ps) => ps.iter().map(|p| r(p, available_captures, in_func)).find(problem)?,
+            ListPath(ps) => ps.iter().map(|p| r(p, available_captures, in_func)).find(problem)?,
+            PathNext => None,
+            Path(ps) => ps.iter().map(|p| r(p, available_captures, in_func)).find(problem)?, 
 
-            And(a, b) => r(a, available_captures, in_func) && r(b, available_captures, in_func),
-            Or(a, b) => {
-                let a_s = r(&**a, in_path);
-                let b_s = r(&**b, in_path);
-
-                if a_s.is_none() || b_s.is_none() {
-                    None
-                }
-                else if !sgtz(a_s) || !sgtz(b_s) {
-                    Some(0)
-                }
-                else {
-                    Some(1)
-                }
-            },
-            Func(p) => r(p, in_path), 
-            TemplateVar(_) => Some(0),*/
-            _ => todo!(),
+            And(a, b) => r(a, available_captures, in_func).or(r(b, available_captures, in_func)),
+            Or(a, b) => r(a, available_captures, in_func).or(r(b, available_captures, in_func)),
+            Func(p) => r(p, available_captures, true), 
+            TemplateVar(var) if !in_func => Some(TypeCheckError::TemplateVariableFoundOutsideFunc(var.clone())),
+            TemplateVar(var) if available_captures.iter().find(|x| *x == var).is_none()
+                => Some(TypeCheckError::FuncReferencesUnknownCaptureVariable(var.clone())),
+            TemplateVar(_) => None, 
         }
     }
 
@@ -234,6 +230,55 @@ pub fn pattern_sig(pattern : &Pattern) -> Result<PatternSig, TypeCheckError> {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn check_template_usage_should_pass() {
+        fn t(input : &str) {
+            let p : Pattern = input.parse().unwrap();
+            let output = check_template_usage(&p);
+            assert!(output.is_none(), "{input}");
+        }
+
+        t(":symbol");
+        t("[:one, :two, :three]");
+        t("[\"1\",:symbol, :three]");
+        t("cons(:a, :b, :c)");
+        t("cons(:a, [:a, :b], :c)");
+        t("[| a, _, c |]");
+        t("x");
+        t("\"x\"");
+        t("\"x\".and( :symbol )");
+        t("\"x\".or( :symbol )");
+        t("{| [ {| ^, :zero |}, ^], :four |}");
+        t("[| a, b, c |]");
+
+
+        t("[:one, :two, :three]");
+        t("[a, b, <| [$a, $b] |>, :three]");
+        t("[a, b, <| $a |>, :three]");
+        t("[a, b, [<| cons($a, $b, c, <| $c |>) |>], :three]");
+        t("{| [^, a], <| $a |> |}");
+        t("[| a, b, <| [$a, $b] |> |]");
+    }
+    
+    #[test]
+    fn check_template_usage_should_not_pass() {
+        fn t(input : &str) {
+            let p : Pattern = input.parse().unwrap();
+            let output = check_template_usage(&p);
+            assert!(output.is_some(), "{input}");
+        }
+
+        t("[$a]");
+        t("cons($a)");
+        t("[|$a|]");
+        t("{| ^, $a |}");
+        t("[a, b, <| [$a, $c] |>, :three]");
+        t("[a, b, <| $c |>, :three]");
+        t("[a, b, [<| cons($a, $c, c, <| $c |>) |>], :three]");
+        t("{| [^, a], <| $c |> |}");
+        t("[| a, b, <| [$c, $b] |> |]");
+    }
 
     #[test]
     fn check_next_usage_should_pass() {
