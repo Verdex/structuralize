@@ -18,7 +18,7 @@ pub enum Pattern {
     Path(Vec<Pattern>),
     And(Box<Pattern>, Box<Pattern>),
     Or(Box<Pattern>, Box<Pattern>),
-    TemplateVar(Box<str>), // TODO : need to typecheck that these only occur in a ret pattern 
+    TemplateVar(Box<str>), 
     Func(Box<Pattern>),
 }
 

@@ -140,7 +140,6 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMa
 fn template_pattern(p : &Pattern, map : &HashMap<Slot, &Data>) -> Pattern {
     use Pattern::*;
     match p {
-        // TODO type checking should ensure that the var is in the map
         TemplateVar(var) => data_to_pattern(*map.get(&var.into()).unwrap()),
 
         x @ String(_) => x.clone(), 
