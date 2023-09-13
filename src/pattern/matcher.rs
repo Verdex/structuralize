@@ -133,20 +133,6 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMa
             inner_match(&p, data, matches)
         },
 
-        (Pattern::Func(ret), data) => {
-            // TODO : Don't really need <| |> brackets and can instead just use template vars
-            // TODO : Instead of using HashMap, just Vec + Iter + find might right faster
-            // Although to be fair to whats here now.  HashMap probably makes more sense with
-            // the <||> brackets because it's only going to need to insert everything once for 
-            // potentially multiple lookups.  However, for small 'matches' vecs and a small
-            // number of template vars, just using vector lookup may be faster.
-            /*let map : HashMap<Slot, &Data> = matches.iter().map(|(k, v)| (k.clone(), *v)).collect();
-            let p = template_pattern(ret, &map);
-            let output = inner_match(&p, data, matches); 
-            output*/
-            inner_match(ret, data, matches)
-        },
-
         _ => fail!(),
     }
 }
@@ -167,7 +153,6 @@ fn template_pattern(p : &Pattern, map : &HashMap<Slot, &Data>) -> Pattern {
         Path(ps) => Path(ps.iter().map(|p| template_pattern(p, map)).collect()),
         And(a, b) => And(Box::new(template_pattern(a, map)), Box::new(template_pattern(b, map))),
         Or(a, b) => Or(Box::new(template_pattern(a, map)), Box::new(template_pattern(b, map))),
-        x @ Func(_) => x.clone(),
     }
 }
 

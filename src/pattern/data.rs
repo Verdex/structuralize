@@ -19,7 +19,6 @@ pub enum Pattern {
     And(Box<Pattern>, Box<Pattern>),
     Or(Box<Pattern>, Box<Pattern>),
     TemplateVar(Box<str>), 
-    Func(Box<Pattern>),
 }
 
 impl<'a> Linearizable<'a> for Pattern {
@@ -38,7 +37,6 @@ impl<'a> Linearizable<'a> for Pattern {
             And(a, b) => vec![&**a, &**b],
             Or(a, b) => vec![&**a, &**b],
             TemplateVar(_) => vec![],
-            Func(p) => vec![&**p],
         }
     }
 }

@@ -54,7 +54,6 @@ fn parse_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
                       parse_path_next;
                       parse_symbol;
                       parse_string_pattern;
-                      parse_pattern_function;
                       parse_template_variable)
     }
 
@@ -263,38 +262,6 @@ fn parse_template_variable(input : &mut Chars) -> Result<Pattern, ParseError> {
     })
 }
 
-fn parse_pattern_function(input : &mut Chars) -> Result<Pattern, ParseError> {
-    pat!(parse_l_angle: char => () = '<' => ());
-    pat!(parse_r_angle: char => () = '>' => ());
-    pat!(parse_bar: char => () = '|' => ());
-
-    fn parse_l_bracket(input : &mut Chars) -> Result<(), ParseError> {
-        parser!(input => {
-            _angle <= parse_l_angle;
-            _bar <= parse_bar;
-            select ()
-        })
-    }
-    
-    fn parse_r_bracket(input : &mut Chars) -> Result<(), ParseError> {
-        parser!(input => {
-            _bar <= parse_bar;
-            _angle <= parse_r_angle;
-            select ()
-        })
-    }
-
-    parser!(input => {
-        _l_bracket <= parse_l_bracket;
-        _ws0 <= parse_whitespace;
-        pattern <= ! parse_pattern;
-        let pattern = Box::new(pattern);
-        _ws1 <= parse_whitespace;
-        _r_bracket <= parse_r_bracket;
-        select Pattern::Func( pattern ) 
-    })
-}
-
 #[cfg(test)]
 mod test {
     use intra::*;
@@ -304,11 +271,11 @@ mod test {
     fn unbox<T>(input : Box<T> ) -> T { *input }
 
     #[test]
-    fn should_parse_function() {
-        let input = "<| cons($a, [$b, $c, d, :e] ) |>";
+    fn should_parse_template() {
+        let input = "cons($a, [$b, $c, d, :e] )";
         let pattern = input.parse::<Pattern>().unwrap();
         let mut matched = false;
-        atom!(pattern => [ Pattern::Func { .. } ] =>  {
+        atom!(pattern => [ Pattern::Cons { .. } ] =>  {
             matched = true;
         } );
         assert!(matched);
