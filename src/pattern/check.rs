@@ -27,7 +27,7 @@ pub enum TypeCheckError {
     IncorrectNextUsage,
     ConsPatternsNeedAtLeastOneParam,
     TypeDoesNotMatch { found: PatternSig, expected: PatternSig },
-    FuncReferencesUnknownCaptureVariable(Box<str>),
+    TemplateReferencesUnknownCaptureVariable(Box<str>),
 }
 
 impl std::fmt::Display for TypeCheckError {
@@ -39,7 +39,7 @@ impl std::fmt::Display for TypeCheckError {
             IncorrectNextUsage => write!(f, "Pattern TypeCheckError: IncorrectNextUsage"),
             ConsPatternsNeedAtLeastOneParam => write!(f, "Pattern TypeCheckError: ConsPatternsNeedAtLeastOneParam"),
             TypeDoesNotMatch { found, expected } => write!(f, "Pattern TypeCheckError: Types do not match.  Found {:?}, but expected {:?}", found, expected),
-            FuncReferencesUnknownCaptureVariable(var) => write!(f, "Pattern TypeCheckError:  Function references unknown variable: {}", var),
+            TemplateReferencesUnknownCaptureVariable(var) => write!(f, "Pattern TypeCheckError:  Template references unknown variable: {}", var),
         }
     }
 }
@@ -94,9 +94,8 @@ fn check_template_usage(pattern : &Pattern) -> Option<TypeCheckError> {
 
             And(a, b) => r(a, available_captures, in_func).or(r(b, available_captures, in_func)),
             Or(a, b) => r(a, available_captures, in_func).or(r(b, available_captures, in_func)),
-            Func(p) => r(p, available_captures, true), 
             TemplateVar(var) if available_captures.iter().find(|x| *x == var).is_none()
-                => Some(TypeCheckError::FuncReferencesUnknownCaptureVariable(var.clone())),
+                => Some(TypeCheckError::TemplateReferencesUnknownCaptureVariable(var.clone())),
             TemplateVar(_) => None, 
         }
     }
@@ -151,7 +150,6 @@ fn check_next_usage(pattern : &Pattern) -> bool {
                     Some(1)
                 }
             },
-            Func(p) => r(p, in_path), 
             TemplateVar(_) => Some(0),
         }
     }
@@ -219,7 +217,6 @@ pub fn pattern_sig(pattern : &Pattern) -> Result<PatternSig, TypeCheckError> {
                 Ok(a_sig)
             }
         },
-        Func(p) => pattern_sig(p), 
         TemplateVar(_) => EMPTY,
     }
 }
