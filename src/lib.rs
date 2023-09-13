@@ -502,39 +502,4 @@ mod tests {
     }
 
     all!(pattern_match);
-
-    #[test]
-    fn should_try_it() {
-
-        use crate::data::*;
-        use crate::pattern::*;
-        use crate::pattern::check::*;
-
-        //let pattern : Pattern = "[ {| [^, ^], a |}, {| [^, ^], <| cons($a, b) |> |} ]".parse().unwrap();
-        //let data : Data = "[ [:sym, :jabber], [cons(:sym, :other), cons(:jabber, :second)] ]".parse().unwrap();
-
-        //let pattern : Pattern = "a |> and( <| $a |> )".parse().unwrap();
-        //let data : Data = "[ cons(:sym, :jabber), cons(cons(:sym, :other), cons(:jabber, :second)) ]".parse().unwrap();
-
-        let pattern : Pattern = "[a, <| $a |>]".parse().unwrap();
-        let data : Data = "[:a, :a]".parse().unwrap();
-
-        //"[cons(a) |> and(b), [<| cons($a) |>]]"
-
-        //"[cons(a), [ <| cons($a) |> ]] |> or( [other(a), [ <| other($a) |> ]] )"
-
-
-        //"[cons(a) |> and(b), [<| cons($a) |>]]"
-
-        //"[cons(a), [ <| cons($a) |> ]] |> or( [other(a), [ <| other($a) |> ]] )"
-
-
-        let type_checked_pattern : TypeChecked = check_pattern(pattern).unwrap();
-
-        let results = pattern_match(&type_checked_pattern, &data);
-
-        for r in results {
-            println!("{:?}\n\n", r);
-        }
-    }
 }
