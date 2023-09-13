@@ -251,11 +251,11 @@ mod test {
 
 
         t("[:one, :two, :three]");
-        t("[a, b, <| [$a, $b] |>, :three]");
-        t("[a, b, <| $a |>, :three]");
-        t("[a, b, [<| cons($a, $b, c, <| $c |>) |>], :three]");
-        t("{| [^, a], <| $a |> |}");
-        t("[| a, b, <| [$a, $b] |> |]");
+        t("[a, b, [$a, $b], :three]");
+        t("[a, b, $a, :three]");
+        t("[a, b, [cons($a, $b, c, $c)], :three]");
+        t("{| [^, a], $a |}");
+        t("[| a, b, [$a, $b] |]");
     }
     
     #[test]
@@ -270,11 +270,11 @@ mod test {
         t("cons($a)");
         t("[|$a|]");
         t("{| ^, $a |}");
-        t("[a, b, <| [$a, $c] |>, :three]");
-        t("[a, b, <| $c |>, :three]");
-        t("[a, b, [<| cons($a, $c, c, <| $c |>) |>], :three]");
-        t("{| [^, a], <| $c |> |}");
-        t("[| a, b, <| [$c, $b] |> |]");
+        t("[a, b, [$a, $c], :three]");
+        t("[a, b, $c, :three]");
+        t("[a, b, [cons($a, $c, c, $c)], :three]");
+        t("{| [^, a], $c |}");
+        t("[| a, b, [$c, $b] |]");
     }
 
     #[test]
