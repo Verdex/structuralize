@@ -497,6 +497,24 @@ mod tests {
                         data "[:a, [:a, :c], :c]";
                         { "a" => ":a"; "c" => ":c" }
                 }
+
+                t! { should_match_list_data_in_template $target =
+                        pattern "[a, $a]";
+                        data "[[:a], [:a]]";
+                        { "a" => "[:a]" }
+                }
+
+                t! { should_match_cons_data_in_template $target =
+                        pattern "[a, $a]";
+                        data "[cons(:a), cons(:a)]";
+                        { "a" => "cons(:a)" }
+                }
+
+                t! { should_match_string_data_in_template $target =
+                        pattern "[a, $a]";
+                        data "[\"a\", \"a\"]";
+                        { "a" => "\"a\"" }
+                }
             }
         };
     }
