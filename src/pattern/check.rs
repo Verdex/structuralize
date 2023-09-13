@@ -79,28 +79,28 @@ fn check_template_usage(pattern : &Pattern) -> Option<TypeCheckError> {
         }
     }
 
-    fn r(pattern : &Pattern, available_captures : &mut Vec<Box<str>>, in_func : bool) -> Option<TypeCheckError> {
+    fn r(pattern : &Pattern, available_captures : &mut Vec<Box<str>>) -> Option<TypeCheckError> {
         use Pattern::*;
         match pattern {
             String(_) => None, 
             Symbol(_) => None,
             Wild => None,
             CaptureVar(var) => { available_captures.push(var.clone()); None },
-            Cons { params, .. } => params.iter().map(|p| r(p, available_captures, in_func)).find(problem)?,
-            ExactList(ps) => ps.iter().map(|p| r(p, available_captures, in_func)).find(problem)?,
-            ListPath(ps) => ps.iter().map(|p| r(p, available_captures, in_func)).find(problem)?,
+            Cons { params, .. } => params.iter().map(|p| r(p, available_captures)).find(problem)?,
+            ExactList(ps) => ps.iter().map(|p| r(p, available_captures)).find(problem)?,
+            ListPath(ps) => ps.iter().map(|p| r(p, available_captures)).find(problem)?,
             PathNext => None,
-            Path(ps) => ps.iter().map(|p| r(p, available_captures, in_func)).find(problem)?, 
+            Path(ps) => ps.iter().map(|p| r(p, available_captures)).find(problem)?, 
 
-            And(a, b) => r(a, available_captures, in_func).or(r(b, available_captures, in_func)),
-            Or(a, b) => r(a, available_captures, in_func).or(r(b, available_captures, in_func)),
+            And(a, b) => r(a, available_captures).or(r(b, available_captures)),
+            Or(a, b) => r(a, available_captures).or(r(b, available_captures)),
             TemplateVar(var) if available_captures.iter().find(|x| *x == var).is_none()
                 => Some(TypeCheckError::TemplateReferencesUnknownCaptureVariable(var.clone())),
             TemplateVar(_) => None, 
         }
     }
 
-    r(pattern, &mut vec![], false)
+    r(pattern, &mut vec![])
 }
 
 fn check_next_usage(pattern : &Pattern) -> bool {
