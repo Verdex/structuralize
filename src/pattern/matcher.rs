@@ -1,6 +1,4 @@
 
-use std::collections::HashMap;
-
 use crate::data::*;
 use super::data::*;
 use super::check::*;
@@ -134,25 +132,6 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMa
         },
 
         _ => fail!(),
-    }
-}
-
-fn template_pattern(p : &Pattern, map : &HashMap<Slot, &Data>) -> Pattern {
-    use Pattern::*;
-    match p {
-        TemplateVar(var) => data_to_pattern(*map.get(&var.into()).unwrap()),
-
-        x @ String(_) => x.clone(), 
-        x @ Symbol(_) => x.clone(),
-        Wild => Wild,
-        x @ CaptureVar(_) => x.clone(),
-        Cons { params, name } => Cons { name: name.clone(), params: params.iter().map(|p| template_pattern(p, map)).collect() },
-        ExactList(ps) => ExactList(ps.iter().map(|p| template_pattern(p, map)).collect()),
-        ListPath(ps) => ListPath(ps.iter().map(|p| template_pattern(p, map)).collect()),
-        PathNext => PathNext,
-        Path(ps) => Path(ps.iter().map(|p| template_pattern(p, map)).collect()),
-        And(a, b) => And(Box::new(template_pattern(a, map)), Box::new(template_pattern(b, map))),
-        Or(a, b) => Or(Box::new(template_pattern(a, map)), Box::new(template_pattern(b, map))),
     }
 }
 
