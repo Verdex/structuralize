@@ -6,6 +6,13 @@ use super::check::*;
 
 pub type MatchMap<K, V> = Vec<(K, V)>;
 
+// TODO : replace the (public:  actually just a internal one should do the trick) pattern match with another version that accepts cows 
+// and then calls the reference version
+
+pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
+    inner_match(pattern.pattern(), data, &vec![])
+}
+
 fn alt_inner_matches<'a>(pattern : &Pattern, 
                          data : &'a Data, 
                          previous_match_groups : Vec<MatchMap<Slot, &'a Data>>,
@@ -26,13 +33,6 @@ fn alt_inner_matches<'a>(pattern : &Pattern,
         results.append(&mut current_result_groups);
     }
     results 
-}
-
-// TODO : replace the (public:  actually just a internal one should do the trick) pattern match with another version that accepts cows 
-// and then calls the reference version
-
-pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
-    inner_match(pattern.pattern(), data, &vec![])
 }
 
 fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMap<Slot, &'data Data>) -> Vec<MatchMap<Slot, &'data Data>> {
