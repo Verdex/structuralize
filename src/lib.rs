@@ -391,109 +391,109 @@ mod tests {
                         { "x" => ":a"; "y" => ":b"; "z" => ":c" } 
                 }
 
-                t!{ should_match_func_in_cons $target =
-                        pattern "cons( a, <| $a |> )";
+                t!{ should_match_template_in_cons $target =
+                        pattern "cons( a, $a )";
                         data "cons(:a, :a)";
                         { "a" => ":a" }
                 }
 
-                t!{ should_not_match_func_in_cons $target =
-                        pattern "cons( a, <| $a |> )";
+                t!{ should_not_match_template_in_cons $target =
+                        pattern "cons( a, $a )";
                         data "cons(:a, :b)";
                 }
 
-                t!{ should_match_func_in_exact_list $target =
-                        pattern "[ a, <| $a |> ]";
+                t!{ should_match_template_in_exact_list $target =
+                        pattern "[ a, $a ]";
                         data "[:a, :a]";
                         { "a" => ":a" }
                 }
 
-                t!{ should_not_match_func_in_exact_list $target =
-                        pattern "[ a, <| $a |> ]";
+                t!{ should_not_match_template_in_exact_list $target =
+                        pattern "[ a, $a ]";
                         data "[:a, :b]";
                 }
 
-                t!{ should_match_func_in_list_path $target =
-                        pattern "[| a, <| $a |> |]";
+                t!{ should_match_template_in_list_path $target =
+                        pattern "[| a, $a |]";
                         data "[:a, :a, :b, :b, :c, :d, :d]";
                         { "a" => ":a" }
                         { "a" => ":b" }
                         { "a" => ":d" }
                 }
 
-                t!{ should_match_func_in_path $target =
-                        pattern "{| [^, ^, ^], cons(a, <| $a |>) |}";
+                t!{ should_match_template_in_path $target =
+                        pattern "{| [^, ^, ^], cons(a, $a) |}";
                         data "[ cons(:a, :a), cons(:b, :b), cons(:c, :d)]";
                         { "a" => ":a" }
                         { "a" => ":b" }
                 }
 
-                t!{ should_match_func_in_and $target =
-                        pattern "a.and( <| $a |> )";
+                t!{ should_match_template_in_and $target =
+                        pattern "a.and( $a )";
                         data ":a";
                         { "a" => ":a" }
                 }
 
-                t!{ should_not_match_func_in_and $target =
-                        pattern "a.and( <| [$a] |> )";
+                t!{ should_not_match_template_in_and $target =
+                        pattern "a.and( [$a] )";
                         data ":a";
                 }
 
-                t!{ should_match_func_in_or $target =
-                        pattern "cons(a, <| [$a] |>).or( cons(a, <| $a |>) )";
+                t!{ should_match_template_in_or $target =
+                        pattern "cons(a, [$a]).or( cons(a, $a) )";
                         data "cons(:a, :a)";
                         { "a" => ":a" }
                 }
 
-                t!{ should_not_match_func_in_or $target =
-                        pattern "cons(a, <| $a |>).or( cons(a, <| $a |> ) )";
+                t!{ should_not_match_template_in_or $target =
+                        pattern "cons(a, $a).or( cons(a, $a) )";
                         data "cons(:a, :b)";
                 }
 
-                t!{ should_match_func_in_func $target = 
-                        pattern "cons(a, <| [b, $a, <| $b |>] |>)";
+                t!{ should_match_template_with_template $target = 
+                        pattern "cons(a, [b, $a, $b ] )";
                         data "cons(:a, [:b, :a, :b])";
                         { "a" => ":a"; "b" => ":b" }
                 }
 
-                t!{ should_not_match_func_in_func $target = 
-                        pattern "cons(a, <| [b, $a, <| $b |>] |>)";
+                t!{ should_not_match_template_with_template $target = 
+                        pattern "cons(a, [b, $a, $b] )";
                         data "cons(:a, [:b, :a, :c])";
                 }
                 
-                t! { should_match_exact_list_nested_func $target =
-                        pattern "[a, b, [[ <| $a |>, c ]], <| $c |> ]";
+                t! { should_match_exact_list_nested_template $target =
+                        pattern "[a, b, [[ $a, c ]], $c]";
                         data "[:a, :b, [[:a, :c]], :c]";
                         { "a" => ":a"; "b" => ":b"; "c" => ":c" }
                 }
 
-                t! { should_match_cons_nested_func $target =
-                        pattern "cons(a, b, cons(cons( <| $a |>, c )), <| $c |> )";
+                t! { should_match_cons_nested_template $target =
+                        pattern "cons(a, b, cons(cons( $a, c )), $c)";
                         data "cons(:a, :b, cons(cons( :a, :c)), :c)";
                         { "a" => ":a"; "b" => ":b"; "c" => ":c" }
                 }
 
-                t! { should_match_list_path_nested_func $target =
-                        pattern "[a, b, [[| <| $a |>, c |]], <| $c |> ]";
+                t! { should_match_list_path_nested_template $target =
+                        pattern "[a, b, [[| $a, c |]], $c]";
                         data "[:a, :b, [[:a, :c, :a, :c]], :c]";
                         { "a" => ":a"; "b" => ":b"; "c" => ":c" }
                         { "a" => ":a"; "b" => ":b"; "c" => ":c" }
                 }
 
-                t! { should_match_path_nested_func $target =
-                        pattern "[a, b, [{| [^, ^, <| $a |>], c |}], <| $c |> ]";
+                t! { should_match_path_nested_template $target =
+                        pattern "[a, b, [{| [^, ^, $a], c |}], $c]";
                         data "[:a, :b, [[:x, :y, :a]], :x]";
                         { "a" => ":a"; "b" => ":b"; "c" => ":x" }
                 }
 
-                t! { should_match_and_nested_func $target =
-                        pattern "[a, b.and(<| [$a, c] |>), <| $c |>]";
+                t! { should_match_and_nested_template $target =
+                        pattern "[a, b.and( [$a, c] ), $c]";
                         data "[:a, [:a, :c], :c]";
                         { "a" => ":a"; "b" => "[:a, :c]"; "c" => ":c" }
                 }
 
-                t! { should_match_or_nested_func $target =
-                        pattern "[a, [c].or(<| [$a, c] |>), <| $c |>]";
+                t! { should_match_or_nested_template $target =
+                        pattern "[a, [c].or( [$a, c] ), $c]";
                         data "[:a, [:a, :c], :c]";
                         { "a" => ":a"; "c" => ":c" }
                 }

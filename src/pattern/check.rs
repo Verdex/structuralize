@@ -28,7 +28,6 @@ pub enum TypeCheckError {
     ConsPatternsNeedAtLeastOneParam,
     TypeDoesNotMatch { found: PatternSig, expected: PatternSig },
     FuncReferencesUnknownCaptureVariable(Box<str>),
-    TemplateVariableFoundOutsideFunc(Box<str>),
 }
 
 impl std::fmt::Display for TypeCheckError {
@@ -41,7 +40,6 @@ impl std::fmt::Display for TypeCheckError {
             ConsPatternsNeedAtLeastOneParam => write!(f, "Pattern TypeCheckError: ConsPatternsNeedAtLeastOneParam"),
             TypeDoesNotMatch { found, expected } => write!(f, "Pattern TypeCheckError: Types do not match.  Found {:?}, but expected {:?}", found, expected),
             FuncReferencesUnknownCaptureVariable(var) => write!(f, "Pattern TypeCheckError:  Function references unknown variable: {}", var),
-            TemplateVariableFoundOutsideFunc(var) => write!(f, "Pattern TypeCheckError:  Template variable found outside of function: {}", var),
         }
     }
 }
@@ -97,7 +95,6 @@ fn check_template_usage(pattern : &Pattern) -> Option<TypeCheckError> {
             And(a, b) => r(a, available_captures, in_func).or(r(b, available_captures, in_func)),
             Or(a, b) => r(a, available_captures, in_func).or(r(b, available_captures, in_func)),
             Func(p) => r(p, available_captures, true), 
-            TemplateVar(var) if !in_func => Some(TypeCheckError::TemplateVariableFoundOutsideFunc(var.clone())),
             TemplateVar(var) if available_captures.iter().find(|x| *x == var).is_none()
                 => Some(TypeCheckError::FuncReferencesUnknownCaptureVariable(var.clone())),
             TemplateVar(_) => None, 
