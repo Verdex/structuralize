@@ -9,6 +9,8 @@ pub type MatchMap<K, V> = Vec<(K, V)>;
 // TODO : replace the (public:  actually just a internal one should do the trick) pattern match with another version that accepts cows 
 // and then calls the reference version
 
+// TODO : Consider * pattern and some sub tree pattern, but only allow a single instance in the list path / path 
+
 pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
     inner_match(pattern.pattern(), data, &vec![])
 }
