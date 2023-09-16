@@ -1,6 +1,4 @@
 
-// TODO: Apparently the 'a from Chars<'a> is optional now
-
 use std::str::Chars;
 use renounce::*;
 
@@ -34,7 +32,7 @@ impl std::str::FromStr for Pattern {
     }
 }
 
-fn parse<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+fn parse(input : &mut Chars) -> Result<Pattern, ParseError> {
     parser!(input => {
         pattern <= ! parse_pattern;
         ! end;
@@ -42,8 +40,8 @@ fn parse<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
     })
 }
 
-fn parse_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
-    fn options<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+fn parse_pattern(input : &mut Chars) -> Result<Pattern, ParseError> {
+    fn options(input : &mut Chars) -> Result<Pattern, ParseError> {
         alt!(input => parse_cons; 
                       parse_list_path;
                       parse_list; 
@@ -57,7 +55,7 @@ fn parse_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
                       parse_template_variable)
     }
 
-    fn end_options<'a>(input : &mut Chars<'a>) -> Result<EndCombinator, ParseError> {
+    fn end_options(input : &mut Chars) -> Result<EndCombinator, ParseError> {
         alt!(input => parse_and; parse_or)
     }
 
@@ -80,12 +78,12 @@ enum EndCombinator {
     Or(Pattern),
 }
 
-fn parse_or<'a>(input : &mut Chars<'a>) -> Result<EndCombinator, ParseError> {
+fn parse_or(input : &mut Chars) -> Result<EndCombinator, ParseError> {
     pat!(parse_dot: char => () = '.' => ());
     pat!(parse_l_paren: char => () = '(' => ());
     pat!(parse_r_paren: char => () = ')' => ());
 
-    fn parse_and<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+    fn parse_and(input : &mut Chars) -> Result<(), ParseError> {
         parser!(input => {
             and <= parse_word;
             where *and == *"or";
@@ -107,12 +105,12 @@ fn parse_or<'a>(input : &mut Chars<'a>) -> Result<EndCombinator, ParseError> {
     })
 }
 
-fn parse_and<'a>(input : &mut Chars<'a>) -> Result<EndCombinator, ParseError> {
+fn parse_and(input : &mut Chars) -> Result<EndCombinator, ParseError> {
     pat!(parse_dot: char => () = '.' => ());
     pat!(parse_l_paren: char => () = '(' => ());
     pat!(parse_r_paren: char => () = ')' => ());
 
-    fn parse_and<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+    fn parse_and(input : &mut Chars) -> Result<(), ParseError> {
         parser!(input => {
             and <= parse_word;
             where *and == *"and";
@@ -134,12 +132,12 @@ fn parse_and<'a>(input : &mut Chars<'a>) -> Result<EndCombinator, ParseError> {
     })
 }
 
-fn parse_list_path<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+fn parse_list_path(input : &mut Chars) -> Result<Pattern, ParseError> {
     pat!(parse_l_square: char => () = '[' => ());
     pat!(parse_r_square: char => () = ']' => ());
     pat!(parse_bar: char => () = '|' => ());
 
-    fn parse_l_bracket<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+    fn parse_l_bracket(input : &mut Chars) -> Result<(), ParseError> {
         parser!(input => {
             _square <= parse_l_square;
             _bar <= parse_bar;
@@ -147,7 +145,7 @@ fn parse_list_path<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
         })
     }
 
-    fn parse_r_bracket<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+    fn parse_r_bracket(input : &mut Chars) -> Result<(), ParseError> {
         parser!(input => {
             _bar <= parse_bar;
             _square <= parse_r_square;
@@ -155,7 +153,7 @@ fn parse_list_path<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
         })
     }
 
-    fn parse_points<'a>(input : &mut Chars<'a>) -> Result<Vec<Pattern>, ParseError> {
+    fn parse_points(input : &mut Chars) -> Result<Vec<Pattern>, ParseError> {
         parse_list!(input => parse_l_bracket, parse_pattern : Pattern, parse_r_bracket)
     }
 
@@ -165,12 +163,12 @@ fn parse_list_path<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
     })
 }
 
-fn parse_path<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+fn parse_path(input : &mut Chars) -> Result<Pattern, ParseError> {
     pat!(parse_l_curl: char => () = '{' => ());
     pat!(parse_r_curl: char => () = '}' => ());
     pat!(parse_bar: char => () = '|' => ());
 
-    fn parse_l_bracket<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+    fn parse_l_bracket(input : &mut Chars) -> Result<(), ParseError> {
         parser!(input => {
             _curl <= parse_l_curl;
             _bar <= parse_bar;
@@ -178,7 +176,7 @@ fn parse_path<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
         })
     }
 
-    fn parse_r_bracket<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+    fn parse_r_bracket(input : &mut Chars) -> Result<(), ParseError> {
         parser!(input => {
             _bar <= parse_bar;
             _curl <= parse_r_curl;
@@ -186,7 +184,7 @@ fn parse_path<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
         })
     }
 
-    fn parse_points<'a>(input : &mut Chars<'a>) -> Result<Vec<Pattern>, ParseError> {
+    fn parse_points(input : &mut Chars) -> Result<Vec<Pattern>, ParseError> {
         parse_list!(input => parse_l_bracket, parse_pattern : Pattern, parse_r_bracket)
     }
 
@@ -198,11 +196,11 @@ fn parse_path<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
 
 pat!(parse_path_next<'a>: char => Pattern = '^' => Pattern::PathNext);
 
-fn parse_cons<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+fn parse_cons(input : &mut Chars) -> Result<Pattern, ParseError> {
     pat!(parse_l_paren: char => () = '(' => ());
     pat!(parse_r_paren: char => () = ')' => ());
 
-    fn param_list<'a>(input : &mut Chars<'a>) -> Result<Vec<Pattern>, ParseError> {
+    fn param_list(input : &mut Chars) -> Result<Vec<Pattern>, ParseError> {
         parse_list!(input => parse_l_paren, parse_pattern : Pattern, parse_r_paren)
     }
 
@@ -214,14 +212,14 @@ fn parse_cons<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
     })
 }
 
-fn parse_capture_var<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+fn parse_capture_var(input : &mut Chars) -> Result<Pattern, ParseError> {
     parser!(input => {
         word <= parse_word;
         select Pattern::CaptureVar(word)
     })
 }
 
-fn parse_wild<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+fn parse_wild(input : &mut Chars) -> Result<Pattern, ParseError> {
     parser!(input => {
         word <= parse_word;
         where *word == *"_";
@@ -229,7 +227,7 @@ fn parse_wild<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
     })
 }
 
-fn parse_symbol<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+fn parse_symbol(input : &mut Chars) -> Result<Pattern, ParseError> {
     pat!(parse_colon: char => () = ':' => ());
     parser!(input => {
         _colon <= parse_colon;
@@ -238,14 +236,14 @@ fn parse_symbol<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
     })
 }
 
-fn parse_string_pattern<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+fn parse_string_pattern(input : &mut Chars) -> Result<Pattern, ParseError> {
     parser!(input => {
         string <= parse_string;
         select Pattern::String(string)
     })
 }
 
-fn parse_list<'a>(input : &mut Chars<'a>) -> Result<Pattern, ParseError> {
+fn parse_list(input : &mut Chars) -> Result<Pattern, ParseError> {
     pat!(parse_l_square: char => () = '[' => ());
     pat!(parse_r_square: char => () = ']' => ());
 
