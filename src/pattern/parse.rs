@@ -251,10 +251,10 @@ fn parse_list(input : &mut Chars) -> Result<Pattern, ParseError> {
 }
 
 fn parse_template_variable(input : &mut Chars) -> Result<Pattern, ParseError> {
-    pat!(parse_dollar: char => () = '$' => ());
+    pat!(parse_percent: char => () = '%' => ());
 
     parser!(input => {
-        _dollar <= parse_dollar;
+        _dollar <= parse_percent;
         word <= ! parse_word;
         select Pattern::TemplateVar(word)
     })
@@ -270,7 +270,7 @@ mod test {
 
     #[test]
     fn should_parse_template() {
-        let input = "cons($a, [$b, $c, d, :e] )";
+        let input = "cons(%a, [%b, %c, d, :e] )";
         let pattern = input.parse::<Pattern>().unwrap();
         let mut matched = false;
         atom!(pattern => [ Pattern::Cons { .. } ] =>  {
