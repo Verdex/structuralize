@@ -279,14 +279,12 @@ mod test {
         assert!(matched);
     }
 
-    // TODO : apparently I copied and pasted 'data' quite a bit
-
     #[test]
     fn should_parse_nested_ends() {
         let input = "[] . and( :c . or ( \"e\" . or( \"1.0\" ) ) )";
-        let data = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern>().unwrap();
         let mut matched = false;
-        atom!(data => [Pattern::And(a, b)] b; unbox $ [Pattern::Or(c, d)] d; unbox $ [Pattern::Or(e, f)] =>  {
+        atom!(pattern => [Pattern::And(a, b)] b; unbox $ [Pattern::Or(c, d)] d; unbox $ [Pattern::Or(e, f)] =>  {
             assert!( matches!( *a, Pattern::ExactList(_) ) );
             assert!( matches!( *c, Pattern::Symbol(_) ) );
             assert!( matches!( *e, Pattern::String(_) ) );
@@ -299,9 +297,9 @@ mod test {
     #[test]
     fn should_parse_multiple_alternating_ends() {
         let input = "[] . or ( \"1.0\" ) . and ( :b ) . or ( \"c\" )";
-        let data = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern>().unwrap();
         let mut matched = false;
-        atom!(data => [Pattern::Or(a, b)] a; unbox $ [Pattern::And(c, d)] c; unbox $ [Pattern::Or(e, f)] =>  {
+        atom!(pattern => [Pattern::Or(a, b)] a; unbox $ [Pattern::And(c, d)] c; unbox $ [Pattern::Or(e, f)] =>  {
             assert!( matches!( *b, Pattern::String(_) ) );
             assert!( matches!( *d, Pattern::Symbol(_) ) );
             assert!( matches!( *e, Pattern::ExactList(_) ) );
@@ -314,9 +312,9 @@ mod test {
     #[test]
     fn should_parse_or() {
         let input = ":a . or ( \"1.0\" )";
-        let data = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern>().unwrap();
         let mut matched = false;
-        atom!(data => [Pattern::Or(a, b)] =>  {
+        atom!(pattern => [Pattern::Or(a, b)] =>  {
             assert!( matches!( *a, Pattern::Symbol(_) ) );
             assert!( matches!( *b, Pattern::String(_) ) );
             matched = true;
@@ -327,9 +325,9 @@ mod test {
     #[test]
     fn should_parse_and() {
         let input = ":a . and ( \"1.0\" )";
-        let data = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern>().unwrap();
         let mut matched = false;
-        atom!(data => [Pattern::And(a, b)] =>  {
+        atom!(pattern => [Pattern::And(a, b)] =>  {
             assert!( matches!( *a, Pattern::Symbol(_) ) );
             assert!( matches!( *b, Pattern::String(_) ) );
             matched = true;
@@ -340,23 +338,23 @@ mod test {
     #[test]
     fn should_parse_path() {
         let input = "{| a, b, c |}";
-        let data = input.parse::<Pattern>().unwrap();
-        assert!(matches!(data, Pattern::Path(_)));
+        let pattern = input.parse::<Pattern>().unwrap();
+        assert!(matches!(pattern, Pattern::Path(_)));
     }
 
     #[test]
     fn should_parse_list_path() {
         let input = "[| a, b, c |]";
-        let data = input.parse::<Pattern>().unwrap();
-        assert!(matches!(data, Pattern::ListPath(_)));
+        let pattern = input.parse::<Pattern>().unwrap();
+        assert!(matches!(pattern, Pattern::ListPath(_)));
     }
 
     #[test]
     fn should_parse_complex_pattern() {
         let input = " name ( other ( one( :a, :b, num([:c, :d, :e, [:blarg]]) ) ) , :inner  )";
-        let data = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern>().unwrap();
         let mut matched = false;
-        atom!(data => [Pattern::Cons { .. }] => { 
+        atom!(pattern => [Pattern::Cons { .. }] => { 
             matched = true;
         } );
         assert!(matched);
@@ -365,10 +363,10 @@ mod test {
     #[test]
     fn should_parse_cons() {
         let input = " name  ( :first, :inner, \"5.5\" )";
-        let data = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern>().unwrap();
 
         let mut matched = false;
-        atom!(data => [Pattern::Cons { name, params: ref params }] params; 
+        atom!(pattern => [Pattern::Cons { name, params: ref params }] params; 
                        slice $ [ [Pattern::Symbol(a), Pattern::Symbol(b), Pattern::String(c)] ] => { 
             assert_eq!(*name, *"name");
             assert_eq!(**a, *"first");
@@ -382,10 +380,10 @@ mod test {
     #[test]
     fn should_parse_capture_var() {
         let input = " symbol_123 ";
-        let data = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern>().unwrap();
 
         let mut matched = false;
-        atom!(data => [Pattern::CaptureVar(sym)] => { 
+        atom!(pattern => [Pattern::CaptureVar(sym)] => { 
             assert_eq!(*sym, *"symbol_123");
             matched = true;
         } );
@@ -395,10 +393,10 @@ mod test {
     #[test]
     fn should_parse_symbol() {
         let input = " :symbol_123 ";
-        let data = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern>().unwrap();
 
         let mut matched = false;
-        atom!(data => [Pattern::Symbol(sym)] => { 
+        atom!(pattern => [Pattern::Symbol(sym)] => { 
             assert_eq!(*sym, *"symbol_123");
             matched = true;
         } );
@@ -408,10 +406,10 @@ mod test {
     #[test]
     fn should_parse_wild() {
         let input = " _ ";
-        let data = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern>().unwrap();
 
         let mut matched = false;
-        atom!(data => [Pattern::Wild] => { 
+        atom!(pattern => [Pattern::Wild] => { 
             matched = true;
         } );
         assert!(matched);
@@ -427,10 +425,10 @@ mod test {
         }
         
         let input = " [ [], [:a, :b], [:c , :d, :e], :f] ";
-        let data = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern>().unwrap();
 
         let mut matched = false;
-        atom!(data => [Pattern::ExactList(ref params)] params; 
+        atom!(pattern => [Pattern::ExactList(ref params)] params; 
               slice $ [ [Pattern::ExactList(first), Pattern::ExactList(second), Pattern::ExactList(third), Pattern::Symbol(f)] ] => { 
             assert_eq!(**f, *"f");
             assert_eq!(first.len(), 0);
