@@ -7,7 +7,7 @@ macro_rules! parse_list {
         {
             pat!(parse_comma: char => () = ',' => ());
 
-            fn parse_target_comma<'a>(input : &mut Chars<'a>) -> Result<$target_type, ParseError> {
+            fn parse_target_comma(input : &mut Chars) -> Result<$target_type, ParseError> {
                 parser!(input => {
                     _clear_0 <= parse_whitespace;
                     target <= $target;
@@ -42,8 +42,8 @@ macro_rules! parse_list {
 
 pat!(pub(crate) parse_any<'a>: char => char = x => x);
 
-pub (crate) fn parse_whitespace<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
-    fn space<'a>(input : &mut Chars<'a>) -> Result<(), ParseError> {
+pub (crate) fn parse_whitespace(input : &mut Chars) -> Result<(), ParseError> {
+    fn space(input : &mut Chars) -> Result<(), ParseError> {
         parser!( input => {
             x <= parse_any;
             where x.is_whitespace();
@@ -57,7 +57,7 @@ pub (crate) fn parse_whitespace<'a>(input : &mut Chars<'a>) -> Result<(), ParseE
     })
 }
 
-pub (crate) fn parse_digit<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+pub (crate) fn parse_digit(input : &mut Chars) -> Result<char, ParseError> {
     parser!(input => {
         num <= parse_any;
         where num.is_digit(10);
@@ -65,10 +65,10 @@ pub (crate) fn parse_digit<'a>(input : &mut Chars<'a>) -> Result<char, ParseErro
     })
 }
 
-pub (crate) fn parse_word<'a>(input : &mut Chars<'a>) -> Result<Box<str>, ParseError> {
+pub (crate) fn parse_word(input : &mut Chars) -> Result<Box<str>, ParseError> {
     pat!(underscore: char => char = '_' => '_');
 
-    fn parse_alpha<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+    fn parse_alpha(input : &mut Chars) -> Result<char, ParseError> {
         parser!(input => {
             init_symbol <= parse_any;
             where init_symbol.is_alphabetic();
@@ -76,11 +76,11 @@ pub (crate) fn parse_word<'a>(input : &mut Chars<'a>) -> Result<Box<str>, ParseE
         })
     }
 
-    fn parse_init<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+    fn parse_init(input : &mut Chars) -> Result<char, ParseError> {
         alt!(input => parse_alpha; underscore)
     }
 
-    fn parse_symbol_char<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+    fn parse_symbol_char(input : &mut Chars) -> Result<char, ParseError> {
         alt!(input => parse_alpha; parse_digit; underscore)
     }
 
@@ -95,7 +95,7 @@ pub (crate) fn parse_word<'a>(input : &mut Chars<'a>) -> Result<Box<str>, ParseE
     })
 }
 
-pub (crate) fn parse_string<'a>(input : &mut Chars<'a>) -> Result<Box<str>, ParseError> {
+pub (crate) fn parse_string(input : &mut Chars) -> Result<Box<str>, ParseError> {
     pat!(parse_n: char => char = 'n' => '\n');
     pat!(parse_r: char => char = 'r' => '\r');
     pat!(parse_t: char => char = 't' => '\t');
@@ -103,11 +103,11 @@ pub (crate) fn parse_string<'a>(input : &mut Chars<'a>) -> Result<Box<str>, Pars
     pat!(parse_zero: char => char = '0' => '\0');
     pat!(parse_quote: char => char = '"' => '"');
 
-    fn parse_code<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+    fn parse_code(input : &mut Chars) -> Result<char, ParseError> {
         alt!(input => parse_n; parse_r; parse_t; parse_slash; parse_zero; parse_quote)
     }
 
-    fn parse_escape<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+    fn parse_escape(input : &mut Chars) -> Result<char, ParseError> {
         parser!(input => {
             _slash <= parse_slash;
             code <= ! parse_code;
@@ -115,7 +115,7 @@ pub (crate) fn parse_string<'a>(input : &mut Chars<'a>) -> Result<Box<str>, Pars
         })
     }
 
-    fn parse_any_but_quote<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+    fn parse_any_but_quote(input : &mut Chars) -> Result<char, ParseError> {
         parser!(input => {
             any <= parse_any;
             where any != '"';
@@ -123,7 +123,7 @@ pub (crate) fn parse_string<'a>(input : &mut Chars<'a>) -> Result<Box<str>, Pars
         })
     }
 
-    fn parse_str_char<'a>(input : &mut Chars<'a>) -> Result<char, ParseError> {
+    fn parse_str_char(input : &mut Chars) -> Result<char, ParseError> {
         alt!(input => parse_escape; parse_any_but_quote)
     }
 
