@@ -19,9 +19,9 @@ pub struct Matches<'a> {
 
 // QueueWork
 macro_rules! qw {
-    ($s : ident, $pattern : ident, $data : ident) => {
+    ($s : expr, $pattern : expr, $data : expr) => {
         for (p, d) in $pattern.into_iter().zip($data.iter()) {
-            $s.current_work.push((p, d));
+            $s.push((p, d));
         }
     };
 }
@@ -39,7 +39,7 @@ impl<'a> Iterator for Matches<'a> {
                 (Pattern::CaptureVar(name), data) => { self.matches.push((name.into(), data)); },
                 (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == 0 && ds.len() == 0 => { /* pass */ },
                 (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
-                    qw!(self, ps, ds);
+                    qw!(self.current_work, ps, ds);
                 },
 
                 (Pattern::ListPath(ps), Data::List(_)) if ps.len() == 0 => { /* pass */ },
@@ -49,16 +49,12 @@ impl<'a> Iterator for Matches<'a> {
                     for i in 1..=(ds.len() - p_len) {
                         let target = &ds[i..(i + p_len)];
                         let mut work = self.current_work.clone();
-                        for (p, d) in ps.clone().into_iter().zip(target.iter()) {
-                            work.push((p, d));
-                        }
+                        qw!(work, ps.clone(), target);
                         self.future_work.push((self.matches.clone(), work));
                     }
 
                     let target = &ds[0..p_len];
-                    for (p, d) in ps.clone().into_iter().zip(target.iter()) {
-                        self.current_work.push((p, d));
-                    }
+                    qw!(self.current_work, ps, target);
                 },
 
                 _ => { 
