@@ -28,18 +28,33 @@ impl<'a> Iterator for Matches<'a> {
         while self.current_work.len() > 0 {
             match self.current_work.pop().unwrap() {
                 (Pattern::CaptureVar(name), data) => { self.matches.push((name.into(), data)); },
-                _ => todo!(),
+                (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == 0 && ds.len() == 0 => { /* pass */ },
+                (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
+                    let mut work = ps.into_iter().zip(ds.iter()).collect::<Vec<_>>();
+                    self.current_work.append(&mut work);
+                },
+                _ => { 
+                    // This match failed
+                    if let Some((new_matches, new_work)) = self.future_work.pop() {
+                        self.current_work = new_work;
+                        self.matches = new_matches;
+                    }
+                    else {
+                        self.current_work = vec![];
+                        self.matches = vec![];
+                        return None;
+                    }
+                },
             }
         }
 
-        if self.future_work.len() == 0 {
-            let ret = std::mem::replace(&mut self.matches, vec![]);
+        if let Some((new_matches, new_work)) = self.future_work.pop() {
+            self.current_work = new_work;
+            let ret = std::mem::replace(&mut self.matches, new_matches);
             Some(ret)
         }
         else {
-            let (new_matches, new_work) = self.future_work.pop().unwrap();
-            self.current_work = new_work;
-            let ret = std::mem::replace(&mut self.matches, new_matches);
+            let ret = std::mem::replace(&mut self.matches, vec![]);
             Some(ret)
         }
     }
