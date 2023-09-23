@@ -10,6 +10,7 @@ pub type MatchMap<K, V> = Vec<(K, V)>;
 // and then calls the reference version
 
 // TODO : Consider * pattern and some sub tree pattern, but only allow a single instance in the list path / path 
+// TODO : Consider .. pattern so that cons and exact list can ignore fields
 
 pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
     inner_match(pattern.pattern(), data, &vec![])
