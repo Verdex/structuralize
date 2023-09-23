@@ -4,7 +4,7 @@ use super::data::*;
 use super::check::*;
 
 
-pub type MatchMap<K, V> = Vec<(K, V)>;
+pub type MatchMap<'a> = Vec<(Slot, &'a Data)>;
 
 // TODO : replace the (public:  actually just a internal one should do the trick) pattern match with another version that accepts cows 
 // and then calls the reference version
@@ -12,15 +12,15 @@ pub type MatchMap<K, V> = Vec<(K, V)>;
 // TODO : Consider * pattern and some sub tree pattern, but only allow a single instance in the list path / path 
 // TODO : Consider .. pattern so that cons and exact list can ignore fields
 
-pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Vec<MatchMap<Slot, &'data Data>> {
+pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Vec<MatchMap<'data>> {
     inner_match(pattern.pattern(), data, &vec![])
 }
 
 fn alt_inner_matches<'a>(pattern : &Pattern, 
                          data : &'a Data, 
-                         previous_match_groups : Vec<MatchMap<Slot, &'a Data>>,
-                         top_matches : &MatchMap<Slot, &'a Data>) 
-    -> Vec<MatchMap<Slot, &'a Data>> {
+                         previous_match_groups : Vec<MatchMap<'a>>,
+                         top_matches : &MatchMap<'a>) 
+    -> Vec<MatchMap<'a>> {
 
     let mut results = vec![];
     for previous_matches in &previous_match_groups {
@@ -38,7 +38,7 @@ fn alt_inner_matches<'a>(pattern : &Pattern,
     results 
 }
 
-fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMap<Slot, &'data Data>) -> Vec<MatchMap<Slot, &'data Data>> {
+fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMap<'data>) -> Vec<MatchMap<'data>> {
 
     macro_rules! pass { 
         () => { vec![ vec![] ] };
@@ -84,17 +84,17 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMa
         (Pattern::PathNext, data) => vec![ [(Slot::Next, data)].into() ],
         (Pattern::Path(ps), _) if ps.len() == 0 => pass!(),
         (Pattern::Path(ps), data) => {
-            let mut outer : Vec<Vec<MatchMap<_, _>>> = vec![];
+            let mut outer : Vec<Vec<MatchMap>> = vec![];
             let results = inner_match(&ps[0], data, matches);
             for result in results {
                 let nexts : Vec<&Data> = result.iter().filter_map(|r| match r { (Slot::Next, d) => Some(*d), _ => None }).collect();
 
-                let top : MatchMap<Slot, &Data> = result.iter().filter_map(|r| match r { (Slot::Next, _) => None, (s, d) => Some((s.clone(), *d)) }).collect();
+                let top : MatchMap = result.iter().filter_map(|r| match r { (Slot::Next, _) => None, (s, d) => Some((s.clone(), *d)) }).collect();
                 if nexts.len() == 0 {
                     outer.push(vec![top]);
                 }
                 else {
-                    let mut inner : Vec<MatchMap<_, _>> = vec![];
+                    let mut inner : Vec<MatchMap> = vec![];
                     for next in nexts {
                         let rest = ps[1..].iter().map(|x| x.clone()).collect::<Vec<_>>();
                         let mut inner_results = alt_inner_matches(&Pattern::Path(rest), next, vec![top.clone()], matches);
