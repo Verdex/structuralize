@@ -17,6 +17,15 @@ pub struct Matches<'a> {
     future_work : Vec<(MatchMap<'a>, Vec<(Pattern, &'a Data)>)>,
 }
 
+// QueueWork
+macro_rules! qw {
+    ($s : ident, $pattern : ident, $data : ident) => {
+        for (p, d) in $pattern.into_iter().zip($data.iter()) {
+            $s.current_work.push((p, d));
+        }
+    };
+}
+
 impl<'a> Iterator for Matches<'a> {
     type Item = MatchMap<'a>;
 
@@ -30,8 +39,7 @@ impl<'a> Iterator for Matches<'a> {
                 (Pattern::CaptureVar(name), data) => { self.matches.push((name.into(), data)); },
                 (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == 0 && ds.len() == 0 => { /* pass */ },
                 (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
-                    let mut work = ps.into_iter().zip(ds.iter()).collect::<Vec<_>>();
-                    self.current_work.append(&mut work); // TODO
+                    qw!(self, ps, ds);
                 },
 
                 (Pattern::ListPath(ps), Data::List(_)) if ps.len() == 0 => { /* pass */ },
