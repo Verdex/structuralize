@@ -31,8 +31,28 @@ impl<'a> Iterator for Matches<'a> {
                 (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == 0 && ds.len() == 0 => { /* pass */ },
                 (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
                     let mut work = ps.into_iter().zip(ds.iter()).collect::<Vec<_>>();
-                    self.current_work.append(&mut work);
+                    self.current_work.append(&mut work); // TODO
                 },
+
+                (Pattern::ListPath(ps), Data::List(_)) if ps.len() == 0 => { /* pass */ },
+                (Pattern::ListPath(ps), Data::List(ds)) if ps.len() <= ds.len() => {
+                    let p_len = ps.len();
+
+                    for i in 1..=(ds.len() - p_len) {
+                        let target = &ds[i..(i + p_len)];
+                        let mut work = self.current_work.clone();
+                        for (p, d) in ps.clone().into_iter().zip(target.iter()) {
+                            work.push((p, d));
+                        }
+                        self.future_work.push((self.matches.clone(), work));
+                    }
+
+                    let target = &ds[0..p_len];
+                    for (p, d) in ps.clone().into_iter().zip(target.iter()) {
+                        self.current_work.push((p, d));
+                    }
+                },
+
                 _ => { 
                     // This match failed
                     if let Some((new_matches, new_work)) = self.future_work.pop() {
