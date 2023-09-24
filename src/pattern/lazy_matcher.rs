@@ -52,6 +52,7 @@ impl<'a> Iterator for Matches<'a> {
                 (Pattern::ListPath(ps), Data::List(ds)) if ps.len() <= ds.len() => {
                     let p_len = ps.len();
 
+                    // TODO maybe collect everything here and reverse it?
                     for i in 1..=(ds.len() - p_len) {
                         let target = &ds[i..(i + p_len)];
                         let mut work = self.current_work.clone();
@@ -79,6 +80,9 @@ impl<'a> Iterator for Matches<'a> {
                     self.current_work.push((*a, data));
                 },
 
+                // TODO to make next patterns work, I think they have to be removed from matches after every path is finished
+
+                // TODO Or is just make the other or future work
                 _ => { 
                     // This match failed
                     if let Some((new_matches, new_work)) = self.future_work.pop() {
