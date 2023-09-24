@@ -5,9 +5,9 @@ use super::check::*;
 
 pub type MatchMap<'a> = Vec<(Slot, &'a Data)>;
 
-pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Vec<MatchMap<'data>> {
-    //inner_match(pattern.pattern(), data, &vec![])
-    vec![]
+pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Matches<'data> {
+    let p = pattern.pattern().clone();
+    Matches { matches: vec![], current_work: vec![(p, &data)], future_work: vec![] }
 }
 
 #[derive(Debug, Clone)]
