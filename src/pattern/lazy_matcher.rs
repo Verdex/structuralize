@@ -68,6 +68,10 @@ impl<'a> Iterator for Matches<'a> {
                     self.current_work.push((p, data));
                 },
 
+                (Pattern::And(a, b), data) => {
+                    self.current_work.push((*b, data));
+                    self.current_work.push((*a, data));
+                },
 
                 _ => { 
                     // This match failed
