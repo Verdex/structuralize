@@ -42,6 +42,12 @@ impl<'a> Iterator for Matches<'a> {
                     qw!(self.current_work, ps, ds);
                 },
 
+                (Pattern::Cons {name: pname, params: pparams}, Data::Cons {name: dname, params: dparams}) 
+                    if pname == *dname && pparams.len() == dparams.len() => {
+
+                    qw!(self.current_work, pparams, dparams);
+                },
+
                 (Pattern::ListPath(ps), Data::List(_)) if ps.len() == 0 => { /* pass */ },
                 (Pattern::ListPath(ps), Data::List(ds)) if ps.len() <= ds.len() => {
                     let p_len = ps.len();
