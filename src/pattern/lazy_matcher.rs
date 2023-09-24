@@ -34,8 +34,8 @@ impl<'a> Iterator for Matches<'a> {
             return None;
         }
 
-        while self.current_work.len() > 0 {
-            match self.current_work.pop().unwrap() {
+        while let Some(w) = self.current_work.pop() {
+            match w {
                 (Pattern::CaptureVar(name), data) => { self.matches.push((name.into(), data)); },
                 (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == 0 && ds.len() == 0 => { /* pass */ },
                 (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == ds.len() => {
@@ -52,8 +52,7 @@ impl<'a> Iterator for Matches<'a> {
                 (Pattern::ListPath(ps), Data::List(ds)) if ps.len() <= ds.len() => {
                     let p_len = ps.len();
 
-                    // TODO maybe collect everything here and reverse it?
-                    for i in 1..=(ds.len() - p_len) {
+                    for i in (1..=(ds.len() - p_len)).rev() {
                         let target = &ds[i..(i + p_len)];
                         let mut work = self.current_work.clone();
                         qw!(work, ps.clone(), target);
