@@ -20,7 +20,7 @@ mod tests {
                 let type_checked_pattern : TypeChecked = check_pattern(pattern).expect(&format!("{}", $pat));
 
                 #[allow(unused_mut)]
-                let mut results = $matcher(&type_checked_pattern, &data);
+                let mut results = $matcher(&type_checked_pattern, &data).into_iter().collect::<Vec<_>>();
 
                 $(
                     let r = results.remove(0);
@@ -50,6 +50,7 @@ mod tests {
             mod $target {
                 use crate::data::*;
                 use crate::pattern::*;
+                use crate::pattern::lazy_matcher::pattern_match as lazy_pattern_match;
                 use crate::pattern::check::*;
 
                 t! { should_match_path_with_next_inside_list_path $target =
@@ -520,4 +521,6 @@ mod tests {
     }
 
     all!(pattern_match);
+    
+    all!(lazy_pattern_match);
 }
