@@ -129,6 +129,7 @@ mod tests {
                         pattern "cons(x).or(cons(x))";
                         data "cons(:one)";
                         { "x" => ":one" }
+                        { "x" => ":one" }
                 }
 
                 t! { should_match_chained_ors $target =
