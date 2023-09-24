@@ -50,8 +50,9 @@ mod tests {
             mod $target {
                 use crate::data::*;
                 use crate::pattern::*;
-                use crate::pattern::lazy_matcher::pattern_match as lazy_pattern_match;
                 use crate::pattern::check::*;
+                #[allow(unused_imports)]
+                use crate::pattern::lazy_matcher::pattern_match as lazy_pattern_match;
 
                 t! { should_match_path_with_next_inside_list_path $target =
                         pattern "{| [| ^, :one |], cons(:a, a) |}";
