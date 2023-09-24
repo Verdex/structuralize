@@ -20,7 +20,7 @@ pub struct Matches<'a> {
 // QueueWork
 macro_rules! qw {
     ($s : expr, $pattern : expr, $data : expr) => {
-        for (p, d) in $pattern.into_iter().zip($data.iter()) {
+        for (p, d) in $pattern.into_iter().zip($data.iter()).rev() {
             $s.push((p, d));
         }
     };
