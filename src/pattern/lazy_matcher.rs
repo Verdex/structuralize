@@ -57,6 +57,10 @@ impl<'a> Iterator for Matches<'a> {
                     qw!(self.current_work, ps, target);
                 },
 
+                (Pattern::Wild, _) => { /* pass */ },
+                (Pattern::Symbol(p), Data::Symbol(d)) if p == *d => { /* pass */ }, 
+                (Pattern::String(p), Data::String(d)) if p == *d => { /* pass */ },
+
                 _ => { 
                     // This match failed
                     if let Some((new_matches, new_work)) = self.future_work.pop() {
