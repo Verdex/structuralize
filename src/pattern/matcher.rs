@@ -117,6 +117,7 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMa
         },
 
         // TODO:  Should both branches generate results if they're both true?
+        // TODO: yes because then lazy impl is pretty easy
         (Pattern::Or(a, b), data) => {
             let a_results = inner_match(a, data, matches);
             if a_results.len() != 0 {
