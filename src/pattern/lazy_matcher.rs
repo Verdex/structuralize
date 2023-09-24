@@ -61,6 +61,14 @@ impl<'a> Iterator for Matches<'a> {
                 (Pattern::Symbol(p), Data::Symbol(d)) if p == *d => { /* pass */ }, 
                 (Pattern::String(p), Data::String(d)) if p == *d => { /* pass */ },
 
+                (Pattern::TemplateVar(var), data) => {
+                    let var : Slot = var.into();
+                    let (_, d) = self.matches.iter().find(|(k, _)| k == &var ).unwrap();
+                    let p = data_to_pattern(d);
+                    self.current_work.push((p, data));
+                },
+
+
                 _ => { 
                     // This match failed
                     if let Some((new_matches, new_work)) = self.future_work.pop() {
