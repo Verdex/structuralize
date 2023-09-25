@@ -79,7 +79,6 @@ impl<'a> Iterator for Matches<'a> {
                     self.current_work.push((*a, data));
                 },
 
-                // TODO to make next patterns work, I think they have to be removed from matches after every path is finished
 
                 (Pattern::Or(a, b), data) => {
                     let mut work = self.current_work.clone();
