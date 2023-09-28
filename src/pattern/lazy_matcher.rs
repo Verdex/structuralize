@@ -3,7 +3,7 @@ use crate::data::*;
 use super::data::*;
 use super::check::*;
 
-pub type MatchMap<'a> = Vec<(Slot, &'a Data)>;
+pub type MatchMap<'a> = Vec<(Slot, &'a Data)>; // TODO this should be common
 
 pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Matches<'data> {
     let p = pattern.pattern().clone();
@@ -14,25 +14,55 @@ pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Match
 }
 
 #[derive(Debug, Clone)]
+struct WorkQueue<'a> {
+    queue : Vec<(Pattern, &'a Data)>,
+}
+
+impl<'a> WorkQueue<'a> {
+    pub fn new() -> Self {
+        WorkQueue { queue : vec![] }
+    }
+
+    pub fn push(&mut self, item : (Pattern, &'a Data)) {
+        self.queue.push(item);
+    }
+
+    pub fn pop(&mut self) -> Option<(Pattern, &'a Data)> {
+        self.queue.pop()
+    }
+
+    pub fn work_finished(&self) -> bool {
+        self.queue.len() == 0
+    }
+}
+
+#[derive(Debug, Clone)]
 struct Work<'a> {
-    work : Vec<(Pattern, &'a Data)>,
+    work : Vec<WorkQueue<'a>>,
 }
 
 impl<'a> Work<'a> {
     pub fn new() -> Self {
-        Work { work : vec![] }
+        Work { work : vec![WorkQueue::new()] }
     }
 
     pub fn push(&mut self, item : (Pattern, &'a Data)) {
-        self.work.push(item);
+        self.work.last_mut().unwrap().push(item);
     }
 
     pub fn pop(&mut self) -> Option<(Pattern, &'a Data)> {
-        self.work.pop()
+        self.work.last_mut().unwrap().pop()
     }
 
     pub fn work_finished(&self) -> bool {
-        self.work.len() == 0
+        self.work.len() == 1 && self.work.last().unwrap().work_finished()
+    }
+
+    pub fn path(&mut self, mut patterns : Vec<Pattern>, data : &'a Data) {
+        patterns.reverse();
+        let first_pattern = patterns.pop().unwrap();
+        self.work.push(WorkQueue::new());
+        self.push((first_pattern, data));
     }
 }
 
@@ -78,7 +108,7 @@ impl<'a> Iterator for Matches<'a> {
                 (Pattern::ListPath(ps), Data::List(ds)) if ps.len() <= ds.len() => {
                     let p_len = ps.len();
 
-                    for i in (1..=(ds.len() - p_len)).rev() {
+                    for i in (1..=(ds.len() - p_len)).rev() { // TODO I would be really great if this were lazy
                         let target = &ds[i..(i + p_len)];
                         let mut work = self.current_work.clone();
                         qw!(work, ps.clone(), target);
@@ -105,6 +135,10 @@ impl<'a> Iterator for Matches<'a> {
                     self.current_work.push((*a, data));
                 },
 
+                (Pattern::Path(ps), _) if ps.len() == 0 => { /* pass */ },
+                (Pattern::Path(ps), data) => {
+                    self.current_work.path(ps.clone(), data);   
+                },
 
                 (Pattern::Or(a, b), data) => {
                     let mut work = self.current_work.clone();
