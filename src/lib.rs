@@ -54,6 +54,9 @@ mod tests {
                 #[allow(unused_imports)]
                 use crate::pattern::lazy_matcher::pattern_match as lazy_pattern_match;
 
+                // TODO path tests where there is a path inside a path that sometimes fails based on
+                // the contents of the outer path (and/or inner one)
+
                 t! { should_match_path_with_next_inside_list_path $target =
                         pattern "{| [| ^, :one |], cons(:a, a) |}";
                         data "[ cons(:a, :b), :one, cons(:a, :c), :one, cons(:a, :d), :two, cons(:x, :e), :one, cons(:a, :f), :one]";

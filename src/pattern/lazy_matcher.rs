@@ -17,15 +17,16 @@ pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Match
 struct WorkPath<'a> {
     work : Vec<(Pattern, &'a Data)>,
     path : Vec<Pattern>,
+    nexts : Vec<&'a Data>,
 }
 
 impl<'a> WorkPath<'a> {
     pub fn empty() -> Self {
-        WorkPath { work: vec![], path: vec![] }
+        WorkPath { work: vec![], path: vec![], nexts: vec![] }
     }
 
     pub fn new(path : Vec<Pattern>) -> Self {
-        WorkPath { work: vec![], path }
+        WorkPath { work: vec![], path, nexts: vec![] }
     }
 
     pub fn push(&mut self, item : (Pattern, &'a Data)) {
@@ -56,7 +57,34 @@ impl<'a> Work<'a> {
     }
 
     pub fn pop(&mut self) -> Option<(Pattern, &'a Data)> {
-        self.work.last_mut().unwrap().pop()
+        let target = self.work.last_mut().unwrap();
+
+        if let Some(ret) = target.pop() {
+            Some(ret)
+        }
+        else if target.nexts.len() != 0 {
+            // TODO
+            // swap target.nexts with empty list
+            // reverse the old target.nexts
+            // pop out the first one
+            // foreach of the remainder ones, clone target and push work of that next data and whatever pattern is popped
+            // then do the same thing for the first one
+            let mut nexts = std::mem::replace(&mut target.nexts, vec![]);
+            nexts.reverse();
+
+            let first = nexts.pop().unwrap();
+
+            for next in nexts.into_iter() {
+                let target = target.clone();
+                //target.pattern
+            }
+
+
+            None
+        }
+        else {
+            None
+        }
     }
 
     pub fn work_finished(&self) -> bool {
@@ -68,6 +96,10 @@ impl<'a> Work<'a> {
         let first_pattern = patterns.pop().unwrap();
         self.work.push(WorkPath::new(patterns));
         self.push((first_pattern, data));
+    }
+
+    pub fn next(&mut self, data : &'a Data) {
+        self.work.last_mut().unwrap().nexts.push(data);
     }
 }
 
@@ -140,8 +172,13 @@ impl<'a> Iterator for Matches<'a> {
                     self.current_work.push((*a, data));
                 },
 
+                // TODO : Pretty sure what needs to happen here is that all of the nexts need to 
+                // be pushed off to future_work and then once the WorkPath.work is found to be empty
+                // instead of giving up the future work is swapped to but with the WorkPath.path
+                // being inserted at index 0 of the WorkPath.Work
+
                 (Pattern::PathNext, data) => { 
-                    todo!();
+                    self.current_work.next(data);
                 },
                 
                 (Pattern::Path(ps), _) if ps.len() == 0 => { /* pass */ },
