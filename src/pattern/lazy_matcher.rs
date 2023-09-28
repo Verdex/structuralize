@@ -7,14 +7,40 @@ pub type MatchMap<'a> = Vec<(Slot, &'a Data)>;
 
 pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Matches<'data> {
     let p = pattern.pattern().clone();
-    Matches { matches: vec![], current_work: vec![(p, &data)], future_work: vec![] }
+    let mut current_work = Work::new();
+    current_work.push((p, data));
+
+    Matches { matches: vec![], current_work, future_work: vec![] }
+}
+
+#[derive(Debug, Clone)]
+struct Work<'a> {
+    work : Vec<(Pattern, &'a Data)>,
+}
+
+impl<'a> Work<'a> {
+    pub fn new() -> Self {
+        Work { work : vec![] }
+    }
+
+    pub fn push(&mut self, item : (Pattern, &'a Data)) {
+        self.work.push(item);
+    }
+
+    pub fn pop(&mut self) -> Option<(Pattern, &'a Data)> {
+        self.work.pop()
+    }
+
+    pub fn work_finished(&self) -> bool {
+        self.work.len() == 0
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct Matches<'a> {
     matches : MatchMap<'a>,
-    current_work : Vec<(Pattern, &'a Data)>,
-    future_work : Vec<(MatchMap<'a>, Vec<(Pattern, &'a Data)>)>,
+    current_work : Work<'a>,
+    future_work : Vec<(MatchMap<'a>, Work<'a>)>,
 }
 
 // QueueWork
@@ -30,7 +56,7 @@ impl<'a> Iterator for Matches<'a> {
     type Item = MatchMap<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.current_work.len() == 0 {
+        if self.current_work.work_finished() {
             return None;
         }
 
@@ -94,7 +120,7 @@ impl<'a> Iterator for Matches<'a> {
                         self.matches = new_matches;
                     }
                     else {
-                        self.current_work = vec![];
+                        self.current_work = Work::new();
                         self.matches = vec![];
                         return None;
                     }
