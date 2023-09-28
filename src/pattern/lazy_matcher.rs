@@ -16,11 +16,16 @@ pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Match
 #[derive(Debug, Clone)]
 struct WorkQueue<'a> {
     queue : Vec<(Pattern, &'a Data)>,
+    path : Vec<Pattern>,
 }
 
 impl<'a> WorkQueue<'a> {
-    pub fn new() -> Self {
-        WorkQueue { queue : vec![] }
+    pub fn empty() -> Self {
+        WorkQueue { queue : vec![], path: vec![] }
+    }
+
+    pub fn new(path : Vec<Pattern>) -> Self {
+        WorkQueue { queue : vec![], path }
     }
 
     pub fn push(&mut self, item : (Pattern, &'a Data)) {
@@ -43,7 +48,7 @@ struct Work<'a> {
 
 impl<'a> Work<'a> {
     pub fn new() -> Self {
-        Work { work : vec![WorkQueue::new()] }
+        Work { work : vec![WorkQueue::empty()] }
     }
 
     pub fn push(&mut self, item : (Pattern, &'a Data)) {
@@ -61,7 +66,7 @@ impl<'a> Work<'a> {
     pub fn path(&mut self, mut patterns : Vec<Pattern>, data : &'a Data) {
         patterns.reverse();
         let first_pattern = patterns.pop().unwrap();
-        self.work.push(WorkQueue::new());
+        self.work.push(WorkQueue::new(patterns));
         self.push((first_pattern, data));
     }
 }
@@ -135,6 +140,10 @@ impl<'a> Iterator for Matches<'a> {
                     self.current_work.push((*a, data));
                 },
 
+                (Pattern::PathNext, data) => { 
+
+                },
+                
                 (Pattern::Path(ps), _) if ps.len() == 0 => { /* pass */ },
                 (Pattern::Path(ps), data) => {
                     self.current_work.path(ps.clone(), data);   
