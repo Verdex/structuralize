@@ -57,34 +57,7 @@ impl<'a> Work<'a> {
     }
 
     pub fn pop(&mut self) -> Option<(Pattern, &'a Data)> {
-        let target = self.work.last_mut().unwrap();
-
-        if let Some(ret) = target.pop() {
-            Some(ret)
-        }
-        else if target.nexts.len() != 0 {
-            // TODO
-            // swap target.nexts with empty list
-            // reverse the old target.nexts
-            // pop out the first one
-            // foreach of the remainder ones, clone target and push work of that next data and whatever pattern is popped
-            // then do the same thing for the first one
-            let mut nexts = std::mem::replace(&mut target.nexts, vec![]);
-            nexts.reverse();
-
-            let first = nexts.pop().unwrap();
-
-            for next in nexts.into_iter() {
-                let target = target.clone();
-                //target.pattern
-            }
-
-
-            None
-        }
-        else {
-            None
-        }
+        self.work.last_mut().unwrap().pop()
     }
 
     pub fn work_finished(&self) -> bool {
@@ -119,6 +92,72 @@ macro_rules! qw {
     };
 }
 
+impl<'a> Matches<'a> {
+    fn pop_current_work(&mut self) -> Option<(Pattern, &'a Data)> { 
+        let target = self.current_work.work.last_mut().unwrap();
+
+        if let Some(ret) = target.pop() {
+            Some(ret)
+        }
+        else if target.nexts.len() != 0 { 
+            // TODO
+            // swap target.nexts with empty list
+            // reverse the old target.nexts
+            // pop out the first one
+            // foreach of the remainder ones, clone target and push work of that next data and whatever pattern is popped
+            // then do the same thing for the first one
+            let mut nexts = std::mem::replace(&mut target.nexts, vec![]);
+            nexts.reverse();
+
+            let first = nexts.pop().unwrap();
+
+            for next in nexts.into_iter() {
+                let blarg = self.current_work.clone();
+                let p = target.path.last().clone();
+                // self.current_work.push((p, next))
+                self.future_work.push((self.matches.clone(), blarg));
+            }
+            None
+        }
+        else if self.current_work.work.len() > 1 {
+            self.current_work.work.pop();
+            self.pop_current_work()
+        }
+        else {
+            None
+        }
+    }
+}
+
+        /*let target = self.work.last_mut().unwrap();
+
+        if let Some(ret) = target.pop() {
+            Some(ret)
+        }
+        else if target.nexts.len() != 0 {
+            // TODO
+            // swap target.nexts with empty list
+            // reverse the old target.nexts
+            // pop out the first one
+            // foreach of the remainder ones, clone target and push work of that next data and whatever pattern is popped
+            // then do the same thing for the first one
+            let mut nexts = std::mem::replace(&mut target.nexts, vec![]);
+            nexts.reverse();
+
+            let first = nexts.pop().unwrap();
+
+            for next in nexts.into_iter() {
+                let target = target.clone();
+                //target.pattern
+            }
+
+
+            None
+        }
+        else {
+            None
+        }*/
+
 impl<'a> Iterator for Matches<'a> {
     type Item = MatchMap<'a>;
 
@@ -127,7 +166,7 @@ impl<'a> Iterator for Matches<'a> {
             return None;
         }
 
-        while let Some(w) = self.current_work.pop() {
+        while let Some(w) = self.pop_current_work() {
             match w {
                 (Pattern::CaptureVar(name), data) => { self.matches.push((name.into(), data)); },
                 (Pattern::ExactList(ps), Data::List(ds)) if ps.len() == 0 && ds.len() == 0 => { /* pass */ },
