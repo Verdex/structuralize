@@ -56,10 +56,6 @@ impl<'a> Work<'a> {
         self.work.last_mut().unwrap().push(item);
     }
 
-    pub fn pop(&mut self) -> Option<(Pattern, &'a Data)> {
-        self.work.last_mut().unwrap().pop()
-    }
-
     pub fn work_finished(&self) -> bool {
         self.work.len() == 1 && self.work.last().unwrap().work_finished()
     }
@@ -94,30 +90,30 @@ macro_rules! qw {
 
 impl<'a> Matches<'a> {
     fn pop_current_work(&mut self) -> Option<(Pattern, &'a Data)> { 
-        let target = self.current_work.work.last_mut().unwrap();
-
-        if let Some(ret) = target.pop() {
+        if let Some(ret) = self.current_work.work.last_mut().unwrap().pop() {
             Some(ret)
         }
-        else if target.nexts.len() != 0 { 
+        else if self.current_work.work.last().unwrap().nexts.len() != 0 { 
             // TODO
             // swap target.nexts with empty list
             // reverse the old target.nexts
             // pop out the first one
             // foreach of the remainder ones, clone target and push work of that next data and whatever pattern is popped
             // then do the same thing for the first one
-            let mut nexts = std::mem::replace(&mut target.nexts, vec![]);
+            let mut nexts = std::mem::replace(&mut self.current_work.work.last_mut().unwrap().nexts, vec![]);
             nexts.reverse();
+
+            let pattern = self.current_work.work.last_mut().unwrap().path.pop().unwrap();
 
             let first = nexts.pop().unwrap();
 
             for next in nexts.into_iter() {
-                let blarg = self.current_work.clone();
-                let p = target.path.last().clone();
-                // self.current_work.push((p, next))
-                self.future_work.push((self.matches.clone(), blarg));
+                let mut work = self.current_work.clone();
+                work.push((pattern.clone(), next));
+                self.future_work.push((self.matches.clone(), work));
             }
-            None
+
+            Some((pattern, first))
         }
         else if self.current_work.work.len() > 1 {
             self.current_work.work.pop();
