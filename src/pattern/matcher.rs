@@ -116,15 +116,11 @@ fn inner_match<'data>(pattern : &Pattern, data : &'data Data, matches : &MatchMa
             }
         },
 
-        // TODO:  Should both branches generate results if they're both true?
         (Pattern::Or(a, b), data) => {
-            let a_results = inner_match(a, data, matches);
-            if a_results.len() != 0 {
-                a_results
-            }
-            else {
-                inner_match(b, data, matches)
-            }
+            let mut a_results = inner_match(a, data, matches);
+            let mut b_results = inner_match(b, data, matches);
+            a_results.append(&mut b_results);
+            a_results
         },
 
         (Pattern::TemplateVar(var), data) => {
