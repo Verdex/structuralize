@@ -94,12 +94,6 @@ impl<'a> Matches<'a> {
             Some(ret)
         }
         else if self.current_work.work.last().unwrap().nexts.len() != 0 { 
-            // TODO
-            // swap target.nexts with empty list
-            // reverse the old target.nexts
-            // pop out the first one
-            // foreach of the remainder ones, clone target and push work of that next data and whatever pattern is popped
-            // then do the same thing for the first one
             let mut nexts = std::mem::replace(&mut self.current_work.work.last_mut().unwrap().nexts, vec![]);
             nexts.reverse();
 
@@ -124,35 +118,6 @@ impl<'a> Matches<'a> {
         }
     }
 }
-
-        /*let target = self.work.last_mut().unwrap();
-
-        if let Some(ret) = target.pop() {
-            Some(ret)
-        }
-        else if target.nexts.len() != 0 {
-            // TODO
-            // swap target.nexts with empty list
-            // reverse the old target.nexts
-            // pop out the first one
-            // foreach of the remainder ones, clone target and push work of that next data and whatever pattern is popped
-            // then do the same thing for the first one
-            let mut nexts = std::mem::replace(&mut target.nexts, vec![]);
-            nexts.reverse();
-
-            let first = nexts.pop().unwrap();
-
-            for next in nexts.into_iter() {
-                let target = target.clone();
-                //target.pattern
-            }
-
-
-            None
-        }
-        else {
-            None
-        }*/
 
 impl<'a> Iterator for Matches<'a> {
     type Item = MatchMap<'a>;
@@ -206,11 +171,6 @@ impl<'a> Iterator for Matches<'a> {
                     self.current_work.push((*b, data));
                     self.current_work.push((*a, data));
                 },
-
-                // TODO : Pretty sure what needs to happen here is that all of the nexts need to 
-                // be pushed off to future_work and then once the WorkPath.work is found to be empty
-                // instead of giving up the future work is swapped to but with the WorkPath.path
-                // being inserted at index 0 of the WorkPath.Work
 
                 (Pattern::PathNext, data) => { 
                     self.current_work.next(data);
