@@ -12,6 +12,11 @@ pub type MatchMap<'a> = Vec<(Slot, &'a Data)>;
 // TODO : Consider * pattern and some sub tree pattern, but only allow a single instance in the list path / path 
 // TODO : Consider .. pattern so that cons and exact list can ignore fields
 
+// TODO : allow list of functions that take the matches and return a pattern of known type
+//        probably needs to specify the type
+// TODO : allow list of functions that "match" ?
+// TODO : pattern match function that takes Matchable impl instead of Data (have data implement matchable)
+
 pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Vec<MatchMap<'data>> {
     inner_match(pattern.pattern(), data, &vec![])
 }
