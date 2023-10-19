@@ -32,7 +32,7 @@ mod tests {
                     let mut expected_map_count = 0;
 
                     $(
-                        let data = *_r.get(&$s.into()).unwrap();
+                        let data = *_r.get($s).unwrap();
                         expected_map_count += 1;
                         assert_eq!( data, &$d.parse::<Data>().unwrap(), "{} found incorrect result", $s);
                     )*

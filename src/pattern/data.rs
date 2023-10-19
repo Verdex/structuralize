@@ -1,7 +1,4 @@
 
-use std::fmt::{Display, Formatter};
-use std::hash::Hash;
-
 use denest::*;
 
 
@@ -38,52 +35,5 @@ impl<'a> Linearizable<'a> for Pattern {
             Or(a, b) => vec![&**a, &**b],
             TemplateVar(_) => vec![],
         }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub enum Slot { // TODO:  is this actually still needed?
-    Next,
-    Symbol(Box<str>),
-    Path(Vec<Box<str>>),
-}
-
-impl Display for Slot {
-    fn fmt(&self, f : &mut Formatter) -> std::fmt::Result {
-        match self {
-            Slot::Next => write!(f, "Next"),
-            Slot::Symbol(s) => write!(f, "{}", s),
-            Slot::Path(s) => write!(f, "{}", s.join(".")),
-        }
-    }
-}
-
-impl From<&Box<str>> for Slot {
-    fn from(item : &Box<str>) -> Self {
-        Slot::Symbol(item.clone())
-    }
-}
-
-impl From<Box<str>> for Slot {
-    fn from(item : Box<str>) -> Self {
-        Slot::Symbol(item)
-    }
-}
-
-impl From<&str> for Slot {
-    fn from(item : &str) -> Self {
-        Slot::Symbol(item.into())
-    }
-}
-
-impl From<&String> for Slot {
-    fn from(item : &String) -> Self {
-        Slot::Symbol(item.clone().into())
-    }
-}
-
-impl From<String> for Slot {
-    fn from(item : String) -> Self {
-        Slot::Symbol(item.into())
     }
 }

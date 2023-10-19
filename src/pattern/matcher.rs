@@ -14,7 +14,7 @@ use super::check::*;
 // TODO : Atom (eqable), object(not eqable), Symbol (?), cons, list
 //        should list return a vec or more likely a iter?  
 
-pub type MatchMap<'a> = Vec<(Slot, &'a Data)>; 
+pub type MatchMap<'a> = Vec<(Box<str>, &'a Data)>; 
 
 pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Matches<'data> {
     let p = pattern.pattern().clone();
@@ -172,7 +172,6 @@ impl<'a> Iterator for Matches<'a> {
                 (Pattern::String(p), Data::String(d)) if p == *d => { /* pass */ },
 
                 (Pattern::TemplateVar(var), data) => {
-                    let var : Slot = var.into();
                     let (_, d) = self.matches.iter().find(|(k, _)| k == &var ).unwrap();
                     let p = data_to_pattern(d);
                     self.current_work.push((p, data));
