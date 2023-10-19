@@ -52,7 +52,7 @@ mod tests {
                 use crate::pattern::*;
                 use crate::pattern::check::*;
                 #[allow(unused_imports)]
-                use crate::pattern::lazy_matcher::pattern_match as lazy_pattern_match;
+                use crate::pattern::matcher::pattern_match;
 
                 t! { should_match_path_in_path_when_inner_path_sometimes_fails $target =
                         pattern "{| cons(^, ^), inner1(a, ^), inner2( {| cons(^, ^), %a |} ) |}";
@@ -528,5 +528,5 @@ mod tests {
         };
     }
 
-    all!(lazy_pattern_match);
+    all!(pattern_match);
 }

@@ -6,4 +6,4 @@ pub mod check;
 
 pub use data::*;
 
-pub mod lazy_matcher;
+pub mod matcher;
