@@ -18,6 +18,9 @@ pub type MatchMap<'a> = Vec<(Slot, &'a Data)>;
 // TODO : pattern match function that takes Matchable impl instead of Data (have data implement matchable)
 // TODO : pattern match function that takes Patternable impl instead of Pattern 
 
+// TODO : Atom (eqable), object(not eqable), Symbol (?), cons, list
+//        should list return a vec or more likely a iter?  
+
 pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Vec<MatchMap<'data>> {
     inner_match(pattern.pattern(), data, &vec![])
 }
