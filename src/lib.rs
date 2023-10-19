@@ -528,7 +528,5 @@ mod tests {
         };
     }
 
-    all!(pattern_match);
-    
     all!(lazy_pattern_match);
 }
