@@ -42,7 +42,7 @@ impl<'a> Linearizable<'a> for Pattern {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub enum Slot {
+pub enum Slot { // TODO:  is this actually still needed?
     Next,
     Symbol(Box<str>),
     Path(Vec<Box<str>>),
