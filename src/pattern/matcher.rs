@@ -16,6 +16,7 @@ pub type MatchMap<'a> = Vec<(Slot, &'a Data)>;
 //        probably needs to specify the type
 // TODO : allow list of functions that "match" ?
 // TODO : pattern match function that takes Matchable impl instead of Data (have data implement matchable)
+// TODO : pattern match function that takes Patternable impl instead of Pattern 
 
 pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Vec<MatchMap<'data>> {
     inner_match(pattern.pattern(), data, &vec![])
