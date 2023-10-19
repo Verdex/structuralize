@@ -6,10 +6,6 @@ use super::check::*;
 
 pub type MatchMap<'a> = Vec<(Slot, &'a Data)>;
 
-// TODO : replace the (public:  actually just a internal one should do the trick) pattern match with another version that accepts cows 
-// and then calls the reference version
-
-// TODO : Consider * pattern and some sub tree pattern, but only allow a single instance in the list path / path 
 // TODO : Consider .. pattern so that cons and exact list can ignore fields
 
 // TODO : allow list of functions that take the matches and return a pattern of known type
