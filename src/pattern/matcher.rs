@@ -14,7 +14,7 @@ use super::check::*;
 // TODO : Atom (eqable), object(not eqable), Symbol (?), cons, list
 //        should list return a vec or more likely a iter?  
 
-pub type MatchMap<'a> = Vec<(Slot, &'a Data)>; // TODO this should be common
+pub type MatchMap<'a> = Vec<(Slot, &'a Data)>; 
 
 pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Matches<'data> {
     let p = pattern.pattern().clone();
