@@ -2,6 +2,20 @@
 use denest::*;
 
 
+pub enum MatchKind<'a, TMatchable : Matchable> {
+    Atom(TMatchable::Atom),
+    Object(TMatchable::Object),
+    Cons(Box<str>, &'a [TMatchable]),
+    List(&'a [TMatchable]),
+}
+
+pub trait Matchable {
+    type Atom : PartialEq;
+    type Object;
+
+    fn kind(&self) -> MatchKind<Self> where Self : Sized;
+}
+
 #[derive(Debug, Clone)]
 pub enum Pattern {
     String(Box<str>), 
