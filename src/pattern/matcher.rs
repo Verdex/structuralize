@@ -14,6 +14,8 @@ use super::check::*;
 // TODO : Atom (eqable), object(not eqable), Symbol (?), cons, list
 //        should list return a vec or more likely a iter?  
 
+
+// TODO move this to patter::data here in a bit
 pub type MatchMap<'a> = Vec<(Box<str>, &'a Data)>; 
 
 pub fn pattern_match<'data>(pattern : &TypeChecked, data : &'data Data) -> Matches<'data> {
