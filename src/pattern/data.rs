@@ -3,9 +3,9 @@ use denest::*;
 
 
 pub enum MatchKind<'a, TMatchable : Matchable> {
-    Atom(TMatchable::Atom),
-    Object(TMatchable::Object),
-    Cons(Box<str>, &'a [TMatchable]),
+    Atom(&'a TMatchable::Atom),
+    Object(&'a TMatchable::Object),
+    Cons(&'a str, &'a [TMatchable]),
     List(&'a [TMatchable]),
 }
 
