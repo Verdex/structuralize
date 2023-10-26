@@ -7,12 +7,11 @@ use super::check::*;
 
 // TODO : allow list of functions that take the matches and return a pattern of known type
 //        probably needs to specify the type
-// TODO : allow list of functions that "match" ?
+// TODO : allow list of functions that "match"
 // TODO : pattern match function that takes Matchable impl instead of Data (have data implement matchable)
 // TODO : pattern match function that takes Patternable impl instead of Pattern 
 
-// TODO : Atom (eqable), object(not eqable), Symbol (?), cons, list
-//        should list return a vec or more likely a iter?  
+// TODO : Atom (eqable), object(not eqable), cons, list
 
 
 // TODO move this to pattern::data here in a bit
@@ -244,7 +243,6 @@ impl<'a, D : Matchable> Iterator for Matches<'a, D> {
 }
 
 // TODO: rename to something like matchable_to_pattern
-// TODO:  an Atom matchable probably results in a pattern that matches fine, but an object probably does not and that might be weird to consumers
 fn data_to_pattern<D : Matchable>(data : &D) -> Pattern {
     match data.kind() {
         //Data::String(s) => Pattern::String(s.clone()), 
