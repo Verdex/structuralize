@@ -186,8 +186,7 @@ impl<'a, TAtom : 'a + Clone + PartialEq, D : Matchable<Atom=TAtom>> Iterator for
                 },
 
                 (Pattern::Wild, _) => { /* pass */ },
-                //(Pattern::Symbol(p), Data::Symbol(d)) if p == *d => { /* pass */ }, 
-                //(Pattern::String(p), Data::String(d)) if p == *d => { /* pass */ },
+                (Pattern::Atom(p), MatchKind::Atom(m)) if p == *m => { /* pass */ },
 
                 (Pattern::TemplateVar(var), _) => {
                     let (_, d) = self.matches.iter().find(|(k, _)| k == &var ).unwrap();
