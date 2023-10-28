@@ -14,10 +14,10 @@ mod tests {
                 #[allow(unused_imports)]
                 use std::collections::HashMap;
 
-                let pattern : Pattern = $pat.parse().expect(&format!("{}", $pat));
+                let pattern : Pattern<SymStr> = $pat.parse().expect(&format!("{}", $pat));
                 let data : Data = $dat.parse().expect(&format!("{}", $pat));
 
-                let type_checked_pattern : TypeChecked = check_pattern(pattern).expect(&format!("{}", $pat));
+                let type_checked_pattern : TypeChecked<SymStr> = check_pattern(pattern).expect(&format!("{}", $pat));
 
                 #[allow(unused_mut)]
                 let mut results = $matcher(&type_checked_pattern, &data).into_iter().collect::<Vec<_>>();

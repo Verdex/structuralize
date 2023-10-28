@@ -24,11 +24,9 @@ impl Matchable for Data {
 
     fn kind(&self) -> MatchKind<Self> {
         match self {
-            /*Data::String(s) => MatchKind::Atom(&SymStr::String(s.clone())), 
-            Data::Symbol(s) => MatchKind::Atom(&SymStr::Symbol(s.clone())),*/
+            Data::SymStr(s) => MatchKind::Atom(s),
             Data::Cons { name, params } => MatchKind::Cons(name, params),
             Data::List(ds) => MatchKind::List(ds),
-            _ => todo!(),
         }
     }
 
