@@ -238,14 +238,14 @@ fn parse_symbol(input : &mut Chars) -> Result<Pattern<SymStr>, ParseError> {
     parser!(input => {
         _colon <= parse_colon;
         word <= parse_word;
-        select Pattern::Symbol(word)
+        select Pattern::Atom(SymStr::Symbol(word))
     })
 }
 
 fn parse_string_pattern(input : &mut Chars) -> Result<Pattern<SymStr>, ParseError> {
     parser!(input => {
         string <= parse_string;
-        select Pattern::String(string)
+        select Pattern::Atom(SymStr::String(string))
     })
 }
 
