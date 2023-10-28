@@ -97,6 +97,7 @@ fn check_template_usage<T : Clone>(pattern : &Pattern<T>) -> Option<TypeCheckErr
             TemplateVar(var) if available_captures.iter().find(|x| *x == var).is_none()
                 => Some(TypeCheckError::TemplateReferencesUnknownCaptureVariable(var.clone())),
             TemplateVar(_) => None, 
+            Matcher(_) => None,
         }
     }
 
@@ -151,6 +152,7 @@ fn check_next_usage<T : Clone>(pattern : &Pattern<T>) -> bool {
                 }
             },
             TemplateVar(_) => Some(0),
+            Matcher(_) => Some(0),
         }
     }
 
@@ -218,6 +220,7 @@ pub fn pattern_sig<T : Clone>(pattern : &Pattern<T>) -> Result<PatternSig, TypeC
             }
         },
         TemplateVar(_) => EMPTY,
+        Matcher(_) => EMPTY,
     }
 }
 

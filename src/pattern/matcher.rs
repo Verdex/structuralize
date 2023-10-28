@@ -11,14 +11,14 @@ use super::check::*;
 
 pub type MatchMap<'a, T> = Vec<(Box<str>, &'a T)>; 
 
-pub fn pattern_match<'a, TAtom : Clone + PartialEq, D : Matchable<Atom=TAtom>>(
-    pattern : &TypeChecked<TAtom>, data : &'a D) -> Matches<'a, TAtom, D> {
+pub fn pattern_match<'a, 'm, TAtom : Clone + PartialEq, D : Matchable<Atom=TAtom>>(
+    pattern : &TypeChecked<TAtom>, data : &'a D) -> Matches<'a, 'm, TAtom, D> {
 
     let p = pattern.pattern().clone();
     let mut current_work = Work::new();
     current_work.push((p, data));
 
-    Matches { matches: vec![], current_work, future_work: vec![] }
+    Matches { matches: vec![], current_work, future_work: vec![], matchers: vec![] }
 }
 
 #[derive(Debug)]
@@ -95,11 +95,12 @@ impl<'a, TAtom : Clone + PartialEq, D : Matchable<Atom=TAtom>> Work<'a, TAtom, D
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Matches<'a, TAtom : Clone + PartialEq, D : Matchable<Atom=TAtom>> {
+#[derive(Clone)]
+pub struct Matches<'a, 'm, TAtom : Clone + PartialEq, D : Matchable<Atom=TAtom>> {
     matches : MatchMap<'a, D>,
     current_work : Work<'a, TAtom, D>,
     future_work : Vec<(MatchMap<'a, D>, Work<'a, TAtom, D>)>,
+    matchers : Vec<&'m dyn Fn(&D) -> bool>,
 }
 
 // QueueWork
@@ -111,7 +112,7 @@ macro_rules! qw {
     };
 }
 
-impl<'a, TAtom : Clone + PartialEq, D : Matchable<Atom=TAtom>> Matches<'a, TAtom, D> {
+impl<'a, 'm, TAtom : Clone + PartialEq, D : Matchable<Atom=TAtom>> Matches<'a, 'm, TAtom, D> {
     fn pop_current_work(&mut self) -> Option<(Pattern<TAtom>, &'a D)> { 
         if let Some(ret) = self.current_work.work.last_mut().unwrap().pop() {
             Some(ret)
@@ -142,7 +143,7 @@ impl<'a, TAtom : Clone + PartialEq, D : Matchable<Atom=TAtom>> Matches<'a, TAtom
     }
 }
 
-impl<'a, TAtom : 'a + Clone + PartialEq, D : Matchable<Atom=TAtom>> Iterator for Matches<'a, TAtom, D> {
+impl<'a, 'm, TAtom : 'a + Clone + PartialEq, D : Matchable<Atom=TAtom>> Iterator for Matches<'a, 'm, TAtom, D> {
     type Item = MatchMap<'a, D>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -208,6 +209,10 @@ impl<'a, TAtom : 'a + Clone + PartialEq, D : Matchable<Atom=TAtom>> Iterator for
                     self.future_work.push((self.matches.clone(), work));
                     self.current_work.push((*a, matchable));
                 },
+
+                // TODO : checker that makes sure that id exists
+                // TODO : unit tests for this
+                (Pattern::Matcher(id), _) if self.matchers[id](matchable) => { /* pass */ },
 
                 _ => { 
                     // This match failed
