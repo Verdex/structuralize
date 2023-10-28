@@ -20,6 +20,7 @@ pub trait Matchable {
 #[derive(Debug, Clone)]
 pub enum Pattern<TAtom : Clone> {
     Atom(TAtom),
+    Fail,
     Wild,
     CaptureVar(Box<str>),
     Cons { name: Box<str>, params: Vec<Pattern<TAtom>> },
@@ -37,6 +38,7 @@ impl<'a, T : Clone> Linearizable<'a> for Pattern<T> {
         use Pattern::*;
         match self {
             Atom(_) => vec![], 
+            Fail => vec![],
             Wild => vec![],
             CaptureVar(_) => vec![],
             Cons { params, name: _ } => params.iter().collect(),
