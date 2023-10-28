@@ -18,11 +18,6 @@ impl std::fmt::Display for E {
 
 impl std::error::Error for E { }
 
-#[derive(Debug, Clone)]
-pub enum SymStr {
-    Symbol(Box<str>),
-    String(Box<str>),
-}
 
 impl std::str::FromStr for Pattern<SymStr> {
     type Err = Box<dyn std::error::Error>;  
