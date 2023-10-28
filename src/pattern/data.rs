@@ -1,6 +1,7 @@
 
-use denest::*;
+use crate::data::*;
 
+use denest::*;
 
 pub enum MatchKind<'a, TMatchable : Matchable> {
     Atom(&'a TMatchable::Atom),
@@ -15,6 +16,36 @@ pub trait Matchable {
 
     fn kind(&self) -> MatchKind<Self> where Self : Sized;
     fn to_pattern(&self) -> Pattern<Self::Atom>;
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum SymStr {
+    Symbol(Box<str>),
+    String(Box<str>),
+}
+
+impl Matchable for Data {
+    type Atom = SymStr;
+    type Object = ();
+
+    fn kind(&self) -> MatchKind<Self> {
+        match self {
+            /*Data::String(s) => MatchKind::Atom(&SymStr::String(s.clone())), 
+            Data::Symbol(s) => MatchKind::Atom(&SymStr::Symbol(s.clone())),*/
+            Data::Cons { name, params } => MatchKind::Cons(name, params),
+            Data::List(ds) => MatchKind::List(ds),
+            _ => todo!(),
+        }
+    }
+
+    fn to_pattern(&self) -> Pattern<Self::Atom> {
+        match self {
+            Data::String(s) => Pattern::Atom(SymStr::String(s.clone())), 
+            Data::Symbol(s) => Pattern::Atom(SymStr::Symbol(s.clone())),
+            Data::Cons { name, params } => Pattern::Cons { name: name.clone(), params: params.iter().map(|x| x.to_pattern()).collect() },
+            Data::List(ds) => Pattern::ExactList(ds.iter().map(|x| x.to_pattern()).collect()),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
