@@ -1,7 +1,6 @@
 
 use denest::Linearizable;
 
-use crate::data::*;
 use super::data::*;
  
 pub type PatternSig = Vec<Box<str>>;
@@ -225,6 +224,7 @@ pub fn pattern_sig<T : Clone>(pattern : &Pattern<T>) -> Result<PatternSig, TypeC
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::data::*;
     use crate::pattern::parse::*;
 
     #[test]
