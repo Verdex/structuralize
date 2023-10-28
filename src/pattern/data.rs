@@ -10,32 +10,35 @@ pub enum MatchKind<'a, TMatchable : Matchable> {
 }
 
 pub trait Matchable {
-    type Atom : PartialEq;
-    type Object;
+    type Atom : Clone + PartialEq;
+    type Object; 
 
     fn kind(&self) -> MatchKind<Self> where Self : Sized;
+    fn to_pattern(&self) -> Pattern<Self::Atom>;
 }
 
 #[derive(Debug, Clone)]
-pub enum Pattern {
+pub enum Pattern<TAtom : Clone> {
     String(Box<str>), 
     Symbol(Box<str>),
+    Atom(TAtom),
     Wild,
     CaptureVar(Box<str>),
-    Cons { name: Box<str>, params: Vec<Pattern> },
-    ExactList(Vec<Pattern>),
-    ListPath(Vec<Pattern>),
+    Cons { name: Box<str>, params: Vec<Pattern<TAtom>> },
+    ExactList(Vec<Pattern<TAtom>>),
+    ListPath(Vec<Pattern<TAtom>>),
     PathNext,
-    Path(Vec<Pattern>),
-    And(Box<Pattern>, Box<Pattern>),
-    Or(Box<Pattern>, Box<Pattern>),
+    Path(Vec<Pattern<TAtom>>),
+    And(Box<Pattern<TAtom>>, Box<Pattern<TAtom>>),
+    Or(Box<Pattern<TAtom>>, Box<Pattern<TAtom>>),
     TemplateVar(Box<str>), 
 }
 
-impl<'a> Linearizable<'a> for Pattern {
+impl<'a, T : Clone> Linearizable<'a> for Pattern<T> {
     fn l_next(&'a self) -> Vec<&'a Self> {
         use Pattern::*;
         match self {
+            Atom(_) => todo!(), // TODO
             String(_) => vec![], 
             Symbol(_) => vec![],
             Wild => vec![],
