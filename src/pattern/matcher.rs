@@ -1,5 +1,4 @@
 
-use crate::data::*;
 use super::data::*;
 use super::check::*;
 
@@ -17,7 +16,9 @@ use super::check::*;
 // TODO move this to pattern::data here in a bit
 pub type MatchMap<'a, T> = Vec<(Box<str>, &'a T)>; 
 
-pub fn pattern_match<'a, D : Matchable>(pattern : &TypeChecked, data : &'a D) -> Matches<'a, D> {
+pub fn pattern_match<'a, TAtom : Clone + PartialEq, D : Matchable<Atom=TAtom>>(
+    pattern : &TypeChecked<TAtom>, data : &'a D) -> Matches<'a, TAtom, D> {
+
     let p = pattern.pattern().clone();
     let mut current_work = Work::new();
     current_work.push((p, data));
@@ -26,13 +27,13 @@ pub fn pattern_match<'a, D : Matchable>(pattern : &TypeChecked, data : &'a D) ->
 }
 
 #[derive(Debug)]
-struct WorkPath<'a, D : Matchable> {
-    work : Vec<(Pattern, &'a D)>,
-    path : Vec<Pattern>,
+struct WorkPath<'a, TAtom : Clone + PartialEq, D : Matchable<Atom=TAtom>> {
+    work : Vec<(Pattern<TAtom>, &'a D)>,
+    path : Vec<Pattern<TAtom>>,
     nexts : Vec<&'a D>,
 }
 
-impl<'a, D : Matchable> Clone for WorkPath<'a, D> {
+impl<'a, TAtom : Clone + PartialEq, D : Matchable<Atom=TAtom>> Clone for WorkPath<'a, TAtom, D> {
     fn clone(&self) -> Self {
         WorkPath { work: self.work.clone()
                  , path: self.path.clone()
@@ -41,20 +42,20 @@ impl<'a, D : Matchable> Clone for WorkPath<'a, D> {
     }
 }
 
-impl<'a, D : Matchable> WorkPath<'a, D> {
+impl<'a, TAtom : Clone + PartialEq, D : Matchable<Atom=TAtom>> WorkPath<'a, TAtom, D> {
     pub fn empty() -> Self {
         WorkPath { work: vec![], path: vec![], nexts: vec![] }
     }
 
-    pub fn new(path : Vec<Pattern>) -> Self {
+    pub fn new(path : Vec<Pattern<TAtom>>) -> Self {
         WorkPath { work: vec![], path, nexts: vec![] }
     }
 
-    pub fn push(&mut self, item : (Pattern, &'a D)) {
+    pub fn push(&mut self, item : (Pattern<TAtom>, &'a D)) {
         self.work.push(item);
     }
 
-    pub fn pop(&mut self) -> Option<(Pattern, &'a D)> {
+    pub fn pop(&mut self) -> Option<(Pattern<TAtom>, &'a D)> {
         self.work.pop()
     }
 
@@ -64,22 +65,22 @@ impl<'a, D : Matchable> WorkPath<'a, D> {
 }
 
 #[derive(Debug)]
-struct Work<'a, D : Matchable> {
-    work : Vec<WorkPath<'a, D>>,
+struct Work<'a, TAtom : Clone + PartialEq, D : Matchable<Atom=TAtom>> {
+    work : Vec<WorkPath<'a, TAtom, D>>,
 }
 
-impl<'a, D : Matchable> Clone for Work<'a, D> {
+impl<'a, TAtom : Clone + PartialEq, D : Matchable<Atom=TAtom>> Clone for Work<'a, TAtom, D> {
     fn clone(&self) -> Self {
         Work { work : self.work.clone() }
     }
 }
 
-impl<'a, D : Matchable> Work<'a, D> {
+impl<'a, TAtom : Clone + PartialEq, D : Matchable<Atom=TAtom>> Work<'a, TAtom, D> {
     pub fn new() -> Self {
         Work { work : vec![WorkPath::empty()] }
     }
 
-    pub fn push(&mut self, item : (Pattern, &'a D)) {
+    pub fn push(&mut self, item : (Pattern<TAtom>, &'a D)) {
         self.work.last_mut().unwrap().push(item);
     }
 
@@ -87,7 +88,7 @@ impl<'a, D : Matchable> Work<'a, D> {
         self.work.len() == 1 && self.work.last().unwrap().work_finished()
     }
 
-    pub fn path(&mut self, mut patterns : Vec<Pattern>, data : &'a D) {
+    pub fn path(&mut self, mut patterns : Vec<Pattern<TAtom>>, data : &'a D) {
         patterns.reverse();
         let first_pattern = patterns.pop().unwrap();
         self.work.push(WorkPath::new(patterns));
@@ -100,10 +101,10 @@ impl<'a, D : Matchable> Work<'a, D> {
 }
 
 #[derive(Debug, Clone)]
-pub struct Matches<'a, D : Matchable> {
+pub struct Matches<'a, TAtom : Clone + PartialEq, D : Matchable<Atom=TAtom>> {
     matches : MatchMap<'a, D>,
-    current_work : Work<'a, D>,
-    future_work : Vec<(MatchMap<'a, D>, Work<'a, D>)>,
+    current_work : Work<'a, TAtom, D>,
+    future_work : Vec<(MatchMap<'a, D>, Work<'a, TAtom, D>)>,
 }
 
 // QueueWork
@@ -115,8 +116,8 @@ macro_rules! qw {
     };
 }
 
-impl<'a, D : Matchable> Matches<'a, D> {
-    fn pop_current_work(&mut self) -> Option<(Pattern, &'a D)> { 
+impl<'a, TAtom : Clone + PartialEq, D : Matchable<Atom=TAtom>> Matches<'a, TAtom, D> {
+    fn pop_current_work(&mut self) -> Option<(Pattern<TAtom>, &'a D)> { 
         if let Some(ret) = self.current_work.work.last_mut().unwrap().pop() {
             Some(ret)
         }
@@ -146,7 +147,7 @@ impl<'a, D : Matchable> Matches<'a, D> {
     }
 }
 
-impl<'a, D : Matchable> Iterator for Matches<'a, D> {
+impl<'a, TAtom : 'a + Clone + PartialEq, D : Matchable<Atom=TAtom>> Iterator for Matches<'a, TAtom, D> {
     type Item = MatchMap<'a, D>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -190,7 +191,7 @@ impl<'a, D : Matchable> Iterator for Matches<'a, D> {
 
                 (Pattern::TemplateVar(var), _) => {
                     let (_, d) = self.matches.iter().find(|(k, _)| k == &var ).unwrap();
-                    let p = data_to_pattern(*d);
+                    let p = d.to_pattern();
                     self.current_work.push((p, matchable));
                 },
 
@@ -239,17 +240,5 @@ impl<'a, D : Matchable> Iterator for Matches<'a, D> {
             let ret = std::mem::replace(&mut self.matches, vec![]);
             Some(ret)
         }
-    }
-}
-
-// TODO: rename to something like matchable_to_pattern
-fn data_to_pattern<D : Matchable>(data : &D) -> Pattern {
-    match data.kind() {
-        //Data::String(s) => Pattern::String(s.clone()), 
-        //Data::Symbol(s) => Pattern::Symbol(s.clone()),
-        // TODO name.clone().into() needs fixed !!!
-        MatchKind::Cons(name, params) => Pattern::Cons { name: name.clone().into(), params: params.iter().map(data_to_pattern).collect() },
-        MatchKind::List(ds) => Pattern::ExactList(ds.iter().map(data_to_pattern).collect()),
-        _ => todo!(),
     }
 }
