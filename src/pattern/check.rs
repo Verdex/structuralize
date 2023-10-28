@@ -6,10 +6,10 @@ use super::data::*;
 pub type PatternSig = Vec<Box<str>>;
 
 #[derive(Debug)]
-pub struct TypeChecked(Pattern, PatternSig);
+pub struct TypeChecked<T : Clone>(Pattern<T>, PatternSig);
 
-impl TypeChecked {
-    pub fn pattern<'a>(&'a self) -> &'a Pattern {
+impl<T : Clone> TypeChecked<T> {
+    pub fn pattern<'a>(&'a self) -> &'a Pattern<T> {
         &self.0
     }
     pub fn signature<'a>(&'a self) -> &'a PatternSig {
@@ -18,7 +18,7 @@ impl TypeChecked {
 }
 
 #[derive(Debug)]
-pub struct TypeMatches(TypeChecked);
+pub struct TypeMatches<T : Clone>(TypeChecked<T>);
 
 #[derive(Debug)]
 pub enum TypeCheckError {
@@ -46,7 +46,7 @@ impl std::fmt::Display for TypeCheckError {
 
 impl std::error::Error for TypeCheckError { }
 
-pub fn check_pattern(pattern : Pattern) -> Result<TypeChecked, TypeCheckError> {
+pub fn check_pattern<T : Clone>(pattern : Pattern<T>) -> Result<TypeChecked<T>, TypeCheckError> {
 
     if ! check_next_usage(&pattern) {
         return Err(TypeCheckError::IncorrectNextUsage);
@@ -64,14 +64,14 @@ pub fn check_pattern(pattern : Pattern) -> Result<TypeChecked, TypeCheckError> {
     Ok(TypeChecked(pattern, sig))
 }
 
-fn check_cons_have_params(pattern : &Pattern) -> bool {
+fn check_cons_have_params<T : Clone>(pattern : &Pattern<T>) -> bool {
     match pattern {
         Pattern::Cons { params, .. } if params.len() == 0 => false,
         _ => true,
     }
 }
 
-fn check_template_usage(pattern : &Pattern) -> Option<TypeCheckError> {
+fn check_template_usage<T : Clone>(pattern : &Pattern<T>) -> Option<TypeCheckError> {
     fn problem(x : &Option<TypeCheckError>) -> bool {
         match x {
             Some(_) => true,
@@ -79,9 +79,10 @@ fn check_template_usage(pattern : &Pattern) -> Option<TypeCheckError> {
         }
     }
 
-    fn r(pattern : &Pattern, available_captures : &mut Vec<Box<str>>) -> Option<TypeCheckError> {
+    fn r<T : Clone>(pattern : &Pattern<T>, available_captures : &mut Vec<Box<str>>) -> Option<TypeCheckError> {
         use Pattern::*;
         match pattern {
+            Atom(_) => todo!(), // TODO
             String(_) => None, 
             Symbol(_) => None,
             Wild => None,
@@ -103,13 +104,14 @@ fn check_template_usage(pattern : &Pattern) -> Option<TypeCheckError> {
     r(pattern, &mut vec![])
 }
 
-fn check_next_usage(pattern : &Pattern) -> bool {
+fn check_next_usage<T : Clone>(pattern : &Pattern<T>) -> bool {
     fn sgtz(input : Option<usize>) -> bool {
         match input { Some(v) if v > 0 => true, _ => false }
     }
-    fn r(pattern : &Pattern, in_path : bool) -> Option<usize> {
+    fn r<T : Clone>(pattern : &Pattern<T>, in_path : bool) -> Option<usize> {
         use Pattern::*;
         match pattern {
+            Atom(_) => todo!(), // TODO
             String(_) => Some(0), 
             Symbol(_) => Some(0),
             Wild => Some(0),
@@ -157,7 +159,7 @@ fn check_next_usage(pattern : &Pattern) -> bool {
     r(pattern, false).is_some()
 }
 
-pub fn pattern_sig_matches(pattern : TypeChecked, sig : PatternSig) -> Result<TypeMatches, TypeCheckError> {
+pub fn pattern_sig_matches<T : Clone>(pattern : TypeChecked<T>, sig : PatternSig) -> Result<TypeMatches<T>, TypeCheckError> {
     if pattern.signature() == &sig {
         Ok(TypeMatches(pattern))
     }
@@ -166,7 +168,7 @@ pub fn pattern_sig_matches(pattern : TypeChecked, sig : PatternSig) -> Result<Ty
     }
 }
 
-pub fn pattern_sig(pattern : &Pattern) -> Result<PatternSig, TypeCheckError> {
+pub fn pattern_sig<T : Clone>(pattern : &Pattern<T>) -> Result<PatternSig, TypeCheckError> {
     use Pattern::*;
     const EMPTY : Result<PatternSig, TypeCheckError> = Ok(vec![]);
 
@@ -194,6 +196,7 @@ pub fn pattern_sig(pattern : &Pattern) -> Result<PatternSig, TypeCheckError> {
     }
 
     match pattern {
+        Atom(_) => todo!(), // TODO 
         String(_) => EMPTY, 
         Symbol(_) => EMPTY,
         Wild => EMPTY,
