@@ -18,7 +18,7 @@ impl std::fmt::Display for E {
 
 impl std::error::Error for E { }
 
-impl<T : Clone> std::str::FromStr for Pattern<T> {
+impl std::str::FromStr for Pattern {
     type Err = Box<dyn std::error::Error>;  
 
     fn from_str(s : &str) -> Result<Self, Self::Err> {
@@ -32,45 +32,7 @@ impl<T : Clone> std::str::FromStr for Pattern<T> {
     }
 }
 
-macro_rules! pl {
-    ($input:ident => $l_bracket:ident, $r_bracket:ident) => {
-        {
-            pat!(parse_comma: char => () = ',' => ());
-
-            fn parse_target_comma<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
-                parser!(input => {
-                    _clear_0 <= parse_whitespace;
-                    target <= parse_pattern;
-                    _clear_1 <= parse_whitespace;
-                    _comma <= parse_comma;
-                    _clear_2 <= parse_whitespace;
-                    select target 
-                })
-            }
-
-            parser!($input => {
-                _clear_0 <= parse_whitespace;
-                _left_bracket <= $l_bracket;
-                targets <= * parse_target_comma;
-                _clear_1 <= parse_whitespace;
-                last_target <= ? parse_pattern;
-                _clear_2 <= parse_whitespace;
-                _right_bracket <= ! $r_bracket;
-                _clear_3 <= parse_whitespace;
-                select {
-                    let mut targets = targets;
-                    match last_target {
-                        Some(target) => { targets.push(target); },
-                        None => (),
-                    }
-                    targets
-                }
-            })
-        }
-    };
-}
-
-fn parse<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
+fn parse(input : &mut Chars) -> Result<Pattern, ParseError> {
     parser!(input => {
         pattern <= ! parse_pattern;
         ! end;
@@ -78,8 +40,8 @@ fn parse<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
     })
 }
 
-fn parse_pattern<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
-    fn options<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
+fn parse_pattern(input : &mut Chars) -> Result<Pattern, ParseError> {
+    fn options(input : &mut Chars) -> Result<Pattern, ParseError> {
         alt!(input => parse_cons; 
                       parse_list_path;
                       parse_list; 
@@ -93,7 +55,7 @@ fn parse_pattern<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError
                       parse_template_variable)
     }
 
-    fn end_options<T : Clone>(input : &mut Chars) -> Result<EndCombinator<T>, ParseError> {
+    fn end_options(input : &mut Chars) -> Result<EndCombinator, ParseError> {
         alt!(input => parse_and; parse_or)
     }
 
@@ -111,12 +73,12 @@ fn parse_pattern<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError
     })
 }
 
-enum EndCombinator<T : Clone> {
-    And(Pattern<T>),
-    Or(Pattern<T>),
+enum EndCombinator {
+    And(Pattern),
+    Or(Pattern),
 }
 
-fn parse_or<T : Clone>(input : &mut Chars) -> Result<EndCombinator<T>, ParseError> {
+fn parse_or(input : &mut Chars) -> Result<EndCombinator, ParseError> {
     pat!(parse_dot: char => () = '.' => ());
     pat!(parse_l_paren: char => () = '(' => ());
     pat!(parse_r_paren: char => () = ')' => ());
@@ -143,7 +105,7 @@ fn parse_or<T : Clone>(input : &mut Chars) -> Result<EndCombinator<T>, ParseErro
     })
 }
 
-fn parse_and<T : Clone>(input : &mut Chars) -> Result<EndCombinator<T>, ParseError> {
+fn parse_and(input : &mut Chars) -> Result<EndCombinator, ParseError> {
     pat!(parse_dot: char => () = '.' => ());
     pat!(parse_l_paren: char => () = '(' => ());
     pat!(parse_r_paren: char => () = ')' => ());
@@ -170,7 +132,7 @@ fn parse_and<T : Clone>(input : &mut Chars) -> Result<EndCombinator<T>, ParseErr
     })
 }
 
-fn parse_list_path<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
+fn parse_list_path(input : &mut Chars) -> Result<Pattern, ParseError> {
     pat!(parse_l_square: char => () = '[' => ());
     pat!(parse_r_square: char => () = ']' => ());
     pat!(parse_bar: char => () = '|' => ());
@@ -191,8 +153,8 @@ fn parse_list_path<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseErr
         })
     }
 
-    fn parse_points<T : Clone>(input : &mut Chars) -> Result<Vec<Pattern<T>>, ParseError> {
-        pl!(input => parse_l_bracket, parse_r_bracket)
+    fn parse_points(input : &mut Chars) -> Result<Vec<Pattern>, ParseError> {
+        parse_list!(input => parse_l_bracket, parse_pattern : Pattern, parse_r_bracket)
     }
 
     parser!(input => {
@@ -201,7 +163,7 @@ fn parse_list_path<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseErr
     })
 }
 
-fn parse_path<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
+fn parse_path(input : &mut Chars) -> Result<Pattern, ParseError> {
     pat!(parse_l_curl: char => () = '{' => ());
     pat!(parse_r_curl: char => () = '}' => ());
     pat!(parse_bar: char => () = '|' => ());
@@ -222,8 +184,8 @@ fn parse_path<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
         })
     }
 
-    fn parse_points<T : Clone>(input : &mut Chars) -> Result<Vec<Pattern<T>>, ParseError> {
-        pl!(input => parse_l_bracket, parse_r_bracket)
+    fn parse_points(input : &mut Chars) -> Result<Vec<Pattern>, ParseError> {
+        parse_list!(input => parse_l_bracket, parse_pattern : Pattern, parse_r_bracket)
     }
 
     parser!(input => {
@@ -232,20 +194,14 @@ fn parse_path<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
     })
 }
 
-fn parse_path_next<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
-    pat!(parse_x: char => () = '^' => ());
-    parser!( input => {
-        _x <= parse_x;
-        select Pattern::PathNext
-    })
-}
+pat!(parse_path_next<'a>: char => Pattern = '^' => Pattern::PathNext);
 
-fn parse_cons<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
+fn parse_cons(input : &mut Chars) -> Result<Pattern, ParseError> {
     pat!(parse_l_paren: char => () = '(' => ());
     pat!(parse_r_paren: char => () = ')' => ());
 
-    fn param_list<T : Clone>(input : &mut Chars) -> Result<Vec<Pattern<T>>, ParseError> {
-        pl!(input => parse_l_paren, parse_r_paren)
+    fn param_list(input : &mut Chars) -> Result<Vec<Pattern>, ParseError> {
+        parse_list!(input => parse_l_paren, parse_pattern : Pattern, parse_r_paren)
     }
 
     parser!(input => {
@@ -256,14 +212,14 @@ fn parse_cons<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
     })
 }
 
-fn parse_capture_var<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
+fn parse_capture_var(input : &mut Chars) -> Result<Pattern, ParseError> {
     parser!(input => {
         word <= parse_word;
         select Pattern::CaptureVar(word)
     })
 }
 
-fn parse_wild<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
+fn parse_wild(input : &mut Chars) -> Result<Pattern, ParseError> {
     parser!(input => {
         word <= parse_word;
         where *word == *"_";
@@ -271,7 +227,7 @@ fn parse_wild<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
     })
 }
 
-fn parse_symbol<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
+fn parse_symbol(input : &mut Chars) -> Result<Pattern, ParseError> {
     pat!(parse_colon: char => () = ':' => ());
     parser!(input => {
         _colon <= parse_colon;
@@ -280,21 +236,21 @@ fn parse_symbol<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError>
     })
 }
 
-fn parse_string_pattern<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
+fn parse_string_pattern(input : &mut Chars) -> Result<Pattern, ParseError> {
     parser!(input => {
         string <= parse_string;
         select Pattern::String(string)
     })
 }
 
-fn parse_list<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
+fn parse_list(input : &mut Chars) -> Result<Pattern, ParseError> {
     pat!(parse_l_square: char => () = '[' => ());
     pat!(parse_r_square: char => () = ']' => ());
 
-    Ok(Pattern::ExactList(pl!(input => parse_l_square, parse_r_square)?))
+    Ok(Pattern::ExactList(parse_list!(input => parse_l_square, parse_pattern : Pattern, parse_r_square)?))
 }
 
-fn parse_template_variable<T : Clone>(input : &mut Chars) -> Result<Pattern<T>, ParseError> {
+fn parse_template_variable(input : &mut Chars) -> Result<Pattern, ParseError> {
     pat!(parse_percent: char => () = '%' => ());
 
     parser!(input => {
