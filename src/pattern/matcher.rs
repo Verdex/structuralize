@@ -164,7 +164,6 @@ impl<'a, TAtom : 'a + Clone + PartialEq, D : Matchable<Atom=TAtom>> Iterator for
                 },
 
                 (Pattern::Cons {name: pname, params: pparams}, MatchKind::Cons(dname, dparams)) 
-                // TODO !!!! pname is hopefully becoming &str soon ::: REMOVE .into() from dname
                     if pname == dname.into() && pparams.len() == dparams.len() => {
 
                     qw!(self.current_work, pparams, dparams);
