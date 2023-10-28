@@ -49,7 +49,7 @@ mod tests {
         ($target:ident) => {
             mod $target {
                 use crate::data::*;
-                use crate::pattern::*;
+                use crate::pattern::data::*;
                 use crate::pattern::check::*;
                 #[allow(unused_imports)]
                 use crate::pattern::matcher::pattern_match;

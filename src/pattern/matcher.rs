@@ -7,13 +7,8 @@ use super::check::*;
 // TODO : allow list of functions that take the matches and return a pattern of known type
 //        probably needs to specify the type
 // TODO : allow list of functions that "match"
-// TODO : pattern match function that takes Matchable impl instead of Data (have data implement matchable)
-// TODO : pattern match function that takes Patternable impl instead of Pattern 
-
-// TODO : Atom (eqable), object(not eqable), cons, list
 
 
-// TODO move this to pattern::data here in a bit
 pub type MatchMap<'a, T> = Vec<(Box<str>, &'a T)>; 
 
 pub fn pattern_match<'a, TAtom : Clone + PartialEq, D : Matchable<Atom=TAtom>>(
