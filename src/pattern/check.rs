@@ -83,8 +83,7 @@ fn check_template_usage<T : Clone>(pattern : &Pattern<T>) -> Option<TypeCheckErr
         use Pattern::*;
         match pattern {
             Atom(_) => todo!(), // TODO
-            String(_) => None, 
-            Symbol(_) => None,
+            Fail => todo!(), // TODO
             Wild => None,
             CaptureVar(var) => { available_captures.push(var.clone()); None },
             Cons { params, .. } => params.iter().map(|p| r(p, available_captures)).find(problem)?,
@@ -112,8 +111,7 @@ fn check_next_usage<T : Clone>(pattern : &Pattern<T>) -> bool {
         use Pattern::*;
         match pattern {
             Atom(_) => todo!(), // TODO
-            String(_) => Some(0), 
-            Symbol(_) => Some(0),
+            Fail => todo!(), // TODO
             Wild => Some(0),
             CaptureVar(_) => Some(0),
             Cons { params, .. } => params.iter().map(|p| r(p, in_path)).sum(),
@@ -197,8 +195,7 @@ pub fn pattern_sig<T : Clone>(pattern : &Pattern<T>) -> Result<PatternSig, TypeC
 
     match pattern {
         Atom(_) => todo!(), // TODO 
-        String(_) => EMPTY, 
-        Symbol(_) => EMPTY,
+        Fail => todo!(), // TODO
         Wild => EMPTY,
         CaptureVar(v) => Ok(vec![v.clone()]),
         Cons { params, .. } => star!(params),
@@ -227,11 +224,12 @@ pub fn pattern_sig<T : Clone>(pattern : &Pattern<T>) -> Result<PatternSig, TypeC
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::pattern::parse::*;
 
     #[test]
     fn check_template_usage_should_pass() {
         fn t(input : &str) {
-            let p : Pattern = input.parse().unwrap();
+            let p : Pattern<SymStr> = input.parse().unwrap();
             let output = check_template_usage(&p);
             assert!(output.is_none(), "{input}");
         }
@@ -261,7 +259,7 @@ mod test {
     #[test]
     fn check_template_usage_should_not_pass() {
         fn t(input : &str) {
-            let p : Pattern = input.parse().unwrap();
+            let p : Pattern<SymStr> = input.parse().unwrap();
             let output = check_template_usage(&p);
             assert!(output.is_some(), "{input}");
         }
@@ -280,7 +278,7 @@ mod test {
     #[test]
     fn check_next_usage_should_pass() {
         fn t(input : &str) {
-            let p : Pattern = input.parse().unwrap();
+            let p : Pattern<SymStr> = input.parse().unwrap();
             let output = check_next_usage(&p);
             assert!(output, "{input}");
         }
@@ -308,7 +306,7 @@ mod test {
     #[test]
     fn check_next_usage_should_fail() {
         fn t(input : &str) {
-            let p : Pattern = input.parse().unwrap();
+            let p : Pattern<SymStr> = input.parse().unwrap();
             let output = check_next_usage(&p);
             assert!(!output, "{input}");
         }

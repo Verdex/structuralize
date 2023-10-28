@@ -277,7 +277,7 @@ mod test {
     #[test]
     fn should_parse_template() {
         let input = "cons(%a, [%b, %c, d, :e] )";
-        let pattern = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern<SymStr>>().unwrap();
         let mut matched = false;
         atom!(pattern => [ Pattern::Cons { .. } ] =>  {
             matched = true;
@@ -288,13 +288,13 @@ mod test {
     #[test]
     fn should_parse_nested_ends() {
         let input = "[] . and( :c . or ( \"e\" . or( \"1.0\" ) ) )";
-        let pattern = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern<SymStr>>().unwrap();
         let mut matched = false;
         atom!(pattern => [Pattern::And(a, b)] b; unbox $ [Pattern::Or(c, d)] d; unbox $ [Pattern::Or(e, f)] =>  {
             assert!( matches!( *a, Pattern::ExactList(_) ) );
-            assert!( matches!( *c, Pattern::Symbol(_) ) );
-            assert!( matches!( *e, Pattern::String(_) ) );
-            assert!( matches!( *f, Pattern::String(_) ) );
+            assert!( matches!( *c, Pattern::Atom(SymStr::Symbol(_))) );
+            assert!( matches!( *e, Pattern::Atom(SymStr::String(_))) );
+            assert!( matches!( *f, Pattern::Atom(SymStr::String(_))) );
             matched = true;
         } );
         assert!(matched);
@@ -303,13 +303,13 @@ mod test {
     #[test]
     fn should_parse_multiple_alternating_ends() {
         let input = "[] . or ( \"1.0\" ) . and ( :b ) . or ( \"c\" )";
-        let pattern = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern<SymStr>>().unwrap();
         let mut matched = false;
         atom!(pattern => [Pattern::Or(a, b)] a; unbox $ [Pattern::And(c, d)] c; unbox $ [Pattern::Or(e, f)] =>  {
-            assert!( matches!( *b, Pattern::String(_) ) );
-            assert!( matches!( *d, Pattern::Symbol(_) ) );
+            assert!( matches!( *b, Pattern::Atom(SymStr::String(_))) );
+            assert!( matches!( *d, Pattern::Atom(SymStr::Symbol(_))) );
             assert!( matches!( *e, Pattern::ExactList(_) ) );
-            assert!( matches!( *f, Pattern::String(_) ) );
+            assert!( matches!( *f, Pattern::Atom(SymStr::String(_))) );
             matched = true;
         } );
         assert!(matched);
@@ -318,11 +318,11 @@ mod test {
     #[test]
     fn should_parse_or() {
         let input = ":a . or ( \"1.0\" )";
-        let pattern = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern<SymStr>>().unwrap();
         let mut matched = false;
         atom!(pattern => [Pattern::Or(a, b)] =>  {
-            assert!( matches!( *a, Pattern::Symbol(_) ) );
-            assert!( matches!( *b, Pattern::String(_) ) );
+            assert!( matches!( *a, Pattern::Atom(SymStr::Symbol(_))) );
+            assert!( matches!( *b, Pattern::Atom(SymStr::String(_))) );
             matched = true;
         } );
         assert!(matched);
@@ -331,11 +331,11 @@ mod test {
     #[test]
     fn should_parse_and() {
         let input = ":a . and ( \"1.0\" )";
-        let pattern = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern<SymStr>>().unwrap();
         let mut matched = false;
         atom!(pattern => [Pattern::And(a, b)] =>  {
-            assert!( matches!( *a, Pattern::Symbol(_) ) );
-            assert!( matches!( *b, Pattern::String(_) ) );
+            assert!( matches!( *a, Pattern::Atom(SymStr::Symbol(_))) );
+            assert!( matches!( *b, Pattern::Atom(SymStr::String(_))) );
             matched = true;
         } );
         assert!(matched);
@@ -344,21 +344,21 @@ mod test {
     #[test]
     fn should_parse_path() {
         let input = "{| a, b, c |}";
-        let pattern = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern<SymStr>>().unwrap();
         assert!(matches!(pattern, Pattern::Path(_)));
     }
 
     #[test]
     fn should_parse_list_path() {
         let input = "[| a, b, c |]";
-        let pattern = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern<SymStr>>().unwrap();
         assert!(matches!(pattern, Pattern::ListPath(_)));
     }
 
     #[test]
     fn should_parse_complex_pattern() {
         let input = " name ( other ( one( :a, :b, num([:c, :d, :e, [:blarg]]) ) ) , :inner  )";
-        let pattern = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern<SymStr>>().unwrap();
         let mut matched = false;
         atom!(pattern => [Pattern::Cons { .. }] => { 
             matched = true;
@@ -369,11 +369,14 @@ mod test {
     #[test]
     fn should_parse_cons() {
         let input = " name  ( :first, :inner, \"5.5\" )";
-        let pattern = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern<SymStr>>().unwrap();
 
         let mut matched = false;
         atom!(pattern => [Pattern::Cons { name, params: ref params }] params; 
-                       slice $ [ [Pattern::Symbol(a), Pattern::Symbol(b), Pattern::String(c)] ] => { 
+                       slice $ [ [ Pattern::Atom(SymStr::Symbol(a))
+                                 , Pattern::Atom(SymStr::Symbol(b))
+                                 , Pattern::Atom(SymStr::String(c))
+                                 ] ] => { 
             assert_eq!(*name, *"name");
             assert_eq!(**a, *"first");
             assert_eq!(**b, *"inner");
@@ -386,7 +389,7 @@ mod test {
     #[test]
     fn should_parse_capture_var() {
         let input = " symbol_123 ";
-        let pattern = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern<SymStr>>().unwrap();
 
         let mut matched = false;
         atom!(pattern => [Pattern::CaptureVar(sym)] => { 
@@ -399,10 +402,10 @@ mod test {
     #[test]
     fn should_parse_symbol() {
         let input = " :symbol_123 ";
-        let pattern = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern<SymStr>>().unwrap();
 
         let mut matched = false;
-        atom!(pattern => [Pattern::Symbol(sym)] => { 
+        atom!(pattern => [Pattern::Atom(SymStr::Symbol(sym))] => { 
             assert_eq!(*sym, *"symbol_123");
             matched = true;
         } );
@@ -412,7 +415,7 @@ mod test {
     #[test]
     fn should_parse_wild() {
         let input = " _ ";
-        let pattern = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern<SymStr>>().unwrap();
 
         let mut matched = false;
         atom!(pattern => [Pattern::Wild] => { 
@@ -423,19 +426,19 @@ mod test {
 
     #[test]
     fn should_parse_exact_list() {
-        fn extract<'a>(p : &'a Pattern) -> &'a str {
+        fn extract<'a>(p : &'a Pattern<SymStr>) -> &'a str {
             match p {
-                Pattern::Symbol(x) => x,
+                Pattern::Atom(SymStr::Symbol(x)) => x,
                 _ => panic!("extraction failure"),
             }
         }
         
         let input = " [ [], [:a, :b], [:c , :d, :e], :f] ";
-        let pattern = input.parse::<Pattern>().unwrap();
+        let pattern = input.parse::<Pattern<SymStr>>().unwrap();
 
         let mut matched = false;
         atom!(pattern => [Pattern::ExactList(ref params)] params; 
-              slice $ [ [Pattern::ExactList(first), Pattern::ExactList(second), Pattern::ExactList(third), Pattern::Symbol(f)] ] => { 
+              slice $ [ [Pattern::ExactList(first), Pattern::ExactList(second), Pattern::ExactList(third), Pattern::Atom(SymStr::Symbol(f))] ] => { 
             assert_eq!(**f, *"f");
             assert_eq!(first.len(), 0);
             assert_eq!(second.len(), 2);
