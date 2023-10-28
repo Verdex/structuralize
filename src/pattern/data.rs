@@ -19,8 +19,6 @@ pub trait Matchable {
 
 #[derive(Debug, Clone)]
 pub enum Pattern<TAtom : Clone> {
-    String(Box<str>), 
-    Symbol(Box<str>),
     Atom(TAtom),
     Wild,
     CaptureVar(Box<str>),
@@ -38,9 +36,7 @@ impl<'a, T : Clone> Linearizable<'a> for Pattern<T> {
     fn l_next(&'a self) -> Vec<&'a Self> {
         use Pattern::*;
         match self {
-            Atom(_) => todo!(), // TODO
-            String(_) => vec![], 
-            Symbol(_) => vec![],
+            Atom(_) => vec![], 
             Wild => vec![],
             CaptureVar(_) => vec![],
             Cons { params, name: _ } => params.iter().collect(),
