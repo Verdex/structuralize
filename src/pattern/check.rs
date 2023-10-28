@@ -82,8 +82,8 @@ fn check_template_usage<T : Clone>(pattern : &Pattern<T>) -> Option<TypeCheckErr
     fn r<T : Clone>(pattern : &Pattern<T>, available_captures : &mut Vec<Box<str>>) -> Option<TypeCheckError> {
         use Pattern::*;
         match pattern {
-            Atom(_) => todo!(), // TODO
-            Fail => todo!(), // TODO
+            Atom(_) => None, 
+            Fail => None, 
             Wild => None,
             CaptureVar(var) => { available_captures.push(var.clone()); None },
             Cons { params, .. } => params.iter().map(|p| r(p, available_captures)).find(problem)?,
@@ -110,8 +110,8 @@ fn check_next_usage<T : Clone>(pattern : &Pattern<T>) -> bool {
     fn r<T : Clone>(pattern : &Pattern<T>, in_path : bool) -> Option<usize> {
         use Pattern::*;
         match pattern {
-            Atom(_) => todo!(), // TODO
-            Fail => todo!(), // TODO
+            Atom(_) => Some(0), 
+            Fail => Some(0), 
             Wild => Some(0),
             CaptureVar(_) => Some(0),
             Cons { params, .. } => params.iter().map(|p| r(p, in_path)).sum(),
@@ -194,8 +194,8 @@ pub fn pattern_sig<T : Clone>(pattern : &Pattern<T>) -> Result<PatternSig, TypeC
     }
 
     match pattern {
-        Atom(_) => todo!(), // TODO 
-        Fail => todo!(), // TODO
+        Atom(_) => EMPTY, 
+        Fail => EMPTY, 
         Wild => EMPTY,
         CaptureVar(v) => Ok(vec![v.clone()]),
         Cons { params, .. } => star!(params),
