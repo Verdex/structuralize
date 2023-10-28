@@ -225,7 +225,6 @@ pub fn pattern_sig<T : Clone>(pattern : &Pattern<T>) -> Result<PatternSig, TypeC
 mod test {
     use super::*;
     use crate::data::*;
-    use crate::pattern::parse::*;
 
     #[test]
     fn check_template_usage_should_pass() {
