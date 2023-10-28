@@ -18,12 +18,6 @@ pub trait Matchable {
     fn to_pattern(&self) -> Pattern<Self::Atom>;
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum SymStr {
-    Symbol(Box<str>),
-    String(Box<str>),
-}
-
 impl Matchable for Data {
     type Atom = SymStr;
     type Object = ();
@@ -40,8 +34,7 @@ impl Matchable for Data {
 
     fn to_pattern(&self) -> Pattern<Self::Atom> {
         match self {
-            Data::String(s) => Pattern::Atom(SymStr::String(s.clone())), 
-            Data::Symbol(s) => Pattern::Atom(SymStr::Symbol(s.clone())),
+            Data::SymStr(s) => Pattern::Atom(s.clone()), 
             Data::Cons { name, params } => Pattern::Cons { name: name.clone(), params: params.iter().map(|x| x.to_pattern()).collect() },
             Data::List(ds) => Pattern::ExactList(ds.iter().map(|x| x.to_pattern()).collect()),
         }

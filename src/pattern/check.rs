@@ -1,6 +1,7 @@
 
 use denest::Linearizable;
 
+use crate::data::*;
 use super::data::*;
  
 pub type PatternSig = Vec<Box<str>>;
