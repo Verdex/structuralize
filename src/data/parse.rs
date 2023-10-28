@@ -77,14 +77,14 @@ fn parse_symbol(input : &mut Chars) -> Result<Data, ParseError> {
     parser!(input => {
         _colon <= parse_colon;
         word <= parse_word;
-        select Data::Symbol(word)
+        select Data::SymStr(SymStr::Symbol(word))
     })
 }
 
 fn parse_string_data(input : &mut Chars) -> Result<Data, ParseError> {
     parser!(input => {
         string <= parse_string;
-        select Data::String(string)
+        select Data::SymStr(SymStr::String(string))
     })
 }
 
@@ -120,7 +120,10 @@ mod test {
 
         let mut matched = false;
         atom!(data => [Data::Cons { name, params: ref params }] params; 
-                       slice $ [ [Data::Symbol(a), Data::Symbol(b), Data::Symbol(c)] ] => { 
+                       slice $ [ [ Data::SymStr(SymStr::Symbol(a))
+                                 , Data::SymStr(SymStr::Symbol(b))
+                                 , Data::SymStr(SymStr::Symbol(c))
+                                 ] ] => { 
             assert_eq!(*name, *"name");
             assert_eq!(**a, *"first");
             assert_eq!(**b, *"inner");
@@ -136,7 +139,7 @@ mod test {
         let data = input.parse::<Data>().unwrap();
 
         let mut matched = false;
-        atom!(data => [Data::Symbol(sym)] => { 
+        atom!(data => [Data::SymStr(SymStr::Symbol(sym))] => { 
             assert_eq!(*sym, *"symbol_123");
             matched = true;
         } );
@@ -150,15 +153,15 @@ mod test {
 
         let mut matched = false;
         atom!(data => [Data::List(ref params)] params; 
-              slice $ [ [Data::List(first), Data::List(second), Data::List(third), Data::Symbol(last)] ] => { 
+              slice $ [ [Data::List(first), Data::List(second), Data::List(third), Data::SymStr(SymStr::Symbol(last))] ] => { 
             assert_eq!(first.len(), 0);
             assert_eq!(second.len(), 2);
-            assert_eq!(second[0], Data::Symbol("a".into()));
-            assert_eq!(second[1], Data::Symbol("b".into()));
+            assert_eq!(second[0], Data::SymStr(SymStr::Symbol("a".into())));
+            assert_eq!(second[1], Data::SymStr(SymStr::Symbol("b".into())));
             assert_eq!(third.len(), 3);
-            assert_eq!(third[0], Data::Symbol("c".into()));
-            assert_eq!(third[1], Data::Symbol("d".into()));
-            assert_eq!(third[2], Data::Symbol("e".into()));
+            assert_eq!(third[0], Data::SymStr(SymStr::Symbol("c".into())));
+            assert_eq!(third[1], Data::SymStr(SymStr::Symbol("d".into())));
+            assert_eq!(third[2], Data::SymStr(SymStr::Symbol("e".into())));
             assert_eq!(**last, *"f");
             matched = true;
         } );
