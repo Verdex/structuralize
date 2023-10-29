@@ -4,10 +4,6 @@ use super::check::*;
 
 // TODO : Consider .. pattern so that cons and exact list can ignore fields
 
-// TODO : allow list of functions that take the matches and return a pattern of known type
-//        probably needs to specify the type
-// TODO : allow list of functions that "match"
-
 
 pub type MatchMap<'a, T> = Vec<(Box<str>, &'a T)>; 
 
