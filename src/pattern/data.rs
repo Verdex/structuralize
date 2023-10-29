@@ -53,7 +53,6 @@ pub enum Pattern<TAtom : Clone> {
     And(Box<Pattern<TAtom>>, Box<Pattern<TAtom>>),
     Or(Box<Pattern<TAtom>>, Box<Pattern<TAtom>>),
     TemplateVar(Box<str>), 
-    Matcher(usize),
 }
 
 impl<'a, T : Clone> Linearizable<'a> for Pattern<T> {
@@ -72,7 +71,6 @@ impl<'a, T : Clone> Linearizable<'a> for Pattern<T> {
             And(a, b) => vec![&**a, &**b],
             Or(a, b) => vec![&**a, &**b],
             TemplateVar(_) => vec![],
-            Matcher(_) => vec![],
         }
     }
 }
