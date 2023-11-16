@@ -164,7 +164,7 @@ impl<'a, TAtom : 'a + Clone + PartialEq, D : Matchable<Atom=TAtom>> Iterator for
                 (Pattern::ListPath(ps), MatchKind::List(ds)) if ps.len() <= ds.len() => {
                     let p_len = ps.len();
 
-                    for i in (1..=(ds.len() - p_len)).rev() { // TODO I would be really great if this were lazy
+                    for i in (1..=(ds.len() - p_len)).rev() { // TODO It would be really great if this were lazy
                         let target = &ds[i..(i + p_len)];
                         let mut work = self.current_work.clone();
                         qw!(work, ps.clone(), target);
